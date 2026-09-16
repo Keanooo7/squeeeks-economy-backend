@@ -107,7 +107,9 @@ The rules suite is 3,390 lines driving 241 assertions against the emulator
 
 - The concurrency claims are asserted against a **hand-rolled in-memory Firestore mock** that
   models optimistic locking (`purchaseChest.test.ts:36-60`), not against real Firestore.
-  `openPendingChest` is tested both ways; `purchaseChest` is not.
+  `openPendingChest` is the mirror image and no better off — two emulator suites and **no**
+  behavioural unit suite at all. Neither callable is tested both ways; each is missing the half
+  the other has.
 - Two assertions in `chestPricing.test.ts` are **source-text** assertions
   (`expect(INDEX_CODE).toMatch(/typeof rawChestPrice !== 'number'/)`), not behavioural ones.
   They pin that a guard exists, not that it works.
