@@ -1,0 +1,105 @@
+{
+  "_comment": "The COMPLETE truth table for reconcileTrashDay, and the only thing that can catch the two ports drifting apart. The rule is implemented TWICE — `functions/src/trashDay.ts` (the normative specification) and `lib/features/trash_day/domain/trash_day_reconciliation.dart` (a hand transcription, because Dart cannot call TypeScript). Each has its own unit tests, each suite is green, and NEITHER CAN SEE THE OTHER: a change to one implementation without the other leaves both suites passing and ships a client that disagrees with its own specification about whether a housemate already took the bins out. One table, two readers, is what makes that impossible.",
+  "_authored_not_generated": "🔴 THESE EXPECTATIONS ARE WRITTEN FROM THE RULE, NEVER GENERATED FROM EITHER IMPLEMENTATION. A table produced by running trashDay.ts would agree with trashDay.ts by construction and could never fail — it would be the producer's own instrument grading the producer. Every row below was derived from the stated contract (a UNION of two positive sources) and then checked against the code, in that order.",
+  "_the_rule": "Cleared if EITHER source says cleared, for THIS date. Both are POSITIVE evidence; neither one's SILENCE is evidence of the negative — a device that has not synced holds no server completion, and that absence must never un-clear what a housemate already did. A completion or ack for a DIFFERENT date says nothing about this one. Keys are compared as OPAQUE STRINGS: the bin date is a local calendar date about a physical event on a kerb, and the parse was deliberately removed rather than pick a timezone for it.",
+  "_coverage": "EXHAUSTIVE over the input space, which is why it is only nine rows: binDateKey is fixed, and each of serverCompletionBinDateKey and localAckBinDateKey is independently one of {absent, this date, another date}. 3 x 3 = 9, with no tenth case to forget. `null` means NO INFORMATION — for the server side that deliberately covers both 'no document' and 'the read failed', so an unreachable server and an empty one cannot become different code paths.",
+  "_fields": "The four fields both ports return. `trashDay.ts` also returns `completion` (the server document itself, or null), which has no Dart counterpart because the Dart signature takes only the key — it is asserted in trashDay.test.ts instead, and mirrors clearedBy === 'server' exactly.",
+  "_readers": [
+    "functions/src/__tests__/trashDayReconciliationParity.test.ts  (npm test)",
+    "test/features/trash_day/trash_day_reconciliation_test.dart    (make test) — W1 lane, NOT YET WIRED"
+  ],
+  "binDateKey": "2026-08-18",
+  "otherDateKey": "2026-08-11",
+  "cases": [
+    {
+      "name": "no information from either side",
+      "server": null,
+      "local": null,
+      "cleared": false,
+      "clearedBy": null,
+      "mustPush": false,
+      "mustCacheLocally": false,
+      "why": "Silence is not evidence of the negative, but it is not evidence of clearing either. Nothing to move in either direction."
+    },
+    {
+      "name": "server cleared it, this device does not know yet",
+      "server": "2026-08-18",
+      "local": null,
+      "cleared": true,
+      "clearedBy": "server",
+      "mustPush": false,
+      "mustCacheLocally": true,
+      "why": "The whole point of the feature: a housemate took the bins out and this device's takeover must stop showing. Caching it locally is what makes that survive going offline."
+    },
+    {
+      "name": "server holds only LAST week's completion",
+      "server": "2026-08-11",
+      "local": null,
+      "cleared": false,
+      "clearedBy": null,
+      "mustPush": false,
+      "mustCacheLocally": false,
+      "why": "A completion for a different date says nothing about this one. Without the date guard, last week's document would pre-clear this week and the bins would never be asked for again."
+    },
+    {
+      "name": "this device cleared it, the server has not heard",
+      "server": null,
+      "local": "2026-08-18",
+      "cleared": true,
+      "clearedBy": "local",
+      "mustPush": true,
+      "mustCacheLocally": false,
+      "why": "🔴 THE UN-CLEAR FAILURE THIS RULE EXISTS TO PREVENT. A 'server wins' precedence would read the absent document as 'not cleared' and re-arm the takeover for someone who has already done it. The push is how the rest of the household finds out."
+    },
+    {
+      "name": "both agree, for this date",
+      "server": "2026-08-18",
+      "local": "2026-08-18",
+      "cleared": true,
+      "clearedBy": "server",
+      "mustPush": false,
+      "mustCacheLocally": false,
+      "why": "Settled. The server is named as the authority when both hold it, and nothing needs moving in either direction."
+    },
+    {
+      "name": "server holds last week, this device cleared THIS week",
+      "server": "2026-08-11",
+      "local": "2026-08-18",
+      "cleared": true,
+      "clearedBy": "local",
+      "mustPush": true,
+      "mustCacheLocally": false,
+      "why": "⚠️ THE ROW MOST LIKELY TO BE GOT WRONG. A stale server document is present and non-null, so an implementation testing `server != null` instead of `server.binDateKey === binDateKey` would call this cleared BY SERVER and skip the push — losing the completion, silently, exactly once a week."
+    },
+    {
+      "name": "this device holds only last week's ack",
+      "server": null,
+      "local": "2026-08-11",
+      "cleared": false,
+      "clearedBy": null,
+      "mustPush": false,
+      "mustCacheLocally": false,
+      "why": "The same date guard on the local side. A device that cleared last week must be asked again this week."
+    },
+    {
+      "name": "server cleared this week, device holds last week's ack",
+      "server": "2026-08-18",
+      "local": "2026-08-11",
+      "cleared": true,
+      "clearedBy": "server",
+      "mustPush": false,
+      "mustCacheLocally": true,
+      "why": "The device's stale ack is not information about this date, so this is the same as holding nothing: take the server's word and cache it."
+    },
+    {
+      "name": "both hold only last week",
+      "server": "2026-08-11",
+      "local": "2026-08-11",
+      "cleared": false,
+      "clearedBy": null,
+      "mustPush": false,
+      "mustCacheLocally": false,
+      "why": "Two stale sources are still no information about this date. The bins have not been taken out this week."
+    }
+  ]
+}

@@ -1,0 +1,1069 @@
+// ===========================================================================
+// ⚠️ A MERGED PR DEPLOYS NOTHING. DO NOT BELIEVE THIS HEADER — RUN THE CHECK.
+//
+//     make check-rules-deployed          (exit 0 in sync · 1 DRIFT · 3 could not ask)
+// ===========================================================================
+//
+// 🔑 IN ONE SENTENCE: landing a change here alters what WOULD be enforced, and
+// alters nothing a real account can do until someone with Firebase credentials
+// runs `firebase deploy --only firestore:rules`. No window runs it and no CI
+// job runs it. A reviewer's natural reading of "the rules now require X" is
+// that they require X today, and that reading is wrong by default.
+//
+// ⚠️ NOT HYPOTHETICAL, AND RECENT: the `fridgeItems` block landed in #447 and
+// spent seven hours enforcing nothing while its own tests were green. Nobody
+// could have told — which is why the paragraph above is a command and not a
+// caution.
+//
+// ── What was actually deployed, measured ───────────────────────────────────
+//
+// 🔴 MEASURED AGAINST PRODUCTION on 2026-08-16 (W2-98, #451), not inferred:
+//
+//     project   <project-id>
+//     release   cloud.firestore
+//     ruleset   a59c548b-fb82-47a7-b8bf-f2c18f2fdd2c
+//     released  2026-08-16T00:59:48.950624Z
+//     size      856 lines, 35 match blocks
+//
+// Production was running EXACTLY this file minus `/fridgeItems/{itemId}` —
+// identical normalised digests once that one block is removed. So the rules
+// for `families`, `housemates`, `economy`, `trashDay`, `housemateTokens`,
+// `chores` and `messages` ARE live, and there were NO hand edits made in the
+// console for a deploy to overwrite.
+//
+// ⚠️ THAT IS A FACT WITH A TIMESTAMP, WHICH IS THE ONLY KIND THIS FILE CAN
+// CARRY. It was true at 07:00Z on 2026-08-16 and says nothing about today. Run
+// `make check-rules-deployed`; it takes a second and it answers for now.
+//
+// 🔴 AND THE VERSION OF THIS HEADER THAT STOOD HERE UNTIL 2026-08-16 WAS
+// CONFIDENTLY WRONG FOR WEEKS. It stated that deploying "IS A HUMAN ACTION
+// NOBODY HAS TAKEN" and reported production as 141 lines dated 2026-07-02.
+// Both were false. It was believed because it was specific, it was quoted into
+// an escalation, and no instrument existed to contradict it — the check above
+// is the instrument, and it is the reason this paragraph can be replaced with a
+// measurement rather than another claim. **Prose in this file is not evidence.
+// Do not add a number here that a command could answer.**
+//
+// ── What a deploy is NOT ───────────────────────────────────────────────────
+//
+// 📌 Not a code change, and not reversible by one. Deploying replaces the live
+// ruleset atomically; rolling back means deploying the previous one. Anything
+// relying on a permission this file removes starts failing at the moment of
+// deploy rather than at the moment of merge — which is the real risk, and the
+// reason a deploy wants a person watching it rather than a pipeline.
+// `functions/src/__tests__/firestore-rules.test.ts` runs this file against the
+// emulator on every `npm run test:rules`, so what it WOULD do is already known;
+// what is unknown is what breaks when it starts doing it.
+//
+// ===========================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isFriend(uid) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(uid))
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(uid)).data.status == 'accepted';
+    }
+
+    // Housemates — who may see the inside of your home.
+    //
+    // isFriend() is deliberately NOT enough. Accepting a friend request and
+    // letting someone into your home are two different consents, and before
+    // this block existed the first tap silently performed both: one button
+    // whose visible meaning was "we're friends" also published your layout to
+    // an account found by substring search.
+    //
+    // ⚠️ The roster lives on users/{uid}, NOT on the friend edge, and that is
+    // forced rather than stylistic. A cap ("a real household is small") has to
+    // count every grant a user has issued, and the edge users/A/friends/B can
+    // only ever name A or B — a size check there is vacuous, and rules cannot
+    // aggregate across documents. One list in one document is the only shape
+    // in which the cap is enforceable rather than advisory.
+    //
+    //   users/{uid}.housemates            — uids that may read {uid}'s house
+    //   friends/{friendUid}.housePendingFrom — uids that have asked, awaiting
+    //                                          an answer (per friendship, and
+    //                                          naturally at most two)
+    //
+    // Both are read through .get(key, []) so documents written before this
+    // feature evaluate to "no access" instead of erroring the expression out
+    // (an error denies — but it would deny the owner's own read too). That
+    // defaulting is also the migration: every existing friendship loses house
+    // access with no backfill, which is the intended revoke. Nobody was ever
+    // shown an advisory before granting it, so nobody has really granted it.
+    function housemates(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data
+               .get('housemates', []);
+    }
+
+    function edgePending(d) {
+      return d.get('housePendingFrom', []);
+    }
+
+    // A household of four. Bounds how far one careless tap-through can carry,
+    // and keeps the roster honest to the word "housemate".
+    function housemateCap() {
+      return 4;
+    }
+
+    // -----------------------------------------------------------------------
+    // W2-111 — the second, independent source of house access: a family
+    // -----------------------------------------------------------------------
+    //
+    // Brendan's decision, 2026-08-17: joining a family grants house access
+    // BOTH WAYS. The family feature shipped chores, trash day and a message
+    // board and then could not show you the house they are all about, because
+    // canViewHouse below wanted a friend edge plus a two-step housemate
+    // handshake and a family member has neither by virtue of being family.
+    //
+    // 🔑 THIS WRITES NOTHING. The brief proposed fanning `housemates` out
+    // across the family instead; three facts killed that and are worth having
+    // here, because "just add them to the roster" is the obvious next idea:
+    //
+    //   🔴 THE CAPS COLLIDE, AND SINCE 2026-08-19 THEY COLLIDE HARDER.
+    //     housemateCap() is 4 and FAMILY_CAP is 5, so a full family does not
+    //     fit in a roster even before anyone earns a housemate — where at 4
+    //     and 4 it took one token to overflow. appendHousemate
+    //     (housemateToken.ts) would refuse the JOIN itself. The argument for
+    //     writing nothing survives the cap change and is strengthened by it.
+    //   🔴 A FAMILY EDGE IN THE ROSTER IS CLIENT-REVOCABLE. Removals are
+    //     deliberately unguarded below — every removal reduces access — and
+    //     the client writes the roster directly (friends_repository_impl.dart,
+    //     FieldValue.arrayRemove). Storing the grant there lets a client undo
+    //     the thing that was just decided.
+    //   🔴 THERE IS NOWHERE TO PUT PROVENANCE. rosterOf drops non-strings and
+    //     housemateAppendOk feeds the appended element straight into a
+    //     document path segment, so entries cannot become objects without a
+    //     migration across the rules, the callable and the client at once —
+    //     and without provenance, leaving a family would revoke a housemate
+    //     edge the pair had earned separately.
+    //
+    // ✅ So membership is READ, never copied. `housemates` stays exactly the
+    // peer-consent mechanism it was, and family.ts:12-57's argument for why a
+    // family is not a housemates array survives intact: the two answer
+    // different questions and now BOTH answer "may this person see my house".
+    //
+    // 🔑 REVOCATION NEEDED NO CODE, WHICH IS THE REAL ARGUMENT FOR THIS SHAPE.
+    // applyFamilyDeparture already prunes memberUids AND nulls familyId for
+    // every revoked uid, and disband deletes the document — so leaveFamily,
+    // removeMember and disbandFamily each close the door the instant they
+    // commit, with nothing here to keep in step and no edge left behind.
+    //
+    // Resolved from the READER's own uid rather than the target's: the reader
+    // controls neither document, but their own familyId is the one a forged
+    // target document could not fake into a grant.
+    //
+    // 🔑 BOTH UIDS ARE CHECKED AGAINST THE ROSTER, not just the target's. The
+    // pointer is only a lookup key; the family document is the authority, and
+    // asking it about the reader too costs nothing — the document is already
+    // fetched. Without that second clause a STALE POINTER IS A GRANT: a uid
+    // whose familyId survived a teardown that pruned them from memberUids
+    // would read every remaining member's house. That pointer is CF-owned and
+    // on the client denylist so nobody can forge one, and the departure
+    // transaction nulls it — but "access is correct because two documents
+    // agree" is a weaker claim than "access is decided by one of them", and
+    // this is the disjunct that opens a stranger's front door.
+    function sharesFamilyWith(uid) {
+      return familyIdOf(request.auth.uid) is string
+          && familyIdOf(request.auth.uid) != ''
+          && exists(/databases/$(database)/documents/families/$(familyIdOf(request.auth.uid)))
+          && familyRoster(familyIdOf(request.auth.uid)).hasAny([uid])
+          && familyRoster(familyIdOf(request.auth.uid)).hasAny([request.auth.uid]);
+    }
+
+    function familyRoster(familyId) {
+      return get(/databases/$(database)/documents/families/$(familyId))
+               .data.get('memberUids', []);
+    }
+
+    // ⚠️ `is string` BEFORE the emptiness test, and both before the path is
+    // built. applyFamilyDeparture writes `familyId: null` rather than deleting
+    // the key (index.ts), so the `''` default below never fires for someone
+    // who has LEFT a family — `!= ''` alone would pass null through and
+    // construct /families/null. The exists() guard is for disbandFamily,
+    // which deletes the document out from under a pointer that is still set.
+    function familyIdOf(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data
+               .get('familyId', '');
+    }
+
+    function canViewHouse(uid) {
+      return (isFriend(uid) && housemates(uid).hasAny([request.auth.uid]))
+          || sharesFamilyWith(uid);
+    }
+
+    // The roster is written by its OWNER, on their own user document — the
+    // one place a client may already write. Three things make that safe:
+    //   1. only the owner may write it at all (isOwner on users/{uid});
+    //   2. a uid may only be ADDED if it is already sitting in
+    //      housePendingFrom on the accepted friend edge — no grant without a
+    //      request to grant, which is what makes the flow two-step;
+    //   3. the result may not exceed the cap.
+    // Removals are unconstrained beyond ownership: every removal reduces
+    // access, so there is nothing to guard.
+    function housematesBefore() {
+      return resource.data.get('housemates', []);
+    }
+
+    function housematesAfter() {
+      return request.resource.data.get('housemates', []);
+    }
+
+    function housemateAdded() {
+      return housematesAfter().toSet().difference(housematesBefore().toSet());
+    }
+
+    function hasAskedToMoveIn(uid, candidate) {
+      return exists(/databases/$(database)/documents/users/$(uid)/friends/$(candidate))
+          && get(/databases/$(database)/documents/users/$(uid)/friends/$(candidate))
+               .data.status == 'accepted'
+          && edgePending(
+               get(/databases/$(database)/documents/users/$(uid)/friends/$(candidate)).data
+             ).hasAny([candidate]);
+    }
+
+    // One uid at a time, appended, and only one that asked.
+    //
+    // The single-append shape is not fussiness — it is what makes the check
+    // expressible. Rules have no loop, so "every added uid has asked" cannot
+    // be written over a set; the candidate has to be NAMEABLE. Taking the
+    // element at the old length names it, and requiring the added set to be
+    // exactly that one uid proves the name is the right one.
+    //
+    // ⚠️ Do not "tighten" this by pinning the untouched prefix with a slice.
+    // `list[0:0]` on an empty roster does not compare equal to the empty list
+    // and the whole expression errors — which denies the very first housemate
+    // anyone ever adds, and passes every test seeded with a non-empty roster.
+    // Order is not a security property here; membership is, and the set
+    // equality below is what carries it.
+    function housemateAppendOk(uid) {
+      return request.resource.data.housemates.size() <= housemateCap()
+          && request.resource.data.housemates.size()
+               == housematesBefore().size() + 1
+          && housemateAdded()
+               == [request.resource.data.housemates[housematesBefore().size()]].toSet()
+          && hasAskedToMoveIn(
+               uid,
+               request.resource.data.housemates[housematesBefore().size()]
+             );
+    }
+
+    // Removals need no guard beyond ownership: every removal reduces access.
+    function housemateWriteOk(uid) {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['housemates'])
+          || housemateAdded().size() == 0
+          || housemateAppendOk(uid);
+    }
+
+    // Gibby, the permanent starter friend. Every account is given him by the
+    // onNewUserBefriendGibby trigger, which fires once per ACCOUNT — so nothing
+    // ever recreates the edge. Without the delete carve-out below, one tap on
+    // "unfriend" removed him for good, which is the opposite of permanent.
+    // Kept as a function rather than an inline literal so the uid appears once.
+    function isStarterFriend(uid) {
+      return uid == 'gibby';
+    }
+
+    // Fields written exclusively by Cloud Functions via the Admin SDK — the
+    // client may never set or change them.
+    function userCfOwnedFields() {
+      return [
+        'subscriptionTier',
+        'subscriptionProductId',
+        'subscriptionExpiresAt',
+        // 🔴 THE ORDERING GUARD'S HIGH-WATER MARK, and omitting it made this
+        // list's OTHER subscription entries bypassable rather than merely
+        // incomplete.
+        //
+        // appStoreNotificationsV2 drops any notification whose Apple-signed
+        // signedDate is at or before this value, because Apple does not
+        // guarantee delivery order and retries for ~3 days. That makes the
+        // field a switch: written far enough into the future by a client, EVERY
+        // subsequent notification is classified stale and applied to nothing.
+        //
+        // Natural expiry survives that — the clock owns it, and
+        // subscriptionExpiresAt is already CF-owned — but a REFUND does not. A
+        // refund is the one ending that must revoke MID-period, so freezing this
+        // field buys a full paid month back after Apple has returned the money,
+        // repeatable every cycle. It is the exact hole the REFUND branch was
+        // built to close, reopened one field to the left.
+        //
+        // Added 2026-08-14, one PR after the field itself (#348). A new
+        // CF-written field on users/{uid} is client-writable BY DEFAULT here —
+        // the rule is a denylist (`!affectedKeys().hasAny(...)`), so forgetting
+        // an entry fails OPEN and silently.
+        'subscriptionNotifiedAt',
+        // The once-per-account stamp for the 5-of-7 retention promo. A client
+        // that could CLEAR it claims a free month every three weeks; one that
+        // could SET it locks itself out, which is merely self-harm but is still
+        // not the client's call.
+        //
+        // 📌 Added in the SAME COMMIT as the code that writes it, deliberately.
+        // #348 shipped `subscriptionNotifiedAt` without its entry and #356 had
+        // to close the resulting refund bypass — this list is a DENYLIST, so a
+        // new CF-written field is client-writable BY DEFAULT and the omission
+        // has no symptom.
+        'proPromoGrantedAt',
+        'orientationCompleted',
+        'orientationCompletedAt',
+        // Streak shields are granted exclusively by purchaseStreakShield CF.
+        // Blocking client writes prevents balance manipulation.
+        'streakShields',
+        // 🔴 THE FAMILY KEY, stamped by createFamily (W2-82). Every family
+        // read is scoped by it, so a client that could write it would point
+        // itself at another household — and an owner who could rewrite it
+        // would orphan their own family, stranding the members whose grant is
+        // copied from it. Added in the SAME COMMIT as the writer, per the
+        // ordering #348 got wrong.
+        'familyId',
+        // 🔑 THE FAMILY PRO GRANT, AND IT IS LISTED HERE BEFORE ANYTHING
+        // WRITES IT — deliberately the inverse of #348's ordering.
+        //
+        // resolveEffectiveTier now returns 'pro' whenever this timestamp is in
+        // the future, independently of subscriptionTier. So a client that
+        // could write it would grant itself Pro indefinitely WITHOUT NEEDING A
+        // FAMILY, a subscription, or any other document to exist — a strictly
+        // easier self-grant than the one subscriptionExpiresAt already guards,
+        // because there is no tier string to have to set as well.
+        //
+        // Written only by the family entitlement fan-out (planFamilyFanOut in
+        // functions/src/family.ts), as a COPY of the family owner's own
+        // subscriptionExpiresAt. #348 shipped a field and added its entry one
+        // PR later, after the bypass; this list is a DENYLIST, so an omission
+        // fails OPEN and in silence. The entry costs nothing while no writer
+        // exists and closes the hole the moment one does.
+        'familyProExpiresAt'
+      ];
+    }
+
+    // Economy fields on users/{uid}/profile/data. Written exclusively by Cloud
+    // Functions via the Admin SDK:
+    //   spongeBalance — currency (purchaseChest, claimDailyGift, claimGift, ...)
+    //   totalXp       — XP progression (awardXp in functions/src/xp.ts)
+    // If this list grows, add here rather than inlining at the match block.
+    function profileCfOwnedFields() {
+      return ['spongeBalance', 'totalXp'];
+    }
+
+    match /users/{uid} {
+      allow read: if isAuthenticated() && (isOwner(uid) || isFriend(uid));
+
+      // create and update are split deliberately. A single `allow write` rule
+      // has to call resource.data.diff(...), and on a create `resource` is
+      // null — the expression errors out and the write is DENIED. That made
+      // the very first write to users/{uid} impossible before orientation had
+      // created the doc (the FCM token write hit exactly this). On create
+      // there is no prior document to diff against, so guard the literal key
+      // set instead.
+      // A create may not seed a roster: there is nobody to have asked yet, so
+      // any non-empty housemates here is a grant nobody requested.
+      allow create: if isAuthenticated() && isOwner(uid)
+        && !request.resource.data.keys().hasAny(userCfOwnedFields())
+        && request.resource.data.get('housemates', []).size() == 0;
+
+      // On update, affectedKeys() (not keys()) so the check applies only to
+      // fields the client is CHANGING, not every field already present in the
+      // document from prior CF writes.
+      //
+      // housemateWriteOk is the second gate on this rule and the one that
+      // matters for privacy: without it "the owner may change any field that
+      // is not CF-owned" would let a client write itself an arbitrary roster,
+      // which is a self-service read grant on its friends' houses and a cap
+      // that only exists in the UI.
+      allow update: if isAuthenticated() && isOwner(uid)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(userCfOwnedFields())
+        && housemateWriteOk(uid);
+
+      // Unchanged from the previous `allow write` rule, which denied deletes
+      // implicitly (request.resource is null on delete, so the guard errored).
+      // Account deletion goes through Firebase Auth, not a client doc delete.
+      allow delete: if false;
+
+      // -----------------------------------------------------------------
+      // users/{uid}/private/{docId} — owner-only, never friend-readable
+      // -----------------------------------------------------------------
+      //
+      // The FCM push token is a stable per-device identifier. It has always
+      // lived on users/{uid} as `fcmToken`, and the read rule above is
+      // `isOwner(uid) || isFriend(uid)` — so every accepted friend could read
+      // the raw device token of every friend they had. Firestore has no
+      // field-level read security: a rule either exposes the whole document
+      // or it does not.
+      //
+      // 🔑 AND users/{uid} CANNOT SIMPLY BE LOCKED TO THE OWNER. The friend
+      // read is live: friends_repository_impl.dart:104 `_roster()` reads
+      // `housemates` off users/{friendUid} to answer "may I visit their
+      // house?" for every accepted friend. Narrowing that rule would not
+      // deny a read — `_roster` swallows FirebaseException and returns empty
+      // — it would silently turn every Visit button into an Ask button. So
+      // the token moves out instead of the friends moving off.
+      //
+      // publicProfiles/{uid} is NOT the place for it either: that projection
+      // exists to be read by OTHER people (see the match block below), which
+      // is the opposite of what a push token needs.
+      //
+      // Written by the client (lib/core/services/fcm_service.dart) rather
+      // than by a Cloud Function, so the owner needs write as well as read.
+      // Split create/update for the same reason as the parent document: a
+      // single `allow write` calling resource.data.diff() errors — and
+      // therefore denies — on the create, and this document does not exist
+      // until the first token write.
+      match /private/{docId} {
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow create: if isAuthenticated() && isOwner(uid);
+        allow update: if isAuthenticated() && isOwner(uid);
+        // Clearing the token on sign-out is a FieldValue.delete() inside a
+        // set(merge:) — an update, not a document delete. Nothing deletes
+        // this document, so nothing may.
+        allow delete: if false;
+      }
+
+      match /friends/{friendUid} {
+        allow read: if isAuthenticated() && (isOwner(uid) || isOwner(friendUid));
+
+        // Both sides of a request are written by the SENDER — see
+        // sendFriendRequest in friends_repository_impl.dart, which writes
+        // users/{me}/friends/{target} AND users/{target}/friends/{me}. The
+        // previous `allow create: if isOwner(uid)` denied that second write,
+        // so requests never reached the recipient — and the first write had
+        // already committed un-transacted, leaving a half-written friendship.
+        //
+        // The same rule also let a client fabricate an 'accepted' document on
+        // its own side, which isFriend() above trusts: a self-service read
+        // grant on any user's doc, profile and house. Pinning creates to
+        // 'pending' is what closes that.
+        //
+        // housePendingFrom may be seeded on create, but only empty: a request
+        // to move in with someone who has not yet accepted you as a friend is
+        // not a request, it is a head start.
+        allow create: if isAuthenticated()
+          && (isOwner(uid) || isOwner(friendUid))
+          && request.resource.data.status == 'pending'
+          && request.resource.data.requesterUid == request.auth.uid
+          && request.resource.data.keys()
+               .hasOnly(['status', 'addedAt', 'requesterUid',
+                         'housePendingFrom'])
+          && edgePending(request.resource.data).size() == 0;
+
+        // Only the RECIPIENT may flip pending -> accepted. requesterUid is
+        // written identically on both sides, so this single check covers both
+        // documents acceptFriendRequest updates, and stops a requester from
+        // accepting on their own behalf.
+        allow update: if isAuthenticated()
+          && (isOwner(uid) || isOwner(friendUid))
+          && resource.data.status == 'pending'
+          && request.resource.data.status == 'accepted'
+          && resource.data.requesterUid != request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status']);
+
+        // --- Asking to move in ---------------------------------------------
+        // The edge carries only the REQUEST. The grant it leads to is written
+        // to users/{uid}.housemates, where it can be capped — see the comment
+        // on housemates() for why it cannot live here.
+        //
+        // Both clauses pin affectedKeys() so a housemate write can never ride
+        // along with a status change, and vice versa.
+
+        // ASK. The caller adds exactly THEMSELVES to housePendingFrom, so no
+        // client can manufacture a request from someone else and then "grant"
+        // it. The friendship must already be accepted — you cannot ask to
+        // move in with someone who has not agreed to be your friend. Asking
+        // twice is denied by the same set equality: the difference is empty.
+        allow update: if isAuthenticated()
+          && (isOwner(uid) || isOwner(friendUid))
+          && resource.data.status == 'accepted'
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['housePendingFrom'])
+          && edgePending(request.resource.data).toSet()
+               .difference(edgePending(resource.data).toSet())
+               == [request.auth.uid].toSet();
+
+        // CLEAR. A pure shrink: nothing may be added. Either party may do it,
+        // because every reading of a shrink reduces exposure — the host
+        // declining, the asker withdrawing, or the request being retired
+        // because it has just been granted. One rule covers all three.
+        allow update: if isAuthenticated()
+          && (isOwner(uid) || isOwner(friendUid))
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['housePendingFrom'])
+          && edgePending(request.resource.data).toSet()
+               .difference(edgePending(resource.data).toSet()).size() == 0;
+
+        // Either party may unfriend, from either side — EXCEPT Gibby.
+        //
+        // Both halves of the edge need the carve-out. The user side is
+        // users/{me}/friends/gibby, and Gibby's side is
+        // users/gibby/friends/{me} — on which the user is isOwner(friendUid)
+        // and could therefore delete it. Guarding only the first still leaves a
+        // one-call path to a half-deleted friendship.
+        //
+        // Gibby himself never signs in, and Admin SDK writes bypass rules, so
+        // nothing legitimate is blocked by this.
+        allow delete: if isAuthenticated()
+          && (isOwner(uid) || isOwner(friendUid))
+          && !isStarterFriend(uid)
+          && !isStarterFriend(friendUid);
+      }
+
+      match /inventory/{itemId} {
+        allow read, write: if isAuthenticated() && isOwner(uid);
+      }
+
+      // Unopened chests granted by an admin (W2-122).
+      //
+      // 🔴 READ-ONLY TO THE OWNER, WRITTEN BY NOBODY, and the split matters more
+      // here than on `inventory` directly above. An unopened chest is a PROMISE
+      // OF A ROLL that has not happened yet: a client that could write this
+      // collection could mint itself chests, and one that could write `openedAt`
+      // could re-open the same chest forever. The roll is the valuable act.
+      //
+      // ⚠️ SO IT DELIBERATELY DOES NOT FOLLOW `inventory`'s SHAPE despite
+      // sitting beside it. Inventory records what you already own and the client
+      // legitimately writes it; this records what you are OWED, and only
+      // `adminGrant` (mint) and `openPendingChest` (spend) may move it. Both are
+      // Admin SDK, which bypasses these rules entirely — so this rule exists to
+      // stop the CLIENT, which is the only party it can stop.
+      //
+      // 📌 Read IS granted: the whole point of an unopened chest is that the
+      // player can see it waiting.
+      match /pendingChests/{pendingChestId} {
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      // The fridge (W2-97), for the client landing in W4-76.
+      //
+      // 🔴 CLIENT-WRITTEN, UNLIKE EVERY RECENT ADDITION TO THIS FILE. The family
+      // subcollections above are `allow write: if false` because a callable is
+      // the only legitimate writer and the authority question lives on another
+      // document. Nothing of the sort applies here: `FridgeRepository` writes
+      // straight from the device, there is no callable, and the only authority
+      // question is "is this your own fridge" — which `isOwner(uid)` answers
+      // completely. A deny-write rule here would not be stricter, it would
+      // simply break the feature.
+      //
+      // ⚠️ AND IT IS NOT FRIEND-READABLE, WHICH IS THE PART WORTH STATING.
+      // `users/{uid}` itself allows `isFriend(uid)`, and rules DO NOT CASCADE
+      // to subcollections — so a reader who knows the parent is friend-visible
+      // will guess wrong about this one in either direction. Owner-only is the
+      // deliberate choice and follows `inventory` directly above: what a player
+      // has in their fridge is more personal than a cleanliness score, nothing
+      // in the feature displays another player's list, and widening it later is
+      // a one-line change while narrowing it after release is a regression
+      // somebody notices. A test pins the friend denial so this cannot drift by
+      // assumption.
+      match /fridgeItems/{itemId} {
+        allow read, write: if isAuthenticated() && isOwner(uid);
+      }
+
+      // The house layout is the one thing friendship alone no longer opens:
+      // you see the homes of people you live with. See the comment on
+      // housemates() for why the roster is not on the edge.
+      //
+      // users/{uid} and profile/{doc=**} deliberately stay on isFriend() —
+      // the ask was the layout, and widening the gate to display names and
+      // cleanliness scores is a different decision.
+      //
+      // Gibby is carved out as an NPC. His layout is seeded content
+      // (GIBBY_HOUSE_LAYOUT), byte-identical for every account, so there is
+      // nothing in it to protect — and making players his housemates instead
+      // would grow his roster by one per signup and hit the cap on the fifth
+      // account, breaking the day-one visit for everyone after that.
+      match /house/{doc=**} {
+        allow read: if isAuthenticated()
+          && (isOwner(uid) || isStarterFriend(uid) || canViewHouse(uid));
+        allow write: if isAuthenticated() && isOwner(uid);
+      }
+
+      match /streak/{doc=**} {
+        // streak/main is written exclusively by recordTaskCompletion and
+        // resolveStreak Cloud Functions. Client reads via StreamProvider.
+        // Write locked to CF-only (Admin SDK bypasses rules).
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      match /dailyScores/{date} {
+        // Written client-side by markTaskComplete() in task_repository_impl.dart
+        // (display-only: heat map, "Days Cleaned" stats; gates no currency).
+        allow read, write: if isAuthenticated() && isOwner(uid);
+      }
+
+      match /economy/{doc=**} {
+        // economy/taskRewards is the per-day ledger of how many task
+        // completions have already been paid out. It is written exclusively by
+        // grantTaskRewards (Admin SDK, called from recordTaskCompletion). A
+        // client that could write it could reset paidCount to 0 and re-collect
+        // the day's sponges without limit, so this is CF-only like streak/.
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      match /days/{dayKey} {
+        // W2-174. The per-day task-reward ledger: paidCount, xpPaidCount and
+        // bonusPaid for one calendar day, written exclusively by
+        // grantTaskRewards (Admin SDK). The document ID IS the day key.
+        //
+        // 🔴 THIS COLLECTION IS THE MONEY GUARD, NOT A CACHE. It replaced a
+        // single `economy/taskRewards` document stamped with a `date` field,
+        // which reset all three counters whenever the caller named a different
+        // day — and the caller named the day. A client that could write here
+        // would restore that exploit in one line, by deleting or zeroing the
+        // document for a day it had already been paid for.
+        //
+        // Read IS allowed, deliberately: Deploy 2 of the dayKey migration points
+        // a snapshot listener at users/{uid}/days/{today} so the cap UI updates
+        // on tap through Firestore's offline cache instead of waiting on the
+        // callable. The function stays the only authority; the client only
+        // watches. Owner-only — a cleaning cap is nobody else's business, and
+        // rules do not cascade from the friend-readable parent.
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      match /completions/{completionId} {
+        // W2-11. The durable completion log: one record per (task, day),
+        // written exclusively by recordTaskCompletion (Admin SDK).
+        //
+        // 🔒 THIS LOG BEARS REWARDS. Quest progress is derived from it unioned
+        // with the task flags, so a client that could write here could
+        // manufacture completions it never performed and farm every tally and
+        // streak in the catalogue. A client that could DELETE here could retract
+        // a completion and re-earn it — the exact exploit (D94-4) the log exists
+        // to close. Deny-write covers create, update AND delete.
+        //
+        // Client reads it for the quest section and any "days cleaned" history.
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      match /quests/{doc=**} {
+        // quests/state is written exclusively by applyQuestProgress (Admin SDK,
+        // called from recordTaskCompletion). It holds `claimedTiers` — the ONLY
+        // thing standing between a player and re-collecting a quest reward
+        // forever — plus the progress counters themselves. A client that could
+        // write here could both award itself infinite sponges and hand itself
+        // chests it never earned, so this is CF-only like streak/ and economy/.
+        // Client reads it to render the quest section on the level page, which
+        // is read-only by construction.
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      match /rewardHistory/{rewardId} {
+        // Written exclusively by awardStreakReward CF (Admin SDK).
+        // Client reads for the reward history list UI.
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      match /habits/{doc=**} {
+        allow read, write: if isAuthenticated() && isOwner(uid);
+      }
+
+      match /tasks/{doc=**} {
+        allow read, write: if isAuthenticated() && isOwner(uid);
+      }
+
+      match /weeklySchedule/{doc=**} {
+        allow read, write: if isAuthenticated() && isOwner(uid);
+      }
+
+      match /dailyGift {
+        // ⚠️ DEAD BLOCK — matches nothing, left in place deliberately.
+        // This is a collection-level match with no document wildcard, so it
+        // can never apply to a document; and there is no dailyGift collection
+        // to begin with — claim state lives at users/{uid}/shop/data in the
+        // field lastDailyGiftClaimedAt (see the comment at functions/src/
+        // index.ts:85). Removing it is a separate cleanup, not this change.
+        //
+        // Written exclusively by Cloud Functions via Admin SDK (sendDailyGiftReminder
+        // reads via collectionGroup; claimDailyGift writes via userShopRef).
+        // Client never writes here directly.
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      match /profile/{doc=**} {
+        allow read: if isAuthenticated() && (isOwner(uid) || isFriend(uid));
+
+        // Client may write cosmetic profile fields (displayName, avatarId, bio,
+        // etc.); economy fields belong to Cloud Functions. create and update are
+        // split for the same reason as users/{uid} above: a single `allow write`
+        // must call resource.data.diff(...), and on a create `resource` is null,
+        // so the expression errors and the write is DENIED. That made the first
+        // client write to users/{uid}/profile/data impossible — the rule could
+        // not honour the permission its own comment described.
+        allow create: if isAuthenticated() && isOwner(uid)
+          && !request.resource.data.keys().hasAny(profileCfOwnedFields());
+
+        // affectedKeys() (not keys()) so the guard applies only to fields the
+        // client is CHANGING — spongeBalance/totalXp are already present in the
+        // doc from prior CF writes and must not block an unrelated update.
+        allow update: if isAuthenticated() && isOwner(uid)
+          && !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(profileCfOwnedFields());
+
+        // Profile deletion is not a client operation; the previous `allow write`
+        // denied it implicitly (request.resource is null on delete).
+        allow delete: if false;
+      }
+
+      match /inviteCounts/{date} {
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      // Per-day feedback submission counter (W2-26), the same shape as
+      // inviteCounts above. Written exclusively by submitGalleryFeedback inside
+      // the transaction that also writes the comment.
+      //
+      // A client that could write here could zero its own count and file
+      // without limit, which is the entire bound — so deny-write, like every
+      // other counter the server enforces against.
+      match /feedbackCounts/{date} {
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      match /giftInvites/{inviteId} {
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      // Replay ledger for purchaseChest (W2-08), keyed on the caller-supplied
+      // purchaseId. Written exclusively by the callable via Admin SDK, with
+      // `create` so a second write to the same id fails atomically.
+      //
+      // A client that could write here could pre-claim an id and lock its own
+      // purchase out, or delete an entry and replay a charge-free grant — so
+      // this is deny-write for the same reason the economy state is.
+      match /chestPurchases/{purchaseId} {
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+
+      match /shop/{doc} {
+        // Written exclusively by Cloud Functions via Admin SDK:
+        //   purchaseChest  → clears dailyChestsPurchased (the daily cap was
+        //                    removed in W2-08; the field is no longer written)
+        //   claimDailyGift → writes lastDailyGiftClaimedAt, lastDailyGiftAmount
+        //   claimWeeklyGift → writes lastWeeklyGiftSunday (W2-66)
+        //   verifyIapAndGrant → writes shop state on IAP completion
+        // Client reads the stream to display shop state; never writes directly.
+        //
+        // 📌 The deny below is WHOLESALE, not per-field, which is why W2-66's new
+        // claim key needed no rule change — only this enumeration. A field added
+        // here is locked the moment it is written; the list is documentation and
+        // goes stale silently, so add to it when you add a writer.
+        allow read: if isAuthenticated() && isOwner(uid);
+        allow write: if false;
+      }
+    }
+
+    // Tester feedback on gallery specimens (W2-23). A signed-in tester CREATES
+    // their own items; nobody reads or edits through the client.
+    //
+    // 🔑 create-only, and owner-stamped: the uid on the document must be the
+    // caller's, so one tester cannot file a comment under another's name. There
+    // is no update and no delete — an edited or vanished comment is a lost
+    // sentence, and the sentence is the whole product.
+    //
+    // ⚠️ read is DENIED to clients even for their own items. The export runs
+    // through a Cloud Function (Admin SDK), so nothing needs client read, and
+    // allowing it would let any tester read every other tester's comments.
+    match /galleryFeedback/{feedbackId} {
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // Public projection of users/{uid}, written exclusively by the
+    // syncPublicProfile Cloud Function (Admin SDK). Carries only display-safe
+    // fields — displayName, avatarUrl, cleanlinessScore, isPublic.
+    //
+    // This collection exists because Firestore has no field-level read
+    // security. On users/{uid} those four fields share a document with
+    // fcmToken, subscriptionTier and subscriptionExpiresAt, so any `allow
+    // list` broad enough to let searchUsers run would hand every
+    // authenticated client the entire user document. Splitting the readable
+    // fields into their own document is the only way to separate the two.
+    //
+    // Fixes two defects from the 2026-08-03 friends audit:
+    //   F3  searchUsers lists users where isPublic == true, which the
+    //       users/{uid} read rule (isOwner || isFriend) cannot satisfy, so
+    //       every search returned permission-denied.
+    //   F5  getFriends reads a profile per friend entry; for a PENDING friend
+    //       isFriend() is false, that read threw, and the error propagated out
+    //       of friendsProvider — one pending request rendered "Could not load
+    //       friends." instead of the pending badge.
+    match /publicProfiles/{uid} {
+      // get and list are split rather than served by one `allow read`.
+      //
+      // A blanket `allow read: if isAuthenticated()` would fix F3 and F5 in
+      // one line, but it also lets any signed-in user who knows a uid read
+      // the display name and cleanliness score of someone who has explicitly
+      // turned discoverability OFF — strictly weaker than what users/{uid}
+      // grants today. The split keeps that promise.
+
+      // list rules are evaluated per returned document, so a query without
+      // the isPublic filter pulls in documents this rule denies and the whole
+      // query fails. That is deliberate: it forces the client to keep
+      // where('isPublic', isEqualTo: true) rather than fetching everything.
+      allow list: if isAuthenticated() && resource.data.isPublic == true;
+
+      // get widens beyond discoverable profiles to the owner and to anyone
+      // holding a friend edge in either state. Note this checks mere
+      // EXISTENCE rather than calling isFriend(), which requires status
+      // 'accepted' — F5 is precisely the pending case, so isFriend() is the
+      // wrong helper here.
+      //
+      // W2-111 adds family, and it is not decoration: getFriendVisit reads
+      // THIS DOCUMENT BEFORE the layout (friends_repository_impl.dart), so
+      // without the disjunct here a family member with discoverability off
+      // and no friend edge — exactly the account the family feature is for —
+      // is refused one read short of the house canViewHouse now opens.
+      allow get: if isAuthenticated() && (
+           isOwner(uid)
+        || resource.data.isPublic == true
+        || exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(uid))
+        || sharesFamilyWith(uid)
+      );
+
+      // Admin SDK only. cleanlinessScore is a score; a client-writable mirror
+      // would be a forgeable one. Unlike the create/update splits above this
+      // can be a single `allow write` — it never evaluates resource.data.diff(),
+      // so there is no create-time null to error on.
+      allow write: if false;
+    }
+
+    match /shop/{doc} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    match /shopInventory/{dateDoc} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // The family group document (W2-76). See functions/src/family.ts for why a
+    // family is a document rather than a derivation over users/{uid}.housemates
+    // — in one line: peer rosters need not agree, so "who is in this family"
+    // has no single answer without one.
+    //
+    // 🔑 READ IS MEMBERSHIP, AND MEMBERSHIP IS READ OFF THE DOCUMENT BEING
+    // READ. `resource.data.memberUids` is the document itself, so this needs no
+    // get() and cannot be confused by a stale copy of the roster living
+    // somewhere else. It is also the reason the cap is enforceable at all:
+    // memberUids is ONE array in ONE place, which is exactly what a per-edge
+    // housemates roster can never be.
+    //
+    // ⚠️ WRITE IS DENIED OUTRIGHT, INCLUDING TO THE OWNER. Every field is
+    // server-written (FamilyDoc), and the entitlement fan-out reads this
+    // document to decide who gets Pro — so a client that could edit memberUids
+    // could add themselves to a paying family, and an owner who could edit it
+    // could hand out Pro to arbitrary uids. Membership changes go through a
+    // callable for the same reason housemate redemption does: rules cannot
+    // bind two writes, and this one has a subscription on the other end.
+    // Opening a field later is additive; closing one after clients depend on
+    // it is not.
+    //
+    // 📌 `list` IS DENIED SEPARATELY FROM `get`, and that is a real decision
+    // rather than a formality. A query rule cannot inspect each returned
+    // document, so any workable `allow list` here would have to trust a
+    // client-supplied constraint — and getting that wrong exposes the roster
+    // of every family in the app. Discovery is instead meant to go through a
+    // `familyId` stamped on users/{uid} by the family-creating callable.
+    // 🔴 THAT CALLABLE DOES NOT EXIST YET and neither does the field, so
+    // NOTHING CAN CURRENTLY FIND A FAMILY — which is correct for this brief
+    // (nothing creates one either) and is named here so the next window does
+    // not read the silence as a bug. When that field lands it is CF-written on
+    // users/{uid} and MUST be added to userCfOwnedFields() in the same commit.
+    function familyMemberUids(familyId) {
+      return get(/databases/$(database)/documents/families/$(familyId))
+               .data.get('memberUids', []);
+    }
+
+    function isFamilyMember(familyId) {
+      return isAuthenticated()
+          && familyMemberUids(familyId).hasAny([request.auth.uid]);
+    }
+
+    match /families/{familyId} {
+      allow get: if isAuthenticated()
+                 && resource.data.get('memberUids', []).hasAny([request.auth.uid]);
+      allow list: if false;
+      allow write: if false;
+
+      // Shared trash-day completion (W2-77). One member takes the bins out and
+      // the fact is readable by the whole family, so every member's takeover
+      // has nothing left to show.
+      //
+      // 🔑 THE DOCUMENT ID IS THE BIN DATE (`YYYY-MM-DD`), and the scoping is
+      // STRUCTURAL: this record lives under one family, so another family's bin
+      // day is not reachable from here by any query a client can write. That is
+      // stronger than filtering, which has to be correct every time it is
+      // written.
+      //
+      // ⚠️ READ IS MEMBERSHIP, and unlike the parent it needs a get(): the
+      // roster is on the family document, not on this one. Read through
+      // .get('memberUids', []) so a malformed family DENIES rather than
+      // erroring the expression out — an error would deny a real member too,
+      // which looks identical from the client and is a different bug.
+      //
+      // 🔴 WRITE IS DENIED TO EVERYONE, INCLUDING MEMBERS, and rules could not
+      // do this job anyway. A member writing their own completion is the easy
+      // case; the point of the feature is that it clears for OTHERS, and no
+      // rule can verify the writer is a member of the family the document sits
+      // under without the same get() being spoofable by whoever controls the
+      // roster. completeTrashDay is the gate — see index.ts, and
+      // housemateToken.ts for the general form of why a callable was needed.
+      match /trashDay/{binDateKey} {
+        allow read: if isFamilyMember(familyId);
+        allow write: if false;
+      }
+
+      // Family chores (W2-88 part 3). Assigned by assignFamilyChore, completed
+      // by completeFamilyChore, both Admin SDK.
+      //
+      // 🔴 READ IS MEMBERSHIP, WRITE IS DENIED TO EVERYONE INCLUDING MEMBERS —
+      // the same split trashDay draws, and for the same reason. The authority
+      // questions here are "is the actor the OWNER" (assign) and "is the actor
+      // the ASSIGNEE" (complete), and both live on documents this rule cannot
+      // reach without a get() that is only as trustworthy as whoever controls
+      // it. A member-writable completion is a member marking their own chore
+      // done without doing it; a member-writable assignment is one child
+      // handing chores to another.
+      match /chores/{choreId} {
+        allow read: if isFamilyMember(familyId);
+        allow write: if false;
+      }
+
+      // The family message board (W2-88 part 4). Posted by postFamilyMessage,
+      // Admin SDK.
+      //
+      // 🔴 READ IS MEMBERSHIP, WRITE IS DENIED TO EVERYONE INCLUDING MEMBERS —
+      // and here the write rule is doing MORE work than in the siblings above.
+      // Every message is filtered server-side: a 15-word cap, a character cap,
+      // no links including obfuscated forms, and a family-friendly wordlist. A
+      // member-writable board would let any client skip all four by writing the
+      // document directly, which is the entire point of the filter.
+      //
+      // ⚠️ NO EDIT PATH EXISTS AT ALL, deliberately: an edited message is a
+      // changed record of what somebody said, and that is a worse default on a
+      // board children read.
+      match /messages/{messageId} {
+        allow read: if isFamilyMember(familyId);
+        allow write: if false;
+      }
+    }
+
+    // Housemate verification tokens (W4-36). Minted by mintHousemateToken and
+    // spent by redeemHousemateToken, both Admin SDK — no client access at all.
+    //
+    // 🔑 DENY-READ IS NOT CAUTION, IT IS THE FEATURE. The document id IS the
+    // code. A client that could `list` this collection could read every live
+    // code in the app and redeem them without ever meeting anybody, and a
+    // client that could `get` one could confirm a guess for free. The minting
+    // caller receives its code in the callable's RESPONSE and never reads it
+    // back, so nothing legitimate needs read.
+    //
+    // ⚠️ AND DENY-WRITE IS WHAT MAKES "single-use" MEAN ANYTHING. The spend is
+    // the `redeemedAtMs` field. A client able to write here could clear it and
+    // replay the same code, or mint one naming any host it liked.
+    //
+    // 📌 These rules are NOT what enforces the redemption — Admin SDK writes
+    // bypass rules entirely, so the callable is the gate (see housemateToken.ts
+    // on why a rules-only design cannot work). This block exists to close the
+    // collection to clients, which is a different job.
+    match /housemateTokens/{code} {
+      allow read, write: if false;
+    }
+
+    // Family invite codes (W2-83), minted by mintFamilyInvite and spent by
+    // joinFamily, both Admin SDK. A client that could READ this collection
+    // could enumerate live codes and join arbitrary families — the invite IS
+    // the capability, so the code is the secret, not the familyId it names.
+    //
+    // 📌 THIS BLOCK IS A PIN, NOT A CATCH, and it is counted as one: Firestore
+    // default-denies, so deleting it leaves every assertion passing. It is
+    // here so the intent is stated where a reader looks for it rather than
+    // inferred from an absence. ⚠️ The practical consequence is that shipping
+    // the join path did NOT create a window of exposure — the collection was
+    // already denied before this rule existed.
+    match /familyInvites/{code} {
+      allow read, write: if false;
+    }
+
+    // The house-plant directory override, read by getPlantDirectory and served
+    // to clients THROUGH that callable rather than directly.
+    //
+    // Denied to clients in both directions. Write, because the intervals are
+    // advice about a living thing and a client that could edit them could tell
+    // somebody else's app to water a fern once a month. Read, because there is
+    // no reason to: the callable already returns the whole list, validated,
+    // with the bundled fallback applied — a direct read would bypass exactly
+    // the validation that makes a console edit safe.
+    match /plantConfig/{doc} {
+      allow read, write: if false;
+    }
+
+    // Written exclusively by Cloud Functions via Admin SDK — no client access
+    // The admin grant audit ledger (W2-122).
+    //
+    // 🔴 DENIED OUTRIGHT, INCLUDING READ, AND INCLUDING TO THE RECIPIENT.
+    // `adminGrants/{grantId}` records who was granted what by an admin action
+    // the player was never party to. It is also the IDEMPOTENCY LOCK, which is
+    // the sharper reason: a client that could read it could enumerate grant
+    // ids, and one that could WRITE it could pre-create the lock document and
+    // make a real grant return `alreadyProcessed` having written nothing —
+    // a denial of service against your own gift.
+    //
+    // ⚠️ Admin SDK writes bypass rules, so THE SECRET GATE IN THE HANDLER IS
+    // THE SECURITY BOUNDARY for issuing a grant. This rule is not that boundary
+    // and cannot be; it exists so the ledger is not readable or forgeable from
+    // a device, which is a different job. It sits beside `processedReceipts`
+    // because that is the other idempotency ledger and it is denied for the
+    // same reason.
+    match /adminGrants/{grantId} {
+      allow read, write: if false;
+    }
+
+    match /processedReceipts/{hash} {
+      allow read, write: if false;
+    }
+
+    // App Store Server Notification replay ledger, keyed on Apple's
+    // notificationUUID. Same job as processedReceipts, different key and a
+    // different producer: Apple calls the endpoint, no client ever does.
+    match /processedNotifications/{notificationUUID} {
+      allow read, write: if false;
+    }
+
+    // 🔴 originalTransactionId -> uid, and READ IS DENIED AS HARD AS WRITE.
+    //
+    // Write, because a client that could forge an entry here would redirect
+    // somebody else's renewals — including their own — onto any account.
+    //
+    // Read, because the document id is a subscription identifier and the body
+    // is a uid, so this collection IS a map of who pays for what. Listing it
+    // would enumerate every subscriber in the app. Nothing client-side has any
+    // reason to resolve a transaction to an account; the only reader is the
+    // notification endpoint, which runs on the Admin SDK and bypasses rules.
+    match /subscriptionOwners/{originalTransactionId} {
+      allow read, write: if false;
+    }
+  }
+}

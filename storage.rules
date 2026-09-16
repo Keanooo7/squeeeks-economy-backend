@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read: if true;    // all files are admin-uploaded presets — public read
+      allow write: if false;  // clients never write; use Firebase Console or Admin SDK
+    }
+  }
+}

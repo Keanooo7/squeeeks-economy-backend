@@ -1,0 +1,23 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "giftInvites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "claimed", "order": "ASCENDING" },
+        { "fieldPath": "sentAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "streak",
+      "fieldPath": "currentStreak",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" },
+        { "order": "DESCENDING", "queryScope": "COLLECTION" },
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    }
+  ]
+}

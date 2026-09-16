@@ -1,0 +1,5 @@
+node_modules/
+lib/*.js
+functions/lib/
+*.log
+.DS_Store

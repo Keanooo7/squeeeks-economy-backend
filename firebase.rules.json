@@ -1,0 +1,24 @@
+{
+  "_comment": "Emulator config for `npm run test:rules` ONLY, and the third file of its kind after firebase.json and firebase.e2e.json. Deliberately SEPARATE and on DIFFERENT PORTS, for a measured reason: on 2026-08-16 this gate could not run AT ALL — `emulators:exec --only firestore` with no --config reads firebase.json, wants 8080, and a long-lived `emulators:start` from another window had held 8080 (and 4000/4400/4500/9099) for eleven hours. `emulators:exec` STARTS its own emulator and cannot attach to a running one, so the orphan did not make this gate pass quietly — it made it UNRUNNABLE, exit 1, `Could not start Firestore Emulator, port taken`. The 188 anyone quoted that day came from a hand-rolled workaround (FIRESTORE_EMULATOR_HOST + direct jest) that attaches to the orphan and therefore judges the rules against a database eleven hours of unrelated writes had touched. A gate that cannot run beside the dev emulator is a gate that gets skipped.",
+  "_ports": "8282 / hub 4403 / logging 4503, chosen to collide with nothing that exists today and nothing either sibling reserves. firebase.json owns 8080 firestore, 9099 auth, 5001 functions, 4000 ui, and the 4400/4500 hub+logging defaults; firebase.e2e.json owns 8181, 9198, 4402, 4502. Picking a number a future e2e run wants would recreate this bug in the other direction, so these sit clear of both blocks rather than adjacent to either. 🔑 THE HUB PORT IS NOT COSMETIC AND MUST STAY PINNED: @firebase/rules-unit-testing resolves the emulator by explicit config, THEN by hub discovery, THEN by FIRESTORE_EMULATOR_HOST. An unpinned hub falls back to 4400, which the dev emulator holds — firebase-tools then quietly starts ours on 4401 and the discovery order becomes a race for which emulator the suite actually judges. Pinned, there is no race.",
+  "_no_auth_block": "No auth emulator, unlike firebase.e2e.json. The rules suite builds its principals with @firebase/rules-unit-testing's authenticatedContext(), which mints tokens in-process and never talks to the Auth emulator. Adding one would reserve a port for nothing. (familyEmulator.test.ts DOES need it, because createFamily calls admin.auth().getUser() to stamp memberNames — which is why e2e has one and this does not.)",
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8282
+    },
+    "hub": {
+      "port": 4403
+    },
+    "logging": {
+      "port": 4503
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": false
+  }
+}
