@@ -3,7 +3,7 @@
 // W2-20. The protection on `users/{uid}/shieldPurchases/{id}` is the ABSENCE of
 // a rule: Firestore default-denies anything no `match` block reaches.
 //
-// 🔴 AN ABSENCE IS WHAT A WELL-MEANING CHANGE DELETES. Someone adding a
+// CRITICAL: AN ABSENCE IS WHAT A WELL-MEANING CHANGE DELETES. Someone adding a
 // convenience `match /users/{uid}/{doc=**}` to fix an unrelated read would
 // silently open EVERY unmatched path under a user — including the replay ledger
 // whose whole job is to stop a second charge. Nothing would fail. The app would
@@ -15,7 +15,7 @@
 // believe in.
 //
 // ---------------------------------------------------------------------------
-// 📌 WHY THIS LIVES IN THE UNIT SUITE AND NOT THE RULES SUITE
+// NOTE: WHY THIS LIVES IN THE UNIT SUITE AND NOT THE RULES SUITE
 // ---------------------------------------------------------------------------
 //
 // The behavioural proof — that a client genuinely cannot touch the ledger — is
@@ -83,7 +83,7 @@ describe('🔴 no catch-all match may exist — it would open every unmatched pa
 });
 
 describe('the two replay ledgers are protected by DIFFERENT mechanisms', () => {
-  // 📌 Found while verifying this brief's premise, and worth recording because
+  // NOTE: Found while verifying this brief's premise, and worth recording because
   // it is invisible: chestPurchases has an explicit block, shieldPurchases has
   // none. Both are deny-write. They differ on READ — a client may read its own
   // chest purchases and may NOT read its own shield purchases.
@@ -96,7 +96,7 @@ describe('the two replay ledgers are protected by DIFFERENT mechanisms', () => {
   });
 
   test('shieldPurchases is protected by the absence of any block', () => {
-    // ⚠️ If this ever fails, someone has ADDED a block. That may be fine, but it
+    // WARNING: If this ever fails, someone has ADDED a block. That may be fine, but it
     // changes the mechanism from "unreachable" to "reachable and refused", and
     // a block that restates default-deny is a block someone can later loosen.
     // The brief's instruction was explicit: pin the behaviour, do not codify a

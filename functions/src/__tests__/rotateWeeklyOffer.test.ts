@@ -90,7 +90,7 @@ const { WEEKLY_OFFERS } = require('../weeklyOffers') as {
   WEEKLY_OFFERS: Array<{
     id: string;
     title: string;
-    // 🔴 NO `price` — W2-176. This is a hand-written mirror of
+    // CRITICAL: NO `price` — W2-176. This is a hand-written mirror of
     // WeeklyOfferConfig behind an UNCHECKED `require` cast, so a stale field
     // here does not fail to compile; it silently licenses assertions about a
     // field that no longer exists. That is how `offer.price` type-checked
@@ -184,7 +184,7 @@ describe('rotateWeeklyOffer', () => {
     await rotateWeeklyOffer._handler();
 
     const { weeklyOffer } = offerWrites(writes)[0].data;
-    // 🔴 W2-176 INVERTED THE PRICE HALF OF THIS. It read
+    // CRITICAL: W2-176 INVERTED THE PRICE HALF OF THIS. It read
     // `expect(weeklyOffer.price).toBeGreaterThan(0)` — the $0.00 symptom
     // asserted on the write. The server no longer asserts a price at all, so
     // the assertion that matters now is that the write does not carry one:
@@ -260,7 +260,7 @@ describe('rotateWeeklyOffer', () => {
 
     // mergeFields, NOT merge:true — a deep merge would leave stale fields from
     // a previous offer shape, and a bare set would destroy dailyChests.
-    // ⚠️ W2-40 added 'weeklyOfferError' to the allowlist. mergeFields is an
+    // WARNING: W2-40 added 'weeklyOfferError' to the allowlist. mergeFields is an
     // ALLOWLIST: the success path clears a stale diagnostic, and a clear for a
     // field absent from this array is SILENTLY IGNORED — the clear would read
     // correctly and do nothing, leaving last week's refusal beside a working
@@ -280,7 +280,7 @@ describe('rotateWeeklyOffer', () => {
     );
   });
 
-  // ⚠️ UPDATED BY W2-40, and the assertion it replaces was correct until now.
+  // WARNING: UPDATED BY W2-40, and the assertion it replaces was correct until now.
   // It asserted ZERO writes on refusal. A refusal now writes ONE — the
   // weeklyOfferError diagnostic — because the old behaviour was loud only in
   // Cloud Functions logs, which nobody here reads. The test's INTENT (do not
@@ -339,7 +339,7 @@ describe('bundled weekly offer pool', () => {
       // Unvalidated server-side, but weekly_offer.dart defaults a missing
       // string to '' — which is the $0.00 card all over again.
       //
-      // 🔴 `price` IS NO LONGER ONE OF THESE (W2-176). It used to read
+      // CRITICAL: `price` IS NO LONGER ONE OF THESE (W2-176). It used to read
       // `expect(offer.price).toBeGreaterThan(0)`; the server has stopped
       // asserting a price, and the absence is enforced in
       // offerIntegrity.test.ts rather than restated here.

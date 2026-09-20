@@ -1,21 +1,21 @@
 // ---------------------------------------------------------------------------
 // accountDeletion — the pure planner behind `deleteAccount`.
 //
-// 🔴 THE DIALOG ALREADY PROMISED THIS AND THE CODE DID NOT DO IT.
+// CRITICAL: THE DIALOG ALREADY PROMISED THIS AND THE CODE DID NOT DO IT.
 // `settings_page.dart` says "All your data will be deleted" and then runs
 // `FirebaseAuth.instance.currentUser?.delete()` — the Auth record, and nothing
 // else. Every document below survived, owned by a uid that can never sign in
 // again. App Store Review Guideline 5.1.1(v) requires the account AND its data;
 // deleting the login is not deleting the account.
 //
-// 🔑 PURE, IN THE `family.ts` / `housemateView.ts` SENSE: plain data in, a plan
+// KEY: PURE, IN THE `family.ts` / `housemateView.ts` SENSE: plain data in, a plan
 // out. No `db`, no async, no Firestore types. Raw documents cross the boundary
 // as `Record<string, unknown> | undefined | null` (i.e. `snap.data()`) and
 // collections as `Array<{id, data}>`, because a planner that took a
 // QuerySnapshot could only be tested against a fake Firestore — and the whole
 // point of the split is that the DECISIONS are testable without one.
 //
-// ⚠️ THE PLANNER DOES NOT DISCOVER, IT DECIDES. Which documents exist is a
+// WARNING: THE PLANNER DOES NOT DISCOVER, IT DECIDES. Which documents exist is a
 // Firestore question and is answered by the caller (`listCollections` /
 // `listDocuments` / four single-field queries). What is deleted, what is
 // mutated on somebody else's document, and what is deliberately KEPT are the
@@ -48,20 +48,20 @@ export interface RetainedRecord {
 }
 
 /**
- * 📌 THE SUBCOLLECTIONS THIS PROJECT KNOWS ABOUT, AND WHY THE LIST IS NOT THE
+ * NOTE: THE SUBCOLLECTIONS THIS PROJECT KNOWS ABOUT, AND WHY THE LIST IS NOT THE
  * MECHANISM.
  *
- * 🔴 The cascade is driven by `listCollections()` AT RUNTIME, not by this
+ * CRITICAL: The cascade is driven by `listCollections()` AT RUNTIME, not by this
  * constant. A hard-coded list is a comment that compiles: add a subcollection
  * and the deletion silently misses it, invisibly, because an orphaned
  * subcollection does not show up under a deleted parent in the console either.
  *
- * 🔑 So this exists only as a PIN — `accountDeletion.test.ts` asserts the
+ * KEY: So this exists only as a PIN — `accountDeletion.test.ts` asserts the
  * runtime enumeration in a seeded fixture covers it. It can go stale upward
  * (a new subcollection nobody added here) without breaking the cascade, which
  * is the direction that is safe.
  *
- * ⚠️ `shieldPurchases` HAS NO BLOCK IN `firestore.rules` (written server-side
+ * WARNING: `shieldPurchases` HAS NO BLOCK IN `firestore.rules` (written server-side
  * only, `index.ts` `buyStreakShield`). Anyone enumerating this surface from the
  * rules file — the obvious way — misses it. That is the concrete reason the
  * runtime list leads and this one follows.
@@ -92,7 +92,7 @@ export const KNOWN_USER_SUBCOLLECTIONS: readonly string[] = [
 /**
  * What deleting this account changes.
  *
- * 🔑 THE THIRD-PARTY EFFECTS ARE SEPARATE FIELDS, NOT ONE `paths` LIST, for the
+ * KEY: THE THIRD-PARTY EFFECTS ARE SEPARATE FIELDS, NOT ONE `paths` LIST, for the
  * same reason `FamilyDeparturePlan` splits `memberUids` from `revokedUids`:
  * they are different WRITES to different documents, and a plan that merged them
  * would leave the caller to infer which was which. Inferring it is how one
@@ -115,7 +115,7 @@ export interface AccountDeletionPlan {
   /**
    * `families/{familyId}/chores` assigned to this user.
    *
-   * 🔑 DELETED, NOT UNASSIGNED, and the type is the argument.
+ * KEY: DELETED, NOT UNASSIGNED, and the type is the argument.
    * `FamilyChoreDoc.assignedToUid` is a non-optional `string` and
    * `planChoreAssignment` refuses any uid outside `memberUids`, so there is no
    * "unassigned" state to write it back to. `planChoreCompletion` refuses
@@ -127,7 +127,7 @@ export interface AccountDeletionPlan {
   /**
    * `families/{familyId}/messages` this user SENT.
    *
-   * 🔴 DELETED AS OF W2-127, AND THIS REVERSES A DOCUMENTED DECISION. They were
+ * CRITICAL: DELETED AS OF W2-127, AND THIS REVERSES A DOCUMENTED DECISION. They were
    * in `ALWAYS_RETAINED` with the reasoning "they are this user's own words,
    * but they sit inside other people's conversation and removing them rewrites
    * a chat everyone else can still read". That reasoning was about
@@ -138,7 +138,7 @@ export interface AccountDeletionPlan {
    * other accounts is not a deletion, and "we delete everything on request"
    * has to be true as written before it is written to Apple.
    *
-   * ⚠️ THE OLD COMMENT CLAIMED THE FLIP WAS "A ONE-LINE CHANGE". Half true and
+ * WARNING: THE OLD COMMENT CLAIMED THE FLIP WAS "A ONE-LINE CHANGE". Half true and
    * recorded here because the half that was false cost the estimate: the index
    * claim holds — a single-field equality query inside one known subcollection
    * is auto-indexed — but the planner is PURE over already-fetched data, so it
@@ -156,7 +156,7 @@ export interface AccountDeletionPlan {
     departure: Extract<FamilyDeparturePlan, {ok: true}>;
   } | null;
   /**
-   * 🔴 A FAMILY THAT COULD NOT BE PLANNED DOES NOT BLOCK THE DELETION.
+ * CRITICAL: A FAMILY THAT COULD NOT BE PLANNED DOES NOT BLOCK THE DELETION.
    * `planFamilyDeparture` refuses a structurally unsound family document, and
    * an unreadable family record must never be able to trap somebody inside an
    * account they asked to delete — that is exactly the 5.1.1(v) failure. The
@@ -168,7 +168,7 @@ export interface AccountDeletionPlan {
 }
 
 /**
- * 📌 KEPT ON PURPOSE, AND THE LIST IS ASSERTED BY THE SUITE.
+ * NOTE: KEPT ON PURPOSE, AND THE LIST IS ASSERTED BY THE SUITE.
  *
  * The failure mode this defends against is not deleting too much — it is
  * keeping something silently. A collection that nobody deleted and nobody wrote
@@ -207,7 +207,7 @@ export const ALWAYS_RETAINED: readonly RetainedRecord[] = [
 /**
  * Plan the deletion of one account.
  *
- * ⚠️ IDEMPOTENT BY CONSTRUCTION. Every field is a set of things to remove, so
+ * WARNING: IDEMPOTENT BY CONSTRUCTION. Every field is a set of things to remove, so
  * a plan built from already-partially-deleted state is simply a smaller plan.
  * A retry after a failure mid-cascade succeeds; that property is what makes it
  * safe to delete the Auth record LAST.
@@ -243,7 +243,7 @@ export function planAccountDeletion(args: {
     nowMs,
   } = args;
 
-  // 🔴 THE PREFIX GUARD IS NOT DEFENSIVE TIDYING — IT IS THE BLAST RADIUS.
+  // CRITICAL: THE PREFIX GUARD IS NOT DEFENSIVE TIDYING — IT IS THE BLAST RADIUS.
   // The caller discovers these paths by walking `users/{uid}` with
   // `listCollections`/`listDocuments`. A bug in that walk — a wrong ref, a
   // stale uid variable, a `..` in a document id — turns this list into "delete
@@ -253,7 +253,7 @@ export function planAccountDeletion(args: {
   const ownPrefix = `users/${uid}/`;
   const ownDocPaths = discovered.filter((p) => p.startsWith(ownPrefix));
 
-  // 🔴 EVERY EDGE, NOT ONLY THE ACCEPTED ONES. A 'pending' edge is still a row
+  // CRITICAL: EVERY EDGE, NOT ONLY THE ACCEPTED ONES. A 'pending' edge is still a row
   // on somebody else's friends list naming a uid that no longer exists, and the
   // starter edge to Gibby (`users/gibby/friends/{uid}`) is one of these too.
   // Self-edges are excluded because deleting `users/{uid}/friends/{uid}` is
@@ -264,7 +264,7 @@ export function planAccountDeletion(args: {
     .filter((friendUid) => friendUid.length > 0 && friendUid !== uid)
     .map((friendUid) => `users/${friendUid}/friends/${uid}`);
 
-  // 🔑 THE USER'S OWN `housemates` ARRAY IS THE REVERSE INDEX, and there is no
+  // KEY: THE USER'S OWN `housemates` ARRAY IS THE REVERSE INDEX, and there is no
   // other one. `redeemHousemateToken` writes BOTH sides (`hostRef` and
   // `guestRef` each get a `housemates` array), so whoever lists this uid is
   // exactly whoever this uid lists. Scanning friends instead would be both
@@ -291,7 +291,7 @@ export function planAccountDeletion(args: {
   let familyEffect: AccountDeletionPlan['family'] = null;
   let familyRefusal: AccountDeletionPlan['familyRefusal'] = null;
   if (family) {
-    // 🔴 AN OWNER DISBANDS; A MEMBER DEPARTS — and this is the ONE product
+    // CRITICAL: AN OWNER DISBANDS; A MEMBER DEPARTS — and this is the ONE product
     // decision in this file. `planFamilyDeparture` refuses an owner with
     // `owner-must-disband` because the grant dies with the payer. Deleting the
     // account is the STRONGER act, so it must not be blocked by the weaker one:
@@ -346,7 +346,7 @@ export function planAccountDeletion(args: {
  * Every third-party document this plan writes to, for the log line and the
  * return block.
  *
- * 📌 EXISTS BECAUSE THE BRIEF ASKS FOR IT BY NAME: "do not delete another
+ * NOTE: EXISTS BECAUSE THE BRIEF ASKS FOR IT BY NAME: "do not delete another
  * user's document to clean up a dangling reference without saying exactly which
  * fields you touched". This is the machine-readable version of that sentence,
  * so the answer cannot drift from what the code does.

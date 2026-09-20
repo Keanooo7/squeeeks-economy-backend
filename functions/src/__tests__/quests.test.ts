@@ -2,7 +2,7 @@
 //
 // W2-10 / Q1. The quest evaluator.
 //
-// 🔑 THIS FILE CARRIES MORE WEIGHT THAN A USUAL SUITE, and the reason is in the
+// KEY: THIS FILE CARRIES MORE WEIGHT THAN A USUAL SUITE, and the reason is in the
 // header of quests.ts: there is NO completion history in Firestore, so quest
 // progress is accumulated forward and CANNOT BE RECOMPUTED. A bug here cannot be
 // repaired by re-running the evaluator over the past — there is no past to run
@@ -230,7 +230,7 @@ describe('the catalogue and the reward table are coherent', () => {
   });
 
   test('every sponge reward names a tier key rather than a literal amount', () => {
-    // 🔑 The economy must be a ONE-FILE edit when Brendan sets it. A quest that
+    // KEY: The economy must be a ONE-FILE edit when Brendan sets it. A quest that
     // carried its own number would be a second place to change.
     for (const quest of QUEST_CATALOGUE) {
       for (const tier of quest.tiers) {
@@ -344,7 +344,7 @@ describe('an unknown or empty day does not corrupt state', () => {
 // W2-12 — a tier grants XP exactly ONCE
 // ---------------------------------------------------------------------------
 //
-// 🔴 `claimedTiers` already gated sponges. This block proves it gates XP too.
+// CRITICAL: `claimedTiers` already gated sponges. This block proves it gates XP too.
 // A re-grantable XP tier is a level-up farm, and it is the same class of defect
 // as the un-completion replay closed in W2-11 — except worse, because XP is
 // permanent progression and cannot be walked back once banked.

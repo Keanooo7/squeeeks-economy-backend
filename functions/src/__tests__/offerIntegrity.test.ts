@@ -2,17 +2,17 @@
 //
 // W2-39. An offer that names an item nobody can grant.
 //
-// 🔴 THE DEFECT: `verifyIapAndGrant` validates NOTHING about
+// CRITICAL: THE DEFECT: `verifyIapAndGrant` validates NOTHING about
 // `contents[].itemId`. It pushes the string into `grantedItems` and writes
 // `users/{uid}/inventory/{itemId}`. SEED_ITEMS appears zero times in the grant
 // path. So an offer naming a nonexistent item does not FAIL — it SUCCEEDS, and
 // the player pays real money for an inventory row pointing at nothing.
 //
-// ⚠️ An unknown id in a LAYOUT is silently SKIPPED — an emptier house. An
+// WARNING: An unknown id in a LAYOUT is silently SKIPPED — an emptier house. An
 // unknown id in a GRANT is silently WRITTEN — a paid-for nothing. Only one of
 // them takes money.
 //
-// 🔑 THESE MUST FAIL ON THE PRE-FIX CODE. Several guards this session could not
+// KEY: THESE MUST FAIL ON THE PRE-FIX CODE. Several guards this session could not
 // have failed; this one was checked by running it against the previous commit,
 // where `validateOfferContents` does not exist — the suite fails to compile,
 // which is a red this file cannot fake.
@@ -30,7 +30,7 @@ const REAL_IDS: ReadonlySet<string> = new Set(SEED_ITEMS.map((i) => i.id));
 const offer = (over: Partial<WeeklyOfferConfig> = {}): WeeklyOfferConfig => ({
   id: 'offer_test',
   title: 'Test',
-  // 🔴 NO `price` — W2-176 removed it from WeeklyOfferConfig, and this literal
+  // CRITICAL: NO `price` — W2-176 removed it from WeeklyOfferConfig, and this literal
   // is type-checked against that interface, so a reintroduction here fails to
   // COMPILE rather than failing an assertion. That is the stronger guard: the
   // suite cannot report `Tests: 0 total` green.
@@ -145,7 +145,7 @@ describe('🟢 the SHIPPED offer is sound — this must not be red', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 🔴 W2-89 — the product exists after all, and the code was pointing at a
+  // CRITICAL: W2-89 — the product exists after all, and the code was pointing at a
   // placeholder that existed nowhere.
   // -------------------------------------------------------------------------
 
@@ -165,7 +165,7 @@ describe('🟢 the SHIPPED offer is sound — this must not be red', () => {
   });
 
   test('🔴 every offer id is REGISTERED IN ios/Configuration.storekit', () => {
-    // 🔑 THE CHECK THAT DID NOT EXIST, and its absence is why a placeholder id
+    // KEY: THE CHECK THAT DID NOT EXIST, and its absence is why a placeholder id
     // survived: nothing compared the believed id to a registered one. The
     // simulator config is the only registry this repo can read.
     const cfg = JSON.parse(
@@ -185,14 +185,14 @@ describe('🟢 the SHIPPED offer is sound — this must not be red', () => {
       expect(
         `${offer.iapProductId} registered in Configuration.storekit: ${product !== undefined}`,
       ).toBe(`${offer.iapProductId} registered in Configuration.storekit: true`);
-      // ⚠️ CONSUMABLE, because the offer ROTATES. A non-consumable can be
+      // WARNING: CONSUMABLE, because the offer ROTATES. A non-consumable can be
       // bought once EVER, so a player could never buy a second week's bundle.
       expect(product!.type).toBe('Consumable');
     }
   });
 
   test('the Spring Bundle still declares the currency it is sold in', () => {
-    // 📌 WHAT THIS USED TO BE. It pinned `price` to 2.99 — the assertion
+    // NOTE: WHAT THIS USED TO BE. It pinned `price` to 2.99 — the assertion
     // W2-176 removed. The currency survives the removal on purpose and the
     // reasoning is in weeklyOffers.ts: it is the same unfounded claim in
     // kind, but it is INERT, because nothing reads it. `_priceLabel` renders
@@ -206,19 +206,19 @@ describe('🟢 the SHIPPED offer is sound — this must not be red', () => {
   // -------------------------------------------------------------------------
   // W2-176 — THE SERVER STOPS ASSERTING A PRICE
   //
-  // 🔴 Brendan, 2026-09-13: "Read the real price from the store. Stop carrying
+  // CRITICAL: Brendan, 2026-09-13: "Read the real price from the store. Stop carrying
   // a written-in 2.99." The two tests below are the enforcement, and they are
   // the REPLACEMENT for the pin above and the storekit comparison beside it —
   // both of which are deleted in the same change that removes the field.
   //
-  // 🔑 WHY THE PIN AND THE DRIFT GUARD BOTH GO. A drift guard asks "does the
+  // KEY: WHY THE PIN AND THE DRIFT GUARD BOTH GO. A drift guard asks "does the
   // number we send still equal the number Apple charges". That question only
   // has to be asked because we send a number. The believed price and the
   // charged price were two numbers in two systems; the fix is not to compare
   // them more carefully, it is to stop having the second one. A test that
   // checks a value you should not be sending protects the defect.
   //
-  // ⚠️ AND THE CURRENCY IS THE SAME CLASS OF ASSERTION, LEFT STANDING ON
+  // WARNING: AND THE CURRENCY IS THE SAME CLASS OF ASSERTION, LEFT STANDING ON
   // PURPOSE. `currency: 'USD'` is as unfounded as the amount was — Apple
   // charges a UK player in GBP — but it is INERT: `_priceLabel` renders the
   // fallback with a hardcoded `$` and reads `currency` nowhere. Surfaced, not
@@ -238,7 +238,7 @@ describe('🟢 the SHIPPED offer is sound — this must not be red', () => {
       // suite that reports `Tests: 0 total`.
       const raw = offer as unknown as Record<string, unknown>;
       const shipped = 'price' in raw ? String(raw.price) : 'no';
-      // 🔑 THE RENDERED SENTENCE IS THE PIN, not a constant either side could
+      // KEY: THE RENDERED SENTENCE IS THE PIN, not a constant either side could
       // share. The failure NAMES the smuggled value, so "2.99 came back" and
       // "some other number came back" are different failures rather than the
       // same `true !== false`.
@@ -257,7 +257,7 @@ describe('🟢 the SHIPPED offer is sound — this must not be red', () => {
     ) as string;
     const code = codeOf(src);
 
-    // 🔴 THE POSITIVE CONTROL. A `.not.toMatch` over a file that failed to load,
+    // CRITICAL: THE POSITIVE CONTROL. A `.not.toMatch` over a file that failed to load,
     // or a `codeOf` that stripped everything, passes against nothing. This
     // proves the same `<field>:` shape DOES fire on a field that is still
     // declared, in this exact text, before the absence below is believed.
@@ -269,7 +269,7 @@ describe('🟢 the SHIPPED offer is sound — this must not be red', () => {
   });
 
   test('🔴 the STORE can price every offer product — it is now the only source', () => {
-    // 🔴 THE PREMISE OF THIS TEST INVERTED, AND THAT IS THE POINT.
+    // CRITICAL: THE PREMISE OF THIS TEST INVERTED, AND THAT IS THE POINT.
     //
     // It used to assert "the price we send equals the price Configuration
     // .storekit charges". That comparison was withdrawn with the field: a
@@ -280,7 +280,7 @@ describe('🟢 the SHIPPED offer is sound — this must not be red', () => {
     // changed from "do our two numbers agree" to "does the one remaining
     // authority actually answer".
     //
-    // ⚠️ Configuration.storekit is the LOCAL test configuration, not App Store
+    // WARNING: Configuration.storekit is the LOCAL test configuration, not App Store
     // Connect. It proves the id is priceable in the harness a simulator run
     // uses; it cannot prove what Apple charges, and nothing in this repo can.
     // That is exactly why the server no longer claims to know.
@@ -311,7 +311,7 @@ describe('🟢 the SHIPPED offer is sound — this must not be red', () => {
       ).toBe(`${offer.iapProductId} store price > 0: true`);
       priced++;
     }
-    // 🔴 THE LOOP RAN. A `for` over an empty array reports success, which is
+    // CRITICAL: THE LOOP RAN. A `for` over an empty array reports success, which is
     // four sightings of "a control that passed while testing nothing" in this
     // repo and counting.
     expect(priced).toBe(WEEKLY_OFFERS.length);
@@ -364,12 +364,12 @@ describe('⚠️ BOTH writers of shop/current validate — rotation is not suffi
 // W2-40 — the refusal has to land where a human looks
 // ---------------------------------------------------------------------------
 //
-// 🔴 W2-39 traded a SILENT bad outcome (a purchase granting a phantom) for a
+// CRITICAL: W2-39 traded a SILENT bad outcome (a purchase granting a phantom) for a
 // LOUD one (the rotation refuses) — but loud only in Cloud Functions logs, which
 // nobody on this project has ever opened. A Monday with no offer, explained
 // somewhere nobody reads, is barely better than a Monday with a bad one.
 //
-// ⚠️ AND PREVENTION IS IMPOSSIBLE. `shopConfig/weeklyOffers` is READ at :460 and
+// WARNING: AND PREVENTION IS IMPOSSIBLE. `shopConfig/weeklyOffers` is READ at :460 and
 // WRITTEN BY NOTHING — no callable, no endpoint, no rules block, so it is
 // console-only. There is no write path to hook a check onto, which is why this
 // is detection rather than prevention.
@@ -453,7 +453,7 @@ describe('the content type is a closed set', () => {
   // the thing that makes the shop safe, was the only reason the launch offer
   // could not name it. Adding the row is what makes it nameable.
   //
-  // 🔑 Both halves, because only the pair is evidence: accepting the new id
+  // KEY: Both halves, because only the pair is evidence: accepting the new id
   // proves the row landed, and refusing a fabricated one proves the guard was
   // not loosened to get there. A test that only asserted the first would pass
   // just as well against a validator that accepted everything.

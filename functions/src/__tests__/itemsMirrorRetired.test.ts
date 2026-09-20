@@ -4,7 +4,7 @@ import * as path from 'path';
 /**
  * W2-134 · The `items` collection stays retired.
  *
- * 🔴 WHY A SOURCE ASSERTION, WHICH IS NORMALLY THE WEAK KIND. Two of the three
+ * CRITICAL: WHY A SOURCE ASSERTION, WHICH IS NORMALLY THE WEAK KIND. Two of the three
  * retired read sites have runtime guards that fail loudly if a read comes back
  * (purchaseChest.test.ts and claimWelcomeChest.test.ts both assert
  * `_db.collection` was never called). The THIRD — `drawGibbyChestItem` — has no
@@ -18,7 +18,7 @@ import * as path from 'path';
  * is the one question a source assertion answers well, and it is the same
  * technique dailyRotation.test.ts already uses to read collection_seed.dart.
  *
- * ⚠️ ITS LIMIT, STATED. This proves the literal string is gone. It does NOT prove
+ * WARNING: ITS LIMIT, STATED. This proves the literal string is gone. It does NOT prove
  * no read reaches the collection by a computed name — `db.collection(NAME)` with
  * `const NAME = 'items'` passes this and is a live read. The runtime guards are
  * what cover that for the two reachable sites; for the Gibby site nothing does,

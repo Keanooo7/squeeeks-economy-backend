@@ -4,7 +4,7 @@
 // mock, because everything here is a property of the bundled constants and a
 // pure function. The callable-level behaviour lives in purchaseChest.test.ts.
 //
-// 🔑 The point of this file is that a tier or a subject with no content must be
+// KEY: The point of this file is that a tier or a subject with no content must be
 // UNREACHABLE, not merely absent. Four rarity vocabularies coexisted before
 // W3-08 and the mismatch was invisible precisely because nothing asserted that
 // what the roller emits and what the pool holds are the same set.
@@ -52,7 +52,7 @@ describe('the rarity vocabulary is exactly three tiers', () => {
     }
   });
 
-  // 🔴 RE-DERIVED IN W2-161, NOT PATCHED. This asserted
+  // CRITICAL: RE-DERIVED IN W2-161, NOT PATCHED. This asserted
   //
   //     expect(Object.keys(DUPLICATE_REFUNDS).sort()).toEqual([...RARITIES].sort());
   //
@@ -204,7 +204,7 @@ describe("the day's subject is deterministic and always stocked", () => {
 
   // --- fox outfits (W3-09) -------------------------------------------------
 
-  // 📌 A general "every drawable subject has art" test was tried here and
+  // NOTE: A general "every drawable subject has art" test was tried here and
   // removed. Subject names are not filename stems: `fox_outfit`'s art ships as
   // `char_fox_<slug>.png`, so a substring sweep reports it artless, while
   // `character` — five glyph-only profession rows with no art at all —
@@ -264,7 +264,7 @@ describe("the day's subject is deterministic and always stocked", () => {
   });
 
   test('a given date selects a specific furniture subject — the pool ORDER is live behaviour', () => {
-    // 🔑 WHY THIS EXISTS AND THE TEST ABOVE IS NOT ENOUGH. Every other
+    // KEY: WHY THIS EXISTS AND THE TEST ABOVE IS NOT ENOUGH. Every other
     // assertion in this file reads the pool as a SET: the reachability test
     // above sorts both sides before comparing, the bench ledger builds a Set,
     // and the stocking sweep iterates without caring about position. So all of
@@ -397,7 +397,7 @@ describe("the day's subject is deterministic and always stocked", () => {
 // if it is asserted in BOTH directions — otherwise a row can be assigned
 // silently, or typo'd into existence, and nothing goes red.
 //
-// 🔑 Family is deliberately NOT a drop key. pickChestItem filters on
+// KEY: Family is deliberately NOT a drop key. pickChestItem filters on
 // (subject, rarity) and picks uniformly; adding family would turn the mandatory
 // coverage grid from 3 x 3 = 9 cells into 3 x 3 x 4 = 36, and an empty cell
 // throws not-found on a purchase the player can see and afford. Nothing in this
@@ -433,7 +433,7 @@ describe('the style-family ledger is exact in both directions', () => {
   // new one, so the subject count moves by two while the assigned count moves by 18.
   // 178 -> 180 (W1-201): the two race-car beds, the last finish-ladder sprites on
   // disk that no seed row reached. Both carry a family, so EXPECTED_NEUTRAL is
-  // unmoved a fourth time and the sum tracks SEED_ITEMS at 194. ⚠️ Their family
+  // unmoved a fourth time and the sum tracks SEED_ITEMS at 194. WARNING: Their family
   // (oakhouse) is PROVISIONAL pending Brendan — see the note on the two rows in
   // functions/seed/collection_seed.json. If it changes, this count does not.
   const EXPECTED_ASSIGNED = 180;
@@ -504,7 +504,7 @@ describe('a family brief cannot speak retired vocabulary or its own name', () =>
     // cleaning-app-art-direction.md:56 — generative-model triggers producing a
     // texture and gloss this library does not have.
     //
-    // ⚠️ This asserts the CONST, not the repo. `lighting='clay'` and
+    // WARNING: This asserts the CONST, not the repo. `lighting='clay'` and
     // `add_clay_box` in 3d-source/ are internal Blender identifiers that never
     // reach a prompt, and nothing here greps for them.
     expect(RETIRED_VOCABULARY).toEqual(
@@ -579,7 +579,7 @@ describe('a family brief cannot speak retired vocabulary or its own name', () =>
 // Cross-mirror gate — SEED_ITEMS (TS) vs kCollectionSeed (Dart)
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE HAZARD THIS CLOSES. `SEED_ITEMS` and `kCollectionSeed` are
+// CRITICAL: THE HAZARD THIS CLOSES. `SEED_ITEMS` and `kCollectionSeed` are
 // hand-maintained 39-row mirrors in two languages with NOTHING cross-checking
 // them. collection_seed.dart:1-2 says so outright — "SYNC:
 // functions/src/itemPool.ts SEED_ITEMS / Keep this list in sync manually".
@@ -591,7 +591,7 @@ describe('a family brief cannot speak retired vocabulary or its own name', () =>
 // calls itself "the cheapest thing that actually fails if someone moves the
 // prompt back". This is the jest-side equivalent.
 //
-// 📌 Deviation from the brief, deliberate: the brief specified regexing ids out
+// NOTE: Deviation from the brief, deliberate: the brief specified regexing ids out
 // of BOTH files. From jest the TypeScript side can simply be IMPORTED, which is
 // strictly stronger than parsing it — a rename that breaks the import fails to
 // compile rather than silently parsing to an empty set. Only the Dart side is
@@ -654,7 +654,7 @@ describe('the Dart mirror has not drifted from SEED_ITEMS', () => {
     ).toBe('add these to functions/src/itemPool.ts SEED_ITEMS: []');
   });
 
-  // The pinning test that used to sit here ('⚠️ the Dart family mirror is OWED')
+  // The pinning test that used to sit here ('WARNING: the Dart family mirror is OWED')
   // asserted this file contained NEITHER kItemFamily NOR kFamilyNeutral, so
   // that writing the Dart mirror would turn it red rather than let the handoff
   // be silently dropped. It fired on 2026-08-08 and was replaced by the three
@@ -663,7 +663,7 @@ describe('the Dart mirror has not drifted from SEED_ITEMS', () => {
 
   /** Drop `//` comment tails before matching quoted strings.
    *
-   * 🔴 W2-48. Without this the parsers below match quoted text inside COMMENTS
+ * CRITICAL: W2-48. Without this the parsers below match quoted text inside COMMENTS
    * as if it were a list entry. It was not hypothetical: #256 added the note
    * "char_gardener is the only character row with a family ('meadow')" inside
    * kFamilyNeutral, and `'meadow'` was counted as a 15th neutral id. The parse
@@ -671,7 +671,7 @@ describe('the Dart mirror has not drifted from SEED_ITEMS', () => {
    * went RED ON MAIN — verified by running it against an untouched checkout:
    * `Expected: 13, Received: 15`.
    *
-   * ⚠️ The guard was doing its job; it just could not distinguish "the mirror
+ * WARNING: The guard was doing its job; it just could not distinguish "the mirror
    * drifted" from "someone wrote a quote in a comment", and it reports both as
    * drift. A prose edit could redden a backend suite, which is the surprising
    * part and the reason this is stripped rather than worked around.
@@ -793,26 +793,26 @@ describe('the Dart mirror has not drifted from SEED_ITEMS', () => {
   // Field-level drift — the hole the id-set gate above leaves open
   // -------------------------------------------------------------------------
   //
-  // 🔴 THE HOLE, STATED. The two tests at the top of this block build id SETS
+  // CRITICAL: THE HOLE, STATED. The two tests at the top of this block build id SETS
   // and diff them both ways. Nothing anywhere compared `rarity`, `name`,
   // `category` or `type`. So a row could carry the right id on both sides and
   // be LEGENDARY on the server and COMMON in the player's album, and every
   // gate in the repo stayed green. Verified before writing this: flipping
   // char_knight to 'common' in the Dart mirror was green on main.
   //
-  // 📌 WHY THESE FOUR FIELDS AND NOT SIX. The TypeScript row carries `subject`
+  // NOTE: WHY THESE FOUR FIELDS AND NOT SIX. The TypeScript row carries `subject`
   // and `artUrl`; the Dart row deliberately does not (collection_seed.dart's
   // SeedItem has five members). Asserting those two would assert a mirror that
   // was never claimed. The claimed mirror is id + type + category + name +
   // rarity, and that is exactly what this compares.
   //
-  // ⚠️ THE PARSER HAZARD, AND IT IS REAL. collection_seed.dart:78-94 is 17
+  // WARNING: THE PARSER HAZARD, AND IT IS REAL. collection_seed.dart:78-94 is 17
   // lines of client-side prose sitting INSIDE the list, and it contains a
   // quoted string: "IT GOES IN THE UNSCOPED 'character' SLOT". A whole-slice
   // sweep for `'...'` — the shape entriesInList uses — reads that prose as
   // data: measured, the raw slice yields 262 quoted strings and 260 after
   // comment-stripping, so the block injects exactly 2 phantoms.
-  // ✅ TWO INDEPENDENT DEFENCES, because one would be a single point of
+  // OK: TWO INDEPENDENT DEFENCES, because one would be a single point of
   // failure: (a) stripComments removes the prose, and (b) every field is read
   // from inside a matched `SeedItem(...)` constructor, which no comment in the
   // list contains. Either alone parses all 52 rows correctly today; both are

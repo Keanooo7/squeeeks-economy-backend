@@ -7,7 +7,7 @@
  * verification run entirely offline: no App Store Server API key, no network
  * call on the purchase path.
  *
- * ⚠️ Embedded as base64 *string constants in a .ts file* rather than committed
+ * WARNING: Embedded as base64 *string constants in a .ts file* rather than committed
  * `.cer` assets on purpose. `tsc` emits only JavaScript — a `.cer` sitting under
  * `src/` never reaches `lib/`, so `readFileSync(__dirname + '/…')` would compile
  * cleanly and then throw ENOENT in production, on the purchase path, where it is

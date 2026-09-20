@@ -7,7 +7,7 @@
 // the notification for all."
 //
 // ---------------------------------------------------------------------------
-// 🔴 WHAT "CLEARS THE NOTIFICATION" CAN AND CANNOT MEAN — MEASURED, AND THE
+// CRITICAL: WHAT "CLEARS THE NOTIFICATION" CAN AND CANNOT MEAN — MEASURED, AND THE
 // ANSWER IS NARROWER THAN THE SENTENCE
 // ---------------------------------------------------------------------------
 //
@@ -23,11 +23,11 @@
 //      a DATE the takeover reads. So "clears for all" is exactly: a shared,
 //      dated fact that every member's takeover can consult.
 //
-//   2. 🔴 THE SCHEDULED NOTIFICATION NOW EXISTS, AND IT IS ON-DEVICE.
+//   2. CRITICAL: THE SCHEDULED NOTIFICATION NOW EXISTS, AND IT IS ON-DEVICE.
 //      `lib/core/services/trash_notification_service.dart:113` calls
 //      `zonedSchedule`, title 'Bins go out tonight' (:115).
 //
-//      📌 REPLACED 2026-08-24 (W2-138). This item used to read "there is no
+//      NOTE: REPLACED 2026-08-24 (W2-138). This item used to read "there is no
 //      scheduled notification to recall, because nothing schedules one yet —
 //      `zonedSchedule` is never called, anywhere". That was true when written
 //      and is now the exact opposite of the truth. What follows was written as
@@ -46,14 +46,14 @@
 //      its own local notification — a different mechanism, a different brief,
 //      and one that still cannot promise delivery.
 //
-//      ⚠️ AND IT IS WHY A DELIVERED TRASH NOTIFICATION SAYS NOTHING ABOUT FCM.
+//      WARNING: AND IT IS WHY A DELIVERED TRASH NOTIFICATION SAYS NOTHING ABOUT FCM.
 //      W2-138 was briefed on the premise "trash arrived tonight and the daily
 //      reminder did not, so the transport is healthy". It does not follow: this
 //      path never touches FCM, the push token, or APNs. The two share only the
 //      OS display layer, so the pairing exonerates exactly one thing — that iOS
 //      will display a notification for this app.
 //
-//   📌 AND A THIRD THING NOBODY HAS WRITTEN DOWN: today `acknowledgedFor` lives
+//   NOTE: AND A THIRD THING NOBODY HAS WRITTEN DOWN: today `acknowledgedFor` lives
 //      in SharedPreferences (`trash_day_provider.dart`, `_kAckKey`), on-device
 //      only. It never reaches a server at all. So this module is not making a
 //      private fact shared — it is the FIRST server-side trash-day state that
@@ -62,7 +62,7 @@
 //      has not synced must not be able to un-clear what a housemate cleared.
 //
 // ---------------------------------------------------------------------------
-// 🔑 WHY THIS NEEDS THE GROUP DOCUMENT, AND COULD NOT HAVE BEEN BUILT BEFORE IT
+// KEY: WHY THIS NEEDS THE GROUP DOCUMENT, AND COULD NOT HAVE BEEN BUILT BEFORE IT
 // ---------------------------------------------------------------------------
 //
 // "Clears for all" needs to know who ALL is, and to record the answer in one
@@ -72,7 +72,7 @@
 // the completion onto each member's own document instead would be a fan-out
 // with no owner and no way to tell a stale copy from a current one.
 //
-// ⚠️ This module DECIDES NO MEMBERSHIP POLICY. It consumes `memberUids` and has
+// WARNING: This module DECIDES NO MEMBERSHIP POLICY. It consumes `memberUids` and has
 // no opinion on how anyone got there — the five open questions from W2-76 are
 // still with Brendan and none of them change anything below.
 
@@ -84,7 +84,7 @@ export const BIN_DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 /**
  * How far from the server's own date a submitted bin date may sit.
  *
- * 🔴 THE BIN DATE IS CLIENT-SUPPLIED, AND THAT IS THE OPPOSITE OF WHAT THE
+ * CRITICAL: THE BIN DATE IS CLIENT-SUPPLIED, AND THAT IS THE OPPOSITE OF WHAT THE
  * PROMO PATH DOES. `retentionPromo` counts days in UTC precisely BECAUSE
  * `dayKey` is client-supplied and a moved device clock could manufacture three
  * weeks of habit in one evening. The reasoning inverts here, and the reason it
@@ -101,7 +101,7 @@ export const BIN_DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
  *     it, and the worst case is a family member clearing their own household's
  *     reminder early — which they could also do by tapping OK.
  *
- * ⚠️ So the clock is trusted only as far as it is cheap to be wrong about. This
+ * WARNING: So the clock is trusted only as far as it is cheap to be wrong about. This
  * window bounds it: a forged key cannot pre-clear a bin day weeks out, which is
  * the one abuse that would be invisible until the bins were missed. ±2 days
  * covers every real timezone offset (max ±14h) plus a day either side of
@@ -137,7 +137,7 @@ export type TrashDayPlan =
        * Everyone the completion clears it for — this family's members, and
        * nobody else.
        *
-       * 🔑 RETURNED EXPLICITLY RATHER THAN LEFT IMPLICIT, so that "clears for
+ * KEY: RETURNED EXPLICITLY RATHER THAN LEFT IMPLICIT, so that "clears for
        * all" and "clears for anyone" are different assertions. A test can name
        * the set; it cannot name an absence.
        */
@@ -161,7 +161,7 @@ export function binDateKeySkewDays(a: string, b: string): number | null {
 /**
  * Whether [key] is a real `YYYY-MM-DD` date and not merely shaped like one.
  *
- * ⚠️ THE PATTERN ALONE IS NOT ENOUGH, and the gap is not theoretical:
+ * WARNING: THE PATTERN ALONE IS NOT ENOUGH, and the gap is not theoretical:
  * `2026-02-31` and `2026-13-01` both match `\d{4}-\d{2}-\d{2}`. `Date.parse`
  * accepts the first and rolls it to March 3rd, so a document id that never
  * names a real day would be created and every later lookup for the real date
@@ -177,14 +177,14 @@ export function isValidBinDateKey(key: unknown): key is string {
 /**
  * What one member's "I did it" should do, for the family they are in.
  *
- * 🔴 THE NON-MEMBER CHECK IS THE WHOLE FEATURE, NOT A VALIDATION. Without it
+ * CRITICAL: THE NON-MEMBER CHECK IS THE WHOLE FEATURE, NOT A VALIDATION. Without it
  * "clears for all" and "clears for anyone" are the same function — any
  * authenticated account could clear any household's bin day, and the failure
  * would be invisible until someone's bins were not put out. It is checked
  * against `memberUids` on the ONE group document, which is the only place a
  * membership question has a single answer (see family.ts).
  *
- * ⚠️ Fails CLOSED on an invalid family. A malformed roster is not a reason to
+ * WARNING: Fails CLOSED on an invalid family. A malformed roster is not a reason to
  * treat the caller as a member of it.
  *
  * IDEMPOTENT, AND IT PRESERVES THE FIRST COMPLETER. A second call for the same
@@ -275,7 +275,7 @@ export const TRASH_DAY_REFUSALS: Record<
 //    has not synced must not be able to un-clear what a housemate cleared."
 //
 // ---------------------------------------------------------------------------
-// 🔴 "SERVER WINS" IS THE WRONG RULE, AND THE ASYMMETRY IS THE WHOLE CONTRACT
+// CRITICAL: "SERVER WINS" IS THE WRONG RULE, AND THE ASYMMETRY IS THE WHOLE CONTRACT
 // ---------------------------------------------------------------------------
 //
 // The obvious reading — the server is authoritative, so its answer replaces the
@@ -290,7 +290,7 @@ export const TRASH_DAY_REFUSALS: Record<
 // and be shown the takeover again. That is the same nagging failure the dated
 // ack exists to prevent, arriving from the other side.
 //
-// 🔑 SO THE RULE IS A UNION, NOT A PRECEDENCE. Both sources are POSITIVE
+// KEY: SO THE RULE IS A UNION, NOT A PRECEDENCE. Both sources are POSITIVE
 // evidence that the bins went out; neither one's silence is evidence that they
 // did not. Cleared if EITHER says cleared. A client implements that without
 // judgement, which is what the brief asked for, and it makes the un-clear
@@ -298,7 +298,7 @@ export const TRASH_DAY_REFUSALS: Record<
 // input to this function in which a local value causes a server completion to
 // be ignored.
 //
-// 📌 AND THE SERVER CANNOT BE MADE TO FORGET, WHICH IS WHAT MAKES THE UNION
+// NOTE: AND THE SERVER CANNOT BE MADE TO FORGET, WHICH IS WHAT MAKES THE UNION
 // SAFE. Verified rather than assumed: `families/{familyId}/trashDay/{key}` is
 // `allow write: if false` to every client; the ONLY writer is completeTrashDay
 // (index.ts:3832); `planTrashDayCompletion` is idempotent and returns the
@@ -307,7 +307,7 @@ export const TRASH_DAY_REFUSALS: Record<
 // un-clear has no server-side mechanism to travel through at all.
 //
 // ---------------------------------------------------------------------------
-// ⚠️ WHICH CLOCK — AND THE ANSWER IS "NEITHER, BY CONSTRUCTION"
+// WARNING: WHICH CLOCK — AND THE ANSWER IS "NEITHER, BY CONSTRUCTION"
 // ---------------------------------------------------------------------------
 //
 // The bin date is a LOCAL calendar date about a physical event, deliberately
@@ -318,14 +318,14 @@ export const TRASH_DAY_REFUSALS: Record<
 // have, and this module has both a UTC helper and a local key in scope, which
 // is precisely the confusion that produced the W2-80 anchor bug.
 //
-// 📌 A STALE LOCAL ACK IS HARMLESS, AND IT IS WORTH SHOWING WHY RATHER THAN
+// NOTE: A STALE LOCAL ACK IS HARMLESS, AND IT IS WORTH SHOWING WHY RATHER THAN
 // TRUSTING IT. `nextBinDate` (trash_day_reminder.dart) returns TODAY when today
 // is bin day and otherwise a FUTURE date — it never returns a past one. So the
 // only ack that can suppress anything is one for the current bin date, and an
 // ack for a bygone date cannot match. This function therefore compares against
 // the bin date in question rather than "recency", and needs no expiry rule.
 //
-// ⚠️ THE COROLLARY IS A REAL LOSS AND IS NOT PAPERED OVER: a device offline
+// WARNING: THE COROLLARY IS A REAL LOSS AND IS NOT PAPERED OVER: a device offline
 // past its bin day cannot sync that day's ack, because the ±2-day skew window
 // refuses it. That is CORRECT for clearing — the takeover has already moved to
 // the next bin date, so there is nothing left to clear — but the record of WHO
@@ -341,7 +341,7 @@ export interface TrashDayReconciliation {
   /** Whether the takeover should be suppressed for this bin date. */
   cleared: boolean;
   /**
-   * 🔑 `'server'` WINS THE LABEL WHENEVER THE SERVER HAS A RECORD, even if the
+ * KEY: `'server'` WINS THE LABEL WHENEVER THE SERVER HAS A RECORD, even if the
    * local ack agrees. The label is what a client shows ("Sam took them out"),
    * and the server copy is the one that names a person.
    */
@@ -366,7 +366,7 @@ export interface TrashDayReconciliation {
 /**
  * Reconcile the shared completion with a device's local acknowledgement.
  *
- * 🔴 THIS IS A NORMATIVE SPECIFICATION, NOT A CALLABLE THE CLIENT INVOKES. Dart
+ * CRITICAL: THIS IS A NORMATIVE SPECIFICATION, NOT A CALLABLE THE CLIENT INVOKES. Dart
  * cannot call it; W1 ports the rule. It lives here, in the same module as the
  * writer it reconciles with, so the contract and its tests sit beside the thing
  * that has to honour them — and so a change to one shows up as a red test on

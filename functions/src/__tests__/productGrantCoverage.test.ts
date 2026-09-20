@@ -4,7 +4,7 @@
 // the proof has to run the real verifier.
 //
 // ---------------------------------------------------------------------------
-// 🔴 WHY THIS FILE EXISTS: THE THING NOBODY HAD MEASURED WAS COVERAGE
+// CRITICAL: WHY THIS FILE EXISTS: THE THING NOBODY HAD MEASURED WAS COVERAGE
 // ---------------------------------------------------------------------------
 //
 // `appleJws.ts` verifies StoreKit 2 transactions offline against the Apple root
@@ -16,7 +16,7 @@
 // pushed through the verifier the callables actually call, ends with that
 // product's entitlement written to Firestore.
 //
-// 🔑 A PURCHASE THAT VERIFIES AND DOES NOT GRANT IS INDISTINGUISHABLE, FROM
+// KEY: A PURCHASE THAT VERIFIES AND DOES NOT GRANT IS INDISTINGUISHABLE, FROM
 // EVERY GATE THIS REPO HAD, FROM ONE THAT WORKS. The client sees success. The
 // ledger doc is written. `processedReceipts` fills up. Only the entitlement is
 // missing, and no test read it per product.
@@ -25,7 +25,7 @@
 // THE REAL VERIFIER, NOT A STUB — AND THE ONE INPUT THAT CHANGES
 // ---------------------------------------------------------------------------
 //
-// ⚠️ Every other callable test replaces `appleJws.verify` with a function that
+// WARNING: Every other callable test replaces `appleJws.verify` with a function that
 // returns a canned object. That is correct for THOSE tests — they are about the
 // ledger and the account boundary, not about Apple — but it means the string
 // the client sends has never been parsed on the way into a grant.
@@ -38,7 +38,7 @@
 // differs from production — which certificates are trusted — and nothing else.
 //
 // ---------------------------------------------------------------------------
-// 🔑 THE EXPECTED VALUES ARE HARD-CODED, AND THAT IS THE OPPOSITE OF THE USUAL
+// KEY: THE EXPECTED VALUES ARE HARD-CODED, AND THAT IS THE OPPOSITE OF THE USUAL
 // "NEVER RETYPE A CONSTANT" RULE. IT IS DELIBERATE.
 // ---------------------------------------------------------------------------
 //
@@ -54,7 +54,7 @@
 // ---------------------------------------------------------------------------
 // Path-keyed Firestore mock (declared before imports — Jest hoists the factory)
 //
-// 📌 The same fake as verifyIapAndGrant.test.ts, kept local rather than shared:
+// NOTE: The same fake as verifyIapAndGrant.test.ts, kept local rather than shared:
 // it is a fixture, and a fixture two suites can change out from under each
 // other is how a control stops controlling.
 // ---------------------------------------------------------------------------
@@ -101,12 +101,12 @@ function docMock(path: string) {
 /**
  * The `families` collection query, served from `docStore`.
  *
- * 🔴 ADDED FOR W2-163, AND IT RETURNS REAL ROWS RATHER THAN AN EMPTY STUB.
+ * CRITICAL: ADDED FOR W2-163, AND IT RETURNS REAL ROWS RATHER THAN AN EMPTY STUB.
  * `verifySubscriptionReceipt` now asks which family the buyer owns, so it reads
  * `families where ownerUid == uid limit 1`. `collection` was a bare `jest.fn()`
  * returning `undefined`, which crashed on `.where`.
  *
- * ⚠️ An empty-result stub would have been the cheap fix and the wrong one: every
+ * WARNING: An empty-result stub would have been the cheap fix and the wrong one: every
  * test here would go green, and they would go green for a subscriber who owns no
  * family — which is every fixture in this file — so the fan-out could break
  * completely without any of them noticing. Serving the real store means a test
@@ -247,7 +247,7 @@ interface Registry {
 /**
  * Every product id the simulator can serve, split by the section it lives in.
  *
- * 📌 `ios/Configuration.storekit` is a proxy for App Store Connect, not a copy
+ * NOTE: `ios/Configuration.storekit` is a proxy for App Store Connect, not a copy
  * of it — the same source and the same caveat as `productRegistry.test.ts`,
  * which is the file that established it as the one machine-readable registry
  * this repo has. Read-only here; `ios/**` belongs to W4.
@@ -284,7 +284,7 @@ type GrantCase =
 /**
  * The expectation table.
  *
- * 🔴 ITS KEYS ARE CHECKED AGAINST THE REGISTRY, WHICH IS THE HALF THAT MAKES IT
+ * CRITICAL: ITS KEYS ARE CHECKED AGAINST THE REGISTRY, WHICH IS THE HALF THAT MAKES IT
  * A COVERAGE GATE RATHER THAN A LIST OF TESTS SOMEBODY FELT LIKE WRITING. Add a
  * product to `ios/Configuration.storekit` and this file goes red until somebody
  * says what that product grants. That red is the feature.
@@ -354,7 +354,7 @@ function seedWeeklyOffer(productId: string) {
 }
 
 beforeAll(() => {
-  // 🔴 THE REAL VERIFIER. Everything downstream of this line parses a genuine
+  // CRITICAL: THE REAL VERIFIER. Everything downstream of this line parses a genuine
   // signed JWS. Module state, but jest gives each test file its own registry,
   // so nothing leaks into the suites that legitimately stub this seam.
   appleJws.verify = makeVerify([CHAIN.rootDer], BUNDLE_ID);
@@ -502,7 +502,7 @@ describe('🔴 subscriptions grant through the REAL verifier', () => {
         },
       });
 
-      // 🔑 THE EXPIRY IS ASSERTED AGAINST THE SIGNED VALUE, not against a
+      // KEY: THE EXPIRY IS ASSERTED AGAINST THE SIGNED VALUE, not against a
       // recomputed "about a month from now". The defect this callable was
       // written to close was a fabricated expiry, and an assertion that
       // recomputed the date would have accepted one.
@@ -582,7 +582,7 @@ describe('🔴 SUBSCRIPTION_PRICES covers every subscription that is sold', () =
 
 describe('📌 what a family purchase does and does not reach', () => {
   test('sub_family_monthly entitles the OWNER and writes nothing for members', async () => {
-    // ⚠️ THIS IS A CHARACTERISATION TEST. It pins observed behaviour so a change
+    // WARNING: THIS IS A CHARACTERISATION TEST. It pins observed behaviour so a change
     // is visible; it does NOT assert that the behaviour is correct, and the
     // brief that produced it explicitly declined to settle the question.
     //

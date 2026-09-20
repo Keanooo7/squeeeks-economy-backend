@@ -119,7 +119,7 @@ export function rollGibbyGift(
  * also the requester, which keeps the accept rule (a requester may not accept
  * their own request) from ever applying to the user.
  *
- * ⚠️ Gibby carries NO housemate grant, and must not.
+ * WARNING: Gibby carries NO housemate grant, and must not.
  *
  * Since house reads moved behind canViewHouse(), an accepted friendship no
  * longer opens a house — but the fix for Gibby is not to make every player his
@@ -159,7 +159,7 @@ export const GIBBY_USER_DOC: Record<string, unknown> = {
   // equipped fox outfit writes, so the friend card, the top bar and the
   // settings page all pick it up with no client change.
   //
-  // ⚠️ It is NOT the shared `duck` preset he used to wear. That one is in the
+  // WARNING: It is NOT the shared `duck` preset he used to wear. That one is in the
   // launch three, so every player could pick it and the starter friend looked
   // like an arbitrary stranger. `gibby` lives outside kAvatarPresets and
   // unlockedAvatarPresets and has no unlock path, so the face is his alone —
@@ -182,7 +182,7 @@ export const GIBBY_PROFILE_DOC: Record<string, unknown> = {
  * Shape notes, each of which has bitten before:
  *   - the key is `floors` — it is the ONLY top-level key HouseLayoutModel.toJson()
  *     has ever written (house_model.dart:40), and `rooms` lives one level down,
- *     inside each floor map. ⚠️ This used to say the opposite, and said it for a
+ * inside each floor map. WARNING: This used to say the opposite, and said it for a
  *     reason: getFriendVisit read data['rooms'], so this document was shaped to
  *     match a CLIENT BUG and the two wrong halves agreed. PR #122 fixed the
  *     client; leaving this as `rooms` would have blanked Gibby's house for

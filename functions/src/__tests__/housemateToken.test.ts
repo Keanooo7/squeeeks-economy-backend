@@ -7,7 +7,7 @@ export {};
 //
 // W4-36. The token that is supposed to prove two people met.
 //
-// 🔑 THE THREE PROPERTIES ARE THE FEATURE, AND EACH IS TESTED AS A BEHAVIOUR
+// KEY: THE THREE PROPERTIES ARE THE FEATURE, AND EACH IS TESTED AS A BEHAVIOUR
 // RATHER THAN AS A FIELD:
 //   SHORT-LIVED   — a token past its expiry is REFUSED and writes nothing.
 //   SINGLE-USE    — the SAME token redeemed twice against the SAME store fails
@@ -399,7 +399,7 @@ describe('mintHousemateToken', () => {
 
     const stored = readRaw(`housemateTokens/${res.code}`);
     expect(stored).toMatchObject({ hostUid: HOST, createdAtMs: T0 });
-    // 🔴 Nothing about redemption is written at mint time. If `redeemedAtMs`
+    // CRITICAL: Nothing about redemption is written at mint time. If `redeemedAtMs`
     // were seeded here the single-use check would be reading its own default.
     expect(stored).not.toHaveProperty('redeemedAtMs');
   });
@@ -600,7 +600,7 @@ describe('🔑 THE CAP HOLDS AFTER REDEMPTION', () => {
     const { code } = await mint(HOST);
     seed(`users/${GUEST}`, { housemates: ['a', 'b', 'c', 'd'] });
     await expect(redeem(code, GUEST)).rejects.toMatchObject({ code: 'resource-exhausted' });
-    // 🔴 Half a grant is the state no screen can describe. Neither side moved.
+    // CRITICAL: Half a grant is the state no screen can describe. Neither side moved.
     expect(rosterOf(readRaw(`users/${HOST}`) ?? undefined)).toEqual([]);
     expect(rosterOf(readRaw(`users/${GUEST}`) ?? undefined)).toEqual(['a', 'b', 'c', 'd']);
   });

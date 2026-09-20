@@ -5,7 +5,7 @@
  * player stops seeing a stale one. Modelled on patch-chest-names.js.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHY THIS EXISTS, AND WHY THE PRICE IS THE SMALLER HALF
+ * CRITICAL: WHY THIS EXISTS, AND WHY THE PRICE IS THE SMALLER HALF
  * ---------------------------------------------------------------------------
  *
  * Measured against production on 2026-08-16, `shop/current.weeklyOffer` held:
@@ -13,7 +13,7 @@
  *     price:        9.99                     (the seed says 2.99 since #350/#415)
  *     iapProductId: premium_offer_spring     (a product that DOES NOT EXIST)
  *
- * ⚠️ THE PRICE IS THE VISIBLE HALF. `premium_offer_spring` is registered in
+ * WARNING: THE PRICE IS THE VISIBLE HALF. `premium_offer_spring` is registered in
  * NEITHER App Store Connect NOR ios/Configuration.storekit — #415 found it and
  * offerIntegrity.test.ts asserts the seed never uses it again. A missing SHOP
  * product THROWS at the client, so the card in the shop right now is not merely
@@ -32,19 +32,19 @@
  *   · There has been no rotation since, so nothing has re-read the corrected
  *     seed. The fix was real, landed, gated, and invisible.
  *
- * 🔑 AND THE NEXT ROTATION FIXES IT BY ITSELF. `rotateWeeklyOffer` reads
+ * KEY: AND THE NEXT ROTATION FIXES IT BY ITSELF. `rotateWeeklyOffer` reads
  * `shopConfig/weeklyOffers` and falls back to the bundled `WEEKLY_OFFERS` when
  * that config is missing or empty. **That document returns HTTP 404 in
  * production — it does not exist** — so the seed IS the source, and Monday
  * 2026-08-17T00:00Z writes 2.99 with the real product id.
  *
- * ⚠️ THAT INVERTS THE OBVIOUS WORRY. The fear was that patching the visible
+ * WARNING: THAT INVERTS THE OBVIOUS WORRY. The fear was that patching the visible
  * document would be reverted by the next rotation. It is the opposite: the next
  * rotation is the fix, and this script only brings it forward. It is worth
  * running because a submission or a player looking today sees the broken card,
  * not because the schedule would undo it.
  *
- * 📌 THE DAILY WRITER IS NOT A RACE. `rotateMarket` runs `0 0 * * *` and writes
+ * NOTE: THE DAILY WRITER IS NOT A RACE. `rotateMarket` runs `0 0 * * *` and writes
  * `shop/current` with `{merge: true}`, touching only `dailyChests` and
  * `dailyChestsRefreshAt`. It cannot clobber `weeklyOffer`.
  *
@@ -57,12 +57,12 @@
  *        node functions/scripts/patch-weekly-offer.js          # dry run
  *        node functions/scripts/patch-weekly-offer.js --write  # actually write
  *
- * 🔴 DRY RUN IS THE DEFAULT. It prints the before and after and writes nothing
+ * CRITICAL: DRY RUN IS THE DEFAULT. It prints the before and after and writes nothing
  * unless `--write` is passed, because the failure mode of a patch script is
  * running it while reading its output.
  *
  * ---------------------------------------------------------------------------
- * 🔴 W2-164 — THE WINDOW IS REPORTED AND NEVER PATCHED. THE DECISION, AND WHY.
+ * CRITICAL: W2-164 — THE WINDOW IS REPORTED AND NEVER PATCHED. THE DECISION, AND WHY.
  * ---------------------------------------------------------------------------
  *
  * This script used to decide `NOTHING TO DO` from PRICE and PRODUCT ID alone,
@@ -85,7 +85,7 @@
  *     EXIT_NOT_VISIBLE below. "The fields I can patch are correct" and "the offer
  *     is on a player's screen" used to be the same green.
  *
- * ⚠️ AND THE MERGE DOES NOT DO WHAT THIS FILE USED TO CLAIM. `{merge: true}`
+ * WARNING: AND THE MERGE DOES NOT DO WHAT THIS FILE USED TO CLAIM. `{merge: true}`
  * DEEP-MERGES a nested map, so a patch leaves `startsAt`/`endsAt` untouched
  * rather than replacing the whole `weeklyOffer`. Measured against the emulator on
  * 2026-08-30; the old comment at the write said "replaces", and acting on that
@@ -93,7 +93,7 @@
  * `--write` can leave the card invisible, which the script now says out loud
  * instead of printing "OK".
  *
- * 🔑 The logic lives in `src/weeklyOffers.ts` (`offerWindowState` and friends),
+ * KEY: The logic lives in `src/weeklyOffers.ts` (`offerWindowState` and friends),
  * not in this file, so `npm test` can reach it. A second copy here would be a
  * third place for the rule to drift — the exact defect this script exists to
  * repair.
@@ -112,7 +112,7 @@ const path = require('path');
  *      because the window is closed, absent or unreadable and only
  *      `rotateWeeklyOffer` writes it.
  *
- * 🔑 2 EXISTS SO "I FIXED IT" AND "IT IS FIXED" CAN BE TOLD APART. Collapsed
+ * KEY: 2 EXISTS SO "I FIXED IT" AND "IT IS FIXED" CAN BE TOLD APART. Collapsed
  * into 0 they were the same green, and the green was the defect.
  */
 const EXIT_NOT_VISIBLE = 2;
@@ -140,13 +140,13 @@ const db = admin.firestore();
 /**
  * The offer this script writes, taken from the COMPILED seed — never retyped.
  *
- * 🔴 A HAND-COPIED PRICE HERE WOULD BE THE ORIGINAL BUG, REBUILT INSIDE ITS OWN
+ * CRITICAL: A HAND-COPIED PRICE HERE WOULD BE THE ORIGINAL BUG, REBUILT INSIDE ITS OWN
  * FIX. The whole defect is a number that was correct in one place and stale in
  * another; typing `2.99` into this file would create a third place to drift.
  * `lib/weeklyOffers.js` is the build output of `functions/src/weeklyOffers.ts`,
  * so this reads exactly what `rotateWeeklyOffer` would read.
  *
- * ⚠️ Requires a build first: `npm --prefix functions run build`.
+ * WARNING: Requires a build first: `npm --prefix functions run build`.
  */
 /**
  * The compiled `weeklyOffers` module — the seed AND the window helpers.
@@ -217,7 +217,7 @@ function describe(offer, nowMs) {
     `  title:        ${offer.title}`,
     `  price:        ${offer.price} ${offer.currency ?? ''}`.trimEnd(),
     `  iapProductId: ${offer.iapProductId}`,
-    // 🔴 W2-164 — THE TWO FIELDS THAT DECIDE WHETHER A PLAYER SEES ANY OF THE
+    // CRITICAL: W2-164 — THE TWO FIELDS THAT DECIDE WHETHER A PLAYER SEES ANY OF THE
     // ABOVE. They were absent from this function, so an operator running the
     // dry run to CHECK the offer got the same blind answer as one running it to
     // FIX: every price could be right and the card still invisible.
@@ -235,7 +235,7 @@ async function main() {
   const ref = db.doc('shop/current');
   const snap = await ref.get();
 
-  // 🔴 REFUSES RATHER THAN CREATING, the safety shape patch-chest-names.js set.
+  // CRITICAL: REFUSES RATHER THAN CREATING, the safety shape patch-chest-names.js set.
   // An absent shop/current means the scheduler has never run or something has
   // deleted it, and inventing a document here would paper over that with a
   // hand-made one nothing else agrees with.
@@ -270,7 +270,7 @@ async function main() {
   const samePrice = before?.price === target.price;
   const sameProduct = before?.iapProductId === target.iapProductId;
 
-  // 🔴 W2-164 — THE WINDOW IS REPORTED, NEVER PATCHED, AND HERE IS THE REASON.
+  // CRITICAL: W2-164 — THE WINDOW IS REPORTED, NEVER PATCHED, AND HERE IS THE REASON.
   //
   // A price mismatch is unambiguous. A window mismatch is not: the cron rewrites
   // `startsAt`/`endsAt` every Monday, and the seed's pool carries neither, so
@@ -279,7 +279,7 @@ async function main() {
   // and a wrong window is worse than a stale price — it makes the card invisible
   // instead of merely mispriced.
   //
-  // 🔑 SO THE WINDOW CHANGES WHAT THE EXIT MEANS, NOT WHAT GETS WRITTEN. It is
+  // KEY: SO THE WINDOW CHANGES WHAT THE EXIT MEANS, NOT WHAT GETS WRITTEN. It is
   // the difference between "this document is healthy" and "the two fields I can
   // patch are already correct and the offer is STILL not on anyone's screen" —
   // two facts that used to share the single word NOTHING TO DO.
@@ -295,7 +295,7 @@ async function main() {
     // Idempotent: running it twice is a no-op with a clear message rather than
     // a second write that churns updateTime for nothing.
     //
-    // ⚠️ AND THE MESSAGE NOW NAMES WHAT IT COMPARED. The old text was
+    // WARNING: AND THE MESSAGE NOW NAMES WHAT IT COMPARED. The old text was
     // "NOTHING TO DO — the live offer already matches the seed on price and
     // product id." — true, and read by every operator as "the offer is fine",
     // which it does not say and cannot: it never looked at the window.
@@ -325,7 +325,7 @@ async function main() {
     process.exit(0);
   }
 
-  // 🔴 CORRECTED W2-164, AND THE OLD COMMENT WAS WRONG IN A LOAD-BEARING WAY.
+  // CRITICAL: CORRECTED W2-164, AND THE OLD COMMENT WAS WRONG IN A LOAD-BEARING WAY.
   // It said this "replaces `weeklyOffer`". It does not: Firestore's
   // `{merge: true}` DEEP-MERGES a nested map, so the keys the seed does not
   // carry survive untouched. Measured against the Firestore emulator on
@@ -334,7 +334,7 @@ async function main() {
   //     before  {id:'live', price:9.99, startsAt:'LIVE-START', endsAt:'LIVE-END'}
   //     after   {startsAt:'LIVE-START', endsAt:'LIVE-END', price:2.99, id:'seed'}
   //
-  // 🔑 THAT IS THE BEHAVIOUR WE WANT — it is why patching cannot stomp a live
+  // KEY: THAT IS THE BEHAVIOUR WE WANT — it is why patching cannot stomp a live
   // window back to a stale seed value — but believing the old comment would lead
   // someone to "fix" the merge into a replace, which WOULD delete `startsAt` and
   // `endsAt` from a live offer and take the card off every screen.
@@ -352,7 +352,7 @@ async function main() {
     console.error('\n🔴 THE RE-READ DOES NOT MATCH. Something else wrote after this did.');
     process.exit(1);
   }
-  // ⚠️ THE SUCCESS LINE IS CONDITIONAL, because "matches the seed" and "a player
+  // WARNING: THE SUCCESS LINE IS CONDITIONAL, because "matches the seed" and "a player
   // can see it" are different claims and this script can only deliver the first.
   // The window survived the merge; if it was closed before, it is closed now.
   const afterState = offerWindow().offerWindowState(after, Date.now());

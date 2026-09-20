@@ -16,7 +16,7 @@ export {};
 // production was throwing 'No items available for rarity …' while shop/current
 // was selling three chests a day at 100 sponges each.
 //
-// 🔑 These tests assert on the DATA PATH — the payload handed to the inventory
+// KEY: These tests assert on the DATA PATH — the payload handed to the inventory
 // write and the item returned to the client — never on SEED_ITEMS. Asserting
 // against the seed constant is exactly how index.ts:833 documented this flaw
 // for days while the suite stayed green. The one place a constant IS the right
@@ -122,7 +122,7 @@ function docMock(path: string): any {
  * collection() call at all. This is a guard, not a stub: it is the assertion
  * that the third mirror stays retired.
  *
- * 🔑 It fails LOUDLY rather than returning an empty result. An empty-result
+ * KEY: It fails LOUDLY rather than returning an empty result. An empty-result
  * stub would let a reintroduced `.collection('items')` read pass silently —
  * the query would return nothing, the SEED_ITEMS fallback would run, every
  * test would stay green, and the round-trip this brief deleted would be back
@@ -394,7 +394,7 @@ describe('purchaseChest with an unseeded `items` collection', () => {
   });
 
   test('dailyChestsPurchased is never written, so the client card cannot grey out', async () => {
-    // 🔑 This is the assertion that makes the change VISIBLE. The client reads
+    // KEY: This is the assertion that makes the change VISIBLE. The client reads
     // this very array (daily_market_grid.dart -> ChestCard.isPurchased) and
     // disables the card on it. Dropping the server guard while still writing
     // the field would have left the button grey and delivered nothing.
@@ -453,7 +453,7 @@ describe('purchaseChest with an unseeded `items` collection', () => {
 // ---------------------------------------------------------------------------
 // W2-08 — what the cap was ALSO doing
 //
-// 🔑 `dailyChestsPurchased` was the cap AND the only replay guard in the
+// KEY: `dailyChestsPurchased` was the cap AND the only replay guard in the
 // callable: one field, two jobs, the same shape `chest.rarity` had before #88.
 // Deleting it deletes both, so the replay half is replaced rather than
 // dropped — an OPTIONAL `purchaseId`, so the shipped client keeps working and
@@ -520,7 +520,7 @@ describe('replay protection via purchaseId', () => {
 // ---------------------------------------------------------------------------
 // W2-08 — concurrency
 //
-// ⚠️ Removing a uniqueness guard must not turn one transaction into a race.
+// WARNING: Removing a uniqueness guard must not turn one transaction into a race.
 // The per-chest guard was NOT what serialised two purchases — the balance read
 // is — but that had never been asserted, so it was a belief rather than a
 // fact. `contendedTransaction()` models Firestore's optimistic locking so it
@@ -597,7 +597,7 @@ describe('two concurrent purchases cannot both pass one affordability check', ()
 // ---------------------------------------------------------------------------
 
 describe('the `items` mirror is retired — W2-134', () => {
-  // 🔴 WHY A TEST AND NOT JUST THE THROWING MOCK. The mock fails any test that
+  // CRITICAL: WHY A TEST AND NOT JUST THE THROWING MOCK. The mock fails any test that
   // triggers a read, which protects the tests that happen to buy a chest. It
   // cannot state the INTENT: someone reading this file needs to find the
   // sentence "purchaseChest performs zero collection reads", not infer it from
@@ -710,7 +710,7 @@ describe('a themed chest only ever grants items of its own subject', () => {
   /**
    * The two real furniture subjects this suite draws against.
    *
-   * 🔑 These used to be synthetic ids ('wanted'/'unwanted') seeded into a fake
+ * KEY: These used to be synthetic ids ('wanted'/'unwanted') seeded into a fake
    * `items` collection. W2-134 retired that read, so a synthetic subject now
    * matches nothing in SEED_ITEMS and `pickChestItem` throws not-found instead
    * of exercising the property. Real subjects are what make these tests

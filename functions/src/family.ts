@@ -9,7 +9,7 @@
 // none of them can be built until "a family" names something.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE DISPROOF: WHY THIS IS NOT `users/{uid}.housemates`
+// CRITICAL: THE DISPROOF: WHY THIS IS NOT `users/{uid}.housemates`
 // ---------------------------------------------------------------------------
 //
 // The brief required this question to be answered before any code: a family
@@ -18,7 +18,7 @@
 // that already exists — was taken seriously and fails on four counts, of which
 // the first is fatal on its own.
 //
-//   🔴 THE ROSTERS NEED NOT AGREE, SO THERE IS NO FACT OF THE MATTER.
+//   CRITICAL: THE ROSTERS NEED NOT AGREE, SO THERE IS NO FACT OF THE MATTER.
 //     `housemates` is a flat array of PEER edges on each user's own document
 //     (firestore.rules housemates(), users/{uid}). A's roster may read [B, C]
 //     while B's reads [A] and C's reads []. Ask "who is in this family" and
@@ -31,13 +31,13 @@
 //     agreement between pairs is not transitivity, and a family is not a set
 //     of pairs.
 //
-//   🔴 A SUBSCRIPTION NEEDS A SINGLE OWNER, AND PEER EDGES HAVE NO
+//   CRITICAL: A SUBSCRIPTION NEEDS A SINGLE OWNER, AND PEER EDGES HAVE NO
 //     DISTINGUISHED NODE. Brendan's requirement is that the controlling parent
 //     holds the plan. In a symmetric edge set there is nothing to attach that
 //     to and nothing to stop two members each believing they are the payer.
 //     `ownerUid` is one field precisely because the alternative is a race.
 //
-//   🔴 THE CAP CANNOT BE ENFORCED, AND THIS IS THE ALREADY-RECORDED RULE. "A
+//   CRITICAL: THE CAP CANNOT BE ENFORCED, AND THIS IS THE ALREADY-RECORDED RULE. "A
 //     cap enforced on a per-edge grant is vacuous until the roster is counted
 //     in one place." Rules cannot aggregate across documents, so a per-user
 //     roster cap bounds how many edges ONE user issued and says nothing about
@@ -47,19 +47,19 @@
 //     the group document is not incidentally convenient for the cap, it is the
 //     thing that makes the cap mean anything.
 //
-//   📌 A MESSAGE BOARD NEEDS A CONTAINER THAT IS NOBODY'S USER DOCUMENT.
+//   NOTE: A MESSAGE BOARD NEEDS A CONTAINER THAT IS NOBODY'S USER DOCUMENT.
 //     Hanging shared posts off one member's document makes that member's
 //     account the substrate for everyone else's data, and their account
 //     deletion everyone else's data loss.
 //
-// ✅ SO: `families/{familyId}`, with `housemates` LEFT ALONE as the peer
+// OK: SO: `families/{familyId}`, with `housemates` LEFT ALONE as the peer
 // visibility mechanism it already is. The two are not redundant and neither
 // replaces the other: housemates answers "may this person see my house", the
 // family answers "who are we". A member of a family is not automatically a
 // housemate and this module never writes that array.
 //
 // ---------------------------------------------------------------------------
-// 🔑 FAMILY IS A SOURCE OF PRO, NOT A TIER — AND THE SHAPE THAT FOLLOWS
+// KEY: FAMILY IS A SOURCE OF PRO, NOT A TIER — AND THE SHAPE THAT FOLLOWS
 // ---------------------------------------------------------------------------
 //
 // `SubscriptionTier` is `enum { free, pro }` (subscription_tier.dart). The
@@ -70,7 +70,7 @@
 // migration across every entitlement check, rule, CF-owned field gate and
 // client branch that switches on the string.
 //
-// ⚠️ THE STOREKIT SERVICE LEVEL IS A DIFFERENT NUMBER ABOUT A DIFFERENT THING,
+// WARNING: THE STOREKIT SERVICE LEVEL IS A DIFFERENT NUMBER ABOUT A DIFFERENT THING,
 // and conflating the two is the easy mistake here. #380 ranked
 // `sub_family_monthly` at service LEVEL 1, above Pro, so that Pro→Family is an
 // immediate prorated upgrade rather than a crossgrade deferred up to a year for
@@ -83,12 +83,12 @@
 // between PRODUCTS. It is not a statement about this app's entitlement enum,
 // which still has two values. A family subscriber and a Pro subscriber are
 // entitled to the same thing; they differ in how many people that entitlement
-// reaches. 🔑 The revert is also the reason this question is still OPEN and
+// reaches. KEY: The revert is also the reason this question is still OPEN and
 // still this module's to answer: patching #380 forward would have settled it in
 // a hotfix, in lib/, under time pressure. It was reverted instead.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE FAN-OUT IS A DATED FIELD, AND THE DATE IS THE WHOLE SAFETY ARGUMENT
+// CRITICAL: THE FAN-OUT IS A DATED FIELD, AND THE DATE IS THE WHOLE SAFETY ARGUMENT
 // ---------------------------------------------------------------------------
 //
 // The fan-out writes `familyProExpiresAt` onto each member's `users/{uid}`,
@@ -116,7 +116,7 @@
 //      entitlement async. The fan-out moves that cost to membership-change and
 //      renewal time, which happen orders of magnitude less often.
 //
-// ⚠️ THE RESIDUAL HOLE, STATED RATHER THAN HIDDEN: a MID-PERIOD refund of the
+// WARNING: THE RESIDUAL HOLE, STATED RATHER THAN HIDDEN: a MID-PERIOD refund of the
 // owner's family subscription. Natural expiry is covered by property 2 — the
 // clock owns it. A refund is the one ending that revokes mid-period, which is
 // exactly why `REFUND` is the only App Store notification branch that writes
@@ -127,7 +127,7 @@
 // is not yet wired — see WIRING, below.
 //
 // ---------------------------------------------------------------------------
-// 📌 WIRING — WHAT THIS MODULE DOES NOT DO, SO NOBODY READS IT AS DONE
+// NOTE: WIRING — WHAT THIS MODULE DOES NOT DO, SO NOBODY READS IT AS DONE
 // ---------------------------------------------------------------------------
 //
 // This is the pure half plus the rules and the resolver change. It does NOT
@@ -136,7 +136,7 @@
 // production code, which `moduleReachability.test.ts` would normally flag —
 // the entry is declared there deliberately and with this reason.
 //
-// ⚠️ AND NONE OF THE RULES IN firestore.rules PROTECT ANYONE UNTIL DEPLOYED.
+// WARNING: AND NONE OF THE RULES IN firestore.rules PROTECT ANYONE UNTIL DEPLOYED.
 // That file's header says so and it is still true: no window and no CI job
 // runs `firebase deploy --only firestore:rules`. It protects the rules FILE;
 // the file protects nobody until deployed.
@@ -144,14 +144,14 @@
 /**
  * How many people may be in one family.
  *
- * 🔴 DECIDED 2026-08-19, BY BRENDAN, ANSWERING W1-133's ESCALATION: FIVE — AND
+ * CRITICAL: DECIDED 2026-08-19, BY BRENDAN, ANSWERING W1-133's ESCALATION: FIVE — AND
  * FIVE IS THE TOTAL, so four people besides whoever started it. `memberUids`
  * "includes the owner" (see FamilyDoc) and is bounded by this, so the two
  * agree; it is written in both forms because the alternative reading costs a
  * whole seat and would surface only to a family that could not add its last
  * member.
  *
- * 🔑 THE PREVIOUS VALUE PREDICTED THIS ANSWER AND SAID SO, WHICH IS WHY THIS
+ * KEY: THE PREVIOUS VALUE PREDICTED THIS ANSWER AND SAID SO, WHICH IS WHY THIS
  * IS ONE LINE AND NOT A MIGRATION. It was 4, decided 2026-08-14, and that
  * comment recorded its own doubt in as many words: "a family of five is a
  * normal family — two parents and three children — so 4 is very likely wrong
@@ -171,7 +171,7 @@
  * wearing one label. Any future proposal to move this number says TOTAL or
  * BESIDES in the same breath, or it is not yet a proposal.
  *
- * ⚠️ DELIBERATELY A SEPARATE CONSTANT FROM `HOUSEMATE_CAP` rather than an
+ * WARNING: DELIBERATELY A SEPARATE CONSTANT FROM `HOUSEMATE_CAP` rather than an
  * import of it. They answer different questions — "how many people may see my
  * house" versus "how many people does one subscription cover" — and the second
  * has a price attached. Aliasing them would mean answering Brendan's cap
@@ -194,8 +194,8 @@ export const FAMILY_MIN_MEMBERS = 2;
 /**
  * The Apple product behind a family plan.
  *
- * ✅ THE PRODUCT NOW EXISTS IN BOTH PLACES (W2-157, 2026-08-24). This header
- * used to open "🔴 THIS PRODUCT DOES NOT EXIST ANYWHERE YET … no StoreKit
+ * OK: THE PRODUCT NOW EXISTS IN BOTH PLACES (W2-157, 2026-08-24). This header
+ * used to open "CRITICAL: THIS PRODUCT DOES NOT EXIST ANYWHERE YET … no StoreKit
  * product, no App Store Connect product, and nothing server-side that has ever
  * seen this string in a receipt." Every clause of that is now false:
  *
@@ -206,13 +206,13 @@ export const FAMILY_MIN_MEMBERS = 2;
  *   server-side         functions/src/proReceipt.ts prices it, so a family
  *                       purchase now composes a receipt naming this string
  *
- * 📌 THE #380/#382 HISTORY IS KEPT BECAUSE IT STILL EXPLAINS A CONSTRAINT, not
+ * NOTE: THE #380/#382 HISTORY IS KEPT BECAUSE IT STILL EXPLAINS A CONSTRAINT, not
  * because it describes today. #382 reverted #380 for a real reason — the app
  * queries a FIXED LIST of product ids, and adding one the list did not contain
  * turned `product_availability_test.dart` red on main. Anyone touching the
  * product list still has to satisfy that test.
  *
- * ⚠️ APPLE FAMILY SHARING (ON in ASC) AND `familyShareable` (FALSE in StoreKit)
+ * WARNING: APPLE FAMILY SHARING (ON in ASC) AND `familyShareable` (FALSE in StoreKit)
  * NOW DISAGREE, AND THAT IS NOT THIS FILE'S TO RESOLVE. W4-131 established the
  * StoreKit flag is deliberate; the reconciliation is Brendan's and is on his
  * list. Named here so the next reader does not "fix" one side of it.
@@ -223,14 +223,14 @@ export const FAMILY_MIN_MEMBERS = 2;
  * (chest_drop_rates.dart, TASK_LIBRARY_IDS, and HOUSEMATE_CAP's own mirror
  * warning two constants above).
  *
- * 📌 THE RE-LAND IS CONSTRAINED BY A FINDING THAT SURVIVED THE REVERT, because
+ * NOTE: THE RE-LAND IS CONSTRAINED BY A FINDING THAT SURVIVED THE REVERT, because
  * it is analysis rather than code: the family product must OUTRANK Pro in its
  * subscription group. At equal service level a switch is a CROSSGRADE, and a
  * crossgrade between different durations defers to the next renewal — which for
  * `sub_pro_annual` means paying for Family and waiting up to a YEAR to receive
  * it. Written up in `Projects/Cleaning/asc-family-product-2026-08-15.md`.
  *
- * ⚠️ That constrains whoever re-lands the product. It does NOT decide this
+ * WARNING: That constrains whoever re-lands the product. It does NOT decide this
  * module's question: StoreKit service level is about Apple's upgrade direction
  * between PRODUCTS, and says nothing about whether this app's entitlement enum
  * grows a third value. See the header — it does not.
@@ -240,7 +240,7 @@ export const FAMILY_PRODUCT_ID = 'sub_family_monthly';
 /**
  * The family group document, as stored at `families/{familyId}`.
  *
- * ⚠️ EVERY FIELD HERE IS SERVER-WRITTEN. `firestore.rules` allows clients to
+ * WARNING: EVERY FIELD HERE IS SERVER-WRITTEN. `firestore.rules` allows clients to
  * READ a family they belong to and to write NOTHING — see the families match
  * block. That is the recoverable direction: opening a field to client writes
  * later is additive, closing one after clients depend on it is a breaking
@@ -251,7 +251,7 @@ export interface FamilyDoc {
    * The controlling parent. Holds the subscription, and is the single node
    * that peer edges could not provide.
    *
-   * 🔑 ALWAYS ALSO PRESENT IN `memberUids`. The owner is a member who happens
+ * KEY: ALWAYS ALSO PRESENT IN `memberUids`. The owner is a member who happens
    * to pay, not a separate role outside the roster — otherwise every member
    * count, every cap check and every fan-out has to remember to add one, and
    * one of them eventually will not.
@@ -263,14 +263,14 @@ export interface FamilyDoc {
    * Display names, keyed by uid — a DENORMALISED COPY, and the reason is a
    * rules problem rather than a performance one.
    *
-   * 🔴 A FAMILY MEMBER CANNOT READ ANOTHER MEMBER'S NAME ANY OTHER WAY.
+ * CRITICAL: A FAMILY MEMBER CANNOT READ ANOTHER MEMBER'S NAME ANY OTHER WAY.
    * `publicProfiles/{uid}` grants `get` to the owner, to anyone holding a
    * friend edge, or when `isPublic == true` — and `isPublic` DEFAULTS FALSE
    * (`buildPublicProfile`: `data.isPublic === true`). Family membership is not
    * one of the conditions. So the family page, which needs a name per member,
    * had no readable source for one.
    *
-   * 🔑 DENORMALISED HERE RATHER THAN WIDENING publicProfiles, deliberately.
+ * KEY: DENORMALISED HERE RATHER THAN WIDENING publicProfiles, deliberately.
    * `families/{familyId}` already grants read to its own members, so this is
    * ONE document read that returns the roster and the names together. Widening
    * the profile rule instead would need TWO rules `get()`s per profile — the
@@ -278,12 +278,12 @@ export interface FamilyDoc {
    * would expose names to a wider set than intended. The narrow-looking fix is
    * the broader one here.
    *
-   * ⚠️ IT GOES STALE ON A RENAME, and that is accepted rather than unnoticed:
+ * WARNING: IT GOES STALE ON A RENAME, and that is accepted rather than unnoticed:
    * `publicProfiles` has exactly the same property from exactly the same cause
    * (a copy of the Auth record, refreshed only when something writes). A
    * rename-propagation path is one brief, not this one.
    *
-   * 📌 A MISSING ENTRY IS NORMAL, NOT AN ERROR. An Auth record can be absent or
+ * NOTE: A MISSING ENTRY IS NORMAL, NOT AN ERROR. An Auth record can be absent or
    * carry no displayName, and a document can outlive its Auth user — the same
    * degradation `syncPublicProfile` already handles by writing an empty name.
    * Readers must tolerate a uid with no entry.
@@ -293,25 +293,25 @@ export interface FamilyDoc {
    * Avatar IDS, keyed by uid — denormalised for the same reason as
    * `memberNames`, and blocked by the same rule.
    *
-   * 🔴 AN **ID**, NOT AN ASSET PATH, AND THAT IS THE WHOLE DECISION.
+ * CRITICAL: AN **ID**, NOT AN ASSET PATH, AND THAT IS THE WHOLE DECISION.
    * `users/{uid}.avatarUrl` stores a STABLE ID (`'fox'`) — the name is legacy;
    * old values holding a real Storage URL still resolve — and
    * `avatarAssetFor` (avatar_catalog.dart) maps it to
    * `assets/images/avatars/<name>.webp` on the CLIENT.
    *
-   * 🔑 THE SERVER HAS NO BUSINESS MINTING ASSET PATHS. Storing a resolved path
+ * KEY: THE SERVER HAS NO BUSINESS MINTING ASSET PATHS. Storing a resolved path
    * here would be a SECOND vocabulary for something the client already owns —
    * and the moment an asset is renamed or the catalogue moves, every stored
    * path is a broken-image box that no test would catch, because nothing
    * server-side can know the bundle. Storing the id keeps ONE resolver.
    *
-   * 📌 The equipped CHARACTER was the other candidate and is deliberately not
+ * NOTE: The equipped CHARACTER was the other candidate and is deliberately not
    * used: it lives inside `users/{uid}/house/layout`, a large client-owned save
    * that stays denied cross-user, and it is not a small stable value. The
    * profile avatar is the field the app already treats as "this person's
    * picture".
    *
-   * ⚠️ A MISSING ENTRY IS NORMAL — a user who never chose one has no value, and
+ * WARNING: A MISSING ENTRY IS NORMAL — a user who never chose one has no value, and
    * `avatarAssetFor(null)` already returns null for exactly that case.
    */
   memberAvatars?: Record<string, string>;
@@ -320,7 +320,7 @@ export interface FamilyDoc {
    * Sunday = 7 — Dart's `DateTime.weekday`, the convention `weekStartKey`
    * (demoAccount.ts) already writes down.
    *
-   * 🔴 THIS FIELD EXISTS BECAUSE THE DOCUMENT KEY IS DERIVED FROM IT, AND THE
+ * CRITICAL: THIS FIELD EXISTS BECAUSE THE DOCUMENT KEY IS DERIVED FROM IT, AND THE
    * DERIVATION USED TO HAPPEN PER DEVICE. `#490` made one member taking the
    * bins out clear it for everyone, keyed by bin DATE
    * (`families/{id}/trashDay/YYYY-MM-DD`). The date came from each member's own
@@ -329,7 +329,7 @@ export interface FamilyDoc {
    * and nothing anywhere reported it. One value on one document is what makes
    * the disagreement unrepresentable rather than merely discouraged.
    *
-   * ⚠️ ABSENT IS NORMAL AND IS NOT AN ERROR. Every family created before this
+ * WARNING: ABSENT IS NORMAL AND IS NOT AN ERROR. Every family created before this
    * field existed has none, and a family whose owner has never set one has
    * none. Readers fall back to the member's own local value — the solo path,
    * unchanged. **Do not write a default here**: a server-chosen weekday would
@@ -351,7 +351,7 @@ export type FamilyInvalidReason =
 /**
  * The structural invariants of a family, checked in one place.
  *
- * 🔑 `owner-not-a-member` and `duplicate-members` are the two that carry
+ * KEY: `owner-not-a-member` and `duplicate-members` are the two that carry
  * weight, and both are about the CAP rather than about tidiness. If the owner
  * could sit outside `memberUids`, the array would undercount the people a
  * subscription covers by exactly one. If a uid could appear twice, the array
@@ -377,7 +377,7 @@ export function familyInvalidReason(
  * Structurally sound: an owner who is in their own roster, no duplicates, and
  * within the cap. **Says nothing about the family being big enough to grant.**
  *
- * 🔴 THIS EXISTS BECAUSE `isValidFamily` MADE THE WHOLE FEATURE UNREACHABLE, and
+ * CRITICAL: THIS EXISTS BECAUSE `isValidFamily` MADE THE WHOLE FEATURE UNREACHABLE, and
  * every test missed it by seeding a state the system could not produce.
  *
  * `createFamily` writes `memberUids: [ownerUid]` — one member, deliberately,
@@ -395,7 +395,7 @@ export function familyInvalidReason(
  * the system cannot produce is the same class as a control that passes on seed
  * order: it describes an intention rather than the code.
  *
- * 🔑 MIN_MEMBERS IS A GRANTING RULE, NOT A STRUCTURAL ONE. "A family of one is a
+ * KEY: MIN_MEMBERS IS A GRANTING RULE, NOT A STRUCTURAL ONE. "A family of one is a
  * Pro subscription with extra steps" is a correct reason not to ENTITLE anyone
  * through it, and a wrong reason to refuse the join that would make it two. So
  * `planFamilyFanOut` still uses `isValidFamily`, and the three lifecycle
@@ -416,7 +416,7 @@ export interface FamilyGrant {
   /**
    * Milliseconds since epoch, or null to REVOKE.
    *
-   * ⚠️ null is an explicit revoke and not "leave it alone". A plan that
+ * WARNING: null is an explicit revoke and not "leave it alone". A plan that
    * omitted revoked members would make removing someone from a family a
    * no-op on their entitlement, which is the failure this whole module's
    * dated-field design exists to bound rather than to permit.
@@ -428,13 +428,13 @@ export interface FamilyGrant {
  * The complete set of `familyProExpiresAt` writes implied by [family] and its
  * owner's subscription, for the moment [nowMs].
  *
- * 🔴 THE ENTITLEMENT IS THE OWNER'S EXPIRY, COPIED — NEVER EXTENDED, NEVER
+ * CRITICAL: THE ENTITLEMENT IS THE OWNER'S EXPIRY, COPIED — NEVER EXTENDED, NEVER
  * ROUNDED UP. See FAMILY_GRANT_EXPIRY_SOURCE in the header: a member who could
  * outlive the owner's paid period would be entitled to something nobody paid
  * for, and the error would be invisible because it looks exactly like a
  * working feature.
  *
- * ⚠️ FAILS CLOSED IN EVERY DIRECTION. An invalid family, an owner who is not
+ * WARNING: FAILS CLOSED IN EVERY DIRECTION. An invalid family, an owner who is not
  * entitled, an unreadable or already-past expiry, and a family whose owner is
  * missing all produce REVOKE plans rather than grants. There is no branch here
  * that grants on the strength of something being absent.
@@ -451,7 +451,7 @@ export function planFamilyFanOut(args: {
    * The owner's `subscriptionExpiresAt`, already resolved to milliseconds by
    * the caller, or null if it could not be read.
    *
-   * 📌 A NUMBER RATHER THAN THE OWNER'S DOCUMENT, deliberately. The many
+ * NOTE: A NUMBER RATHER THAN THE OWNER'S DOCUMENT, deliberately. The many
    * shapes `subscriptionExpiresAt` arrives in (Timestamp, ISO string, the unit
    * suite's `{_type:'ts', ms}` sentinel) are already decoded in exactly one
    * place — `expiryMillis` in taskRewards.ts — and a second decoder that
@@ -497,7 +497,7 @@ export function planFamilyFanOut(args: {
 }
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-79 — THE FAN-OUT NOW HAS A CALLER, AND THE FALSIFIER CHANGED THE SHAPE
+// CRITICAL: W2-79 — THE FAN-OUT NOW HAS A CALLER, AND THE FALSIFIER CHANGED THE SHAPE
 // ---------------------------------------------------------------------------
 //
 // W2-76 left this: "the refund path must re-run the fan-out, and
@@ -505,7 +505,7 @@ export function planFamilyFanOut(args: {
 // it there, a refunded family owner's MEMBERS keep Pro until the owner's
 // original expiry." This is that caller's decision half.
 //
-// 🔑 THE BRIEF ASKED ME TO CHECK WHETHER REFUND IS THE ONLY NOTIFICATION THAT
+// KEY: THE BRIEF ASKED ME TO CHECK WHETHER REFUND IS THE ONLY NOTIFICATION THAT
 // MOVES AN EXPIRY BACKWARDS. IT IS NOT, AND THERE IS NO REFUND BRANCH TO SIT
 // BESIDE. `effectOf` in appStoreNotifications.ts collapses FOUR types —
 // REFUND, REVOKE, EXPIRED and GRACE_PERIOD_EXPIRED — into one `revoke` effect
@@ -517,13 +517,13 @@ export function planFamilyFanOut(args: {
 // the chokepoint the existing code already computes, so a notification type
 // added to REVOKING_TYPES tomorrow is covered here without anyone remembering.
 //
-// 📌 EXPIRED and GRACE_PERIOD_EXPIRED are tidy-ups for the family exactly as
+// NOTE: EXPIRED and GRACE_PERIOD_EXPIRED are tidy-ups for the family exactly as
 // they are for the owner: `familyProExpiresAt` is the owner's expiry copied, so
 // a natural expiry has already lapsed every member's grant on the clock. Writing
 // null makes the stored documents agree with what the resolver computes. Harmless
 // and consistent, which is the same reason they are in REVOKING_TYPES at all.
 //
-// 🔴 AND THE PRODUCT MATTERS MORE THAN THE DIRECTION. Only the FAMILY product
+// CRITICAL: AND THE PRODUCT MATTERS MORE THAN THE DIRECTION. Only the FAMILY product
 // funds a family. A refund of the owner's personal `sub_pro_monthly` must not
 // revoke their family's grant, and a renewal of it must not create one — those
 // are two different subscriptions that happen to belong to one person. An effect
@@ -541,7 +541,7 @@ import type {SubscriptionEffect} from './appStoreNotifications';
  * returned grant unconditionally would then touch nothing, which is the
  * behaviour worth having by construction rather than by the caller's care.
  *
- * ⚠️ Fails CLOSED in the direction that matters: an unrecognised or malformed
+ * WARNING: Fails CLOSED in the direction that matters: an unrecognised or malformed
  * effect revokes nothing and grants nothing, and an invalid family on a
  * revoking effect still revokes — because [planFamilyFanOut] only validates for
  * a GRANT, and refusing to revoke a broken family would leave exactly the stale
@@ -589,7 +589,7 @@ export function planFamilyFanOutForEffect(args: {
 // is allowed; index.ts writes it.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE ENTITLEMENT GATE MUST READ THE OWNER'S **OWN PAID** TIER, NOT THEIR
+// CRITICAL: THE ENTITLEMENT GATE MUST READ THE OWNER'S **OWN PAID** TIER, NOT THEIR
 // EFFECTIVE ONE — AND THE OBVIOUS CHOICE IS THE BROKEN ONE
 // ---------------------------------------------------------------------------
 //
@@ -626,7 +626,7 @@ export function planFamilyFanOutForEffect(args: {
 //   WHAT ENTITLES THE SEATS    — `sub_family_monthly` and nothing else.
 //                                (`planFamilyFanOutForEffect`)
 //
-// 🔑 AND THE REASON THE GATE COULD NOT BE TIGHTENED BY REWORDING THE CHECK IT
+// KEY: AND THE REASON THE GATE COULD NOT BE TIGHTENED BY REWORDING THE CHECK IT
 // ALREADY MADE: `ownPaidTier` is a TIER, and `SUBSCRIPTION_PRODUCT_TIERS` maps
 // BOTH `sub_pro_monthly` AND `sub_family_monthly` to `pro` ON PURPOSE — "family
 // is a SOURCE of pro, not a third tier". `resolveOwnPaidTier` returns the
@@ -638,7 +638,7 @@ export function planFamilyFanOutForEffect(args: {
 // change; a third tier there would break the member entitlement that depends on
 // the owner reading as plain `pro`.
 //
-// ⚠️ WHAT THIS CLOSES: a personal-Pro owner could create a family, invite four
+// WARNING: WHAT THIS CLOSES: a personal-Pro owner could create a family, invite four
 // people, and every one of them got NOTHING — an empty shell, silently, with no
 // error anywhere. W2-156 recorded that as "a UX trap, not a correctness bug"
 // whose remedy was "a CLIENT warning at create/invite time ... NOT a third rule
@@ -646,7 +646,7 @@ export function planFamilyFanOutForEffect(args: {
 // a comment prescribing a client-side remedy would send the next window to fix
 // something that can no longer happen. (W2-177)
 //
-// 📌 THE COST IS REAL AND WAS ACCEPTED, NOT OVERLOOKED: an existing Pro
+// NOTE: THE COST IS REAL AND WAS ACCEPTED, NOT OVERLOOKED: an existing Pro
 // subscriber must cancel and rebuy to invite their household. The price ladder
 // is what pays for it — Family at 12.99 is not defensible against Pro at 5.99
 // if Pro quietly creates families too.
@@ -655,15 +655,15 @@ export function planFamilyFanOutForEffect(args: {
 /**
  * The next uid → string map — add one, drop everyone no longer in the roster.
  *
- * 📌 RENAMED FROM `namesFor` IN W2-88 because it now backs `memberAvatars` too.
+ * NOTE: RENAMED FROM `namesFor` IN W2-88 because it now backs `memberAvatars` too.
  * A helper called "names" quietly managing avatars is the kind of mislabel a
  * later reader trusts.
  *
- * 🔑 PURE, AND SEPARATE FROM THE ROSTER WRITE, so the two cannot drift: every
+ * KEY: PURE, AND SEPARATE FROM THE ROSTER WRITE, so the two cannot drift: every
  * path that changes membership passes through this, and a name for somebody not
  * in `memberUids` cannot survive it.
  *
- * ⚠️ AN ABSENT OR EMPTY NAME WRITES NO ENTRY RATHER THAN AN EMPTY STRING. A uid
+ * WARNING: AN ABSENT OR EMPTY NAME WRITES NO ENTRY RATHER THAN AN EMPTY STRING. A uid
  * mapped to '' renders as a member with a blank name, which looks like a bug in
  * the page; a uid with no entry lets the reader choose its own fallback. The
  * Auth record can genuinely have no displayName, so this is the normal case and
@@ -691,7 +691,7 @@ export function memberMapFor(
 
 export type FamilyCreateRefusal =
   | 'not-entitled'
-  // 🔴 W2-177. SEPARATE FROM `not-entitled` ON PURPOSE, because the two want
+  // CRITICAL: W2-177. SEPARATE FROM `not-entitled` ON PURPOSE, because the two want
   // opposite things from the person reading them: `not-entitled` pays for
   // nothing and is sold a subscription, while this one ALREADY PAYS and is sold
   // an UPGRADE. Collapsing them would ship "subscribe to Pro" to somebody
@@ -725,7 +725,7 @@ export function planFamilyCreation(args: {
   ownerUid: string;
   ownPaidTier: string;
   /**
-   * 🔴 REQUIRED, NOT OPTIONAL, AND THAT IS THE POINT. An optional product id
+ * CRITICAL: REQUIRED, NOT OPTIONAL, AND THAT IS THE POINT. An optional product id
    * would still fail closed at runtime, but a call site that forgot it would
    * compile and then refuse EVERY create in production — a gate that is wrong
    * in the quiet direction. Required means forgetting it is a tsc error.
@@ -755,7 +755,7 @@ export function planFamilyCreation(args: {
     ownerBinWeekday,
   } = args;
 
-  // 🔴 SINGLE OWNERSHIP, CHECKED FIRST. `ownedFamilies` in
+  // CRITICAL: SINGLE OWNERSHIP, CHECKED FIRST. `ownedFamilies` in
   // appStoreNotificationsV2 reads the owner's family with `.limit(1)` against
   // an invariant that nothing enforced — "a subscriber owns at most one family;
   // a second would be a defect in the creating callable". This IS the creating
@@ -767,17 +767,17 @@ export function planFamilyCreation(args: {
   // Fails CLOSED: an unrecognised tier string normalises to `free` upstream, so
   // a value nobody understands refuses rather than grants.
   //
-  // 📌 CHECKED BEFORE THE PRODUCT so somebody paying for nothing is told they
+  // NOTE: CHECKED BEFORE THE PRODUCT so somebody paying for nothing is told they
   // need a subscription, not that they need to upgrade the one they do not
   // have. Order is the whole difference between the two messages being right.
   if (ownPaidTier === 'free') return {ok: false, refusal: 'not-entitled'};
 
-  // 🔴 W2-177 — THE PRODUCT, NOT THE TIER. Both paid products resolve to the
+  // CRITICAL: W2-177 — THE PRODUCT, NOT THE TIER. Both paid products resolve to the
   // tier `pro`, so this is the only check that can tell a Family buyer from a
   // Pro buyer. Same rule as the fan-out's, deliberately, rather than a looser
   // sibling: what may CREATE a family is now exactly what ENTITLES its seats.
   //
-  // ⚠️ THIS ALSO REFUSES A PROMO-GRANTED PRO, and that is a real cohort rather
+  // WARNING: THIS ALSO REFUSES A PROMO-GRANTED PRO, and that is a real cohort rather
   // than a hypothetical: `claimRetentionPromo` sets the tier to `pro` and
   // deliberately writes NO `subscriptionProductId` ("there is no Apple product
   // behind this grant"). Such an account reaches here with `undefined` and is
@@ -792,13 +792,13 @@ export function planFamilyCreation(args: {
     ok: true,
     family: {
       ownerUid,
-      // 🔑 THE OWNER IS A MEMBER FROM THE FIRST INSTANT. FamilyDoc requires it
+      // KEY: THE OWNER IS A MEMBER FROM THE FIRST INSTANT. FamilyDoc requires it
       // ("a member who happens to pay, not a separate role outside the
       // roster"), and `familyInvalidReason` returns 'owner-not-a-member'
       // otherwise — so a family created without this line is invalid on
       // arrival and every fan-out fails closed against it.
       //
-      // ⚠️ This also means a NEW family already holds 1 of FAMILY_CAP's 5
+      // WARNING: This also means a NEW family already holds 1 of FAMILY_CAP's 5
       // seats. It is deliberately BELOW FAMILY_MIN_MEMBERS (2) at this moment:
       // a family of one is not yet worth existing, but it is the only way to
       // reach two, and refusing it would make families uncreatable. Validity is
@@ -807,20 +807,20 @@ export function planFamilyCreation(args: {
       createdAtMs: nowMs,
       memberNames: memberMapFor({}, {add: {uid: ownerUid, name: ownerDisplayName}}),
       memberAvatars: memberMapFor({}, {add: {uid: ownerUid, name: ownerAvatarId}}),
-      // 🔑 SEEDED SO THE DISAGREEMENT CANNOT OCCUR, RATHER THAN MERELY BEING
+      // KEY: SEEDED SO THE DISAGREEMENT CANNOT OCCUR, RATHER THAN MERELY BEING
       // FIXABLE. W2-118 gave the owner a way to set one shared bin day; until
       // they used it a NEW family had none, so every member fell back to their
       // own device weekday and `#490`'s split-document bug was the DEFAULT
       // state of every family for as long as nobody opened the setting.
       // Seeding from the founder closes the window instead of shortening it.
       //
-      // 🔴 AND NO DEFAULT IS INVENTED WHEN THE OWNER HAS NONE. An absent
+      // CRITICAL: AND NO DEFAULT IS INVENTED WHEN THE OWNER HAS NONE. An absent
       // weekday stays absent: a family that prompts is visibly incomplete,
       // while a family silently assigned Monday looks finished and is wrong,
       // and nobody audits a plausible value. Same reason the field itself is
       // optional — a server-chosen bin day is one nobody picked.
       //
-      // ⚠️ AN INVALID VALUE IS DROPPED, NOT REFUSED. A malformed weekday from
+      // WARNING: AN INVALID VALUE IS DROPPED, NOT REFUSED. A malformed weekday from
       // some future client must not be able to stop a family being created;
       // creating the family is the important act and the bin day is
       // recoverable afterwards by the owner. Refusing here would trade a
@@ -837,7 +837,7 @@ export const FAMILY_CREATE_REFUSALS: Record<
   FamilyCreateRefusal,
   {code: 'failed-precondition' | 'already-exists'; message: string}
 > = {
-  // ⚠️ THE MESSAGE MOVED WITH THE GATE. It used to read "A Pro subscription is
+  // WARNING: THE MESSAGE MOVED WITH THE GATE. It used to read "A Pro subscription is
   // required to start a family", which after W2-177 is precisely the sentence
   // that is NOT true — a Pro subscription is the thing that is no longer
   // sufficient. A shipped string that contradicts the rule beside it misdirects
@@ -864,7 +864,7 @@ export const FAMILY_CREATE_REFUSALS: Record<
 //
 // W2-83.
 //
-// 🔴 AN UNGATED JOIN IS A FREE-PRO VECTOR, AND THE OBVIOUS SIGNATURE IS THE
+// CRITICAL: AN UNGATED JOIN IS A FREE-PRO VECTOR, AND THE OBVIOUS SIGNATURE IS THE
 // UNGATED ONE. `joinFamily(familyId)` lets anyone who learns a family id add
 // themselves and be entitled: `familyProExpiresAt` is copied to every member by
 // the fan-out, so the attacker gets Pro until the cap fills, and the owner's
@@ -872,13 +872,13 @@ export const FAMILY_CREATE_REFUSALS: Record<
 // secret — it appears in client logs, in support screenshots, in any shared
 // device — so unguessability is not a defence, it is a delay.
 //
-// 🔑 SO THE INVITE IS THE CAPABILITY, NOT THE FAMILY ID. The owner mints a
+// KEY: SO THE INVITE IS THE CAPABILITY, NOT THE FAMILY ID. The owner mints a
 // short-lived code; the joiner redeems it. That is exactly the shape
 // housemateToken.ts already uses for the same problem — a stranger must not add
 // themselves to your house — and it is exactly the QR flow the family spec
 // describes ("a parent scans the kid's phone").
 //
-// ⚠️ REUSING THE SHAPE IS NOT ALIASING THE RELATION. A family member does NOT
+// WARNING: REUSING THE SHAPE IS NOT ALIASING THE RELATION. A family member does NOT
 // become a housemate (#383) and this does not touch `users/{uid}.housemates`.
 // The two systems share a proven token pattern and nothing else — family is
 // billing plus shared chores, housemates is a peer roster that need not agree.
@@ -921,19 +921,19 @@ export type FamilyJoinPlan =
       /** `memberAvatars` AFTER the join. */
       memberAvatars: Record<string, string>;
       /**
-       * 🔴 THE JOINER IS NOW PAYING TWICE, AND WE CANNOT STOP IT.
+ * CRITICAL: THE JOINER IS NOW PAYING TWICE, AND WE CANNOT STOP IT.
        *
        * A callable cannot cancel a StoreKit subscription — only the account
        * holder can, through Apple — so a joiner with their own active Pro keeps
        * being billed for it while also receiving the family grant. Pretending
        * otherwise would be worse than saying it.
        *
-       * 🔑 SILENT double-billing is the failure; the double-billing itself is
+ * KEY: SILENT double-billing is the failure; the double-billing itself is
        * Apple's to refund. So this is RETURNED rather than logged, so the client
        * can say it in words to the person it is happening to, at the moment it
        * starts.
        *
-       * ⚠️ Computed from the joiner's OWN PAID tier, never the effective one —
+ * WARNING: Computed from the joiner's OWN PAID tier, never the effective one —
        * the effective tier would be `pro` for anyone already carrying a family
        * grant, and this would then fire for people paying nothing. Same trap as
        * the creation gate, approached from the other side.
@@ -988,7 +988,7 @@ export function planFamilyJoin(args: {
   // anything about the family it names.
   if (nowMs > inviteExpiresAtMs) return {ok: false, refusal: 'invite-expired'};
 
-  // 🔑 IDEMPOTENT, AND BEFORE THE CAP. Redeeming twice — a double tap, a retry
+  // KEY: IDEMPOTENT, AND BEFORE THE CAP. Redeeming twice — a double tap, a retry
   // on a flaky connection — must not be an error, and must not consume a seat
   // that is already theirs. Checked before the cap so the last member of a FULL
   // family can still re-redeem without being told the family is full.
@@ -1004,7 +1004,7 @@ export function planFamilyJoin(args: {
     return {ok: false, refusal: 'already-in-another-family'};
   }
 
-  // 🔴 THE CAP IS ENFORCED AT THE JOIN, NOT ONLY AT CREATE, and it counts the
+  // CRITICAL: THE CAP IS ENFORCED AT THE JOIN, NOT ONLY AT CREATE, and it counts the
   // TOTAL including the owner — FAMILY_CAP is 5 people, so four besides the
   // owner. A cap checked only where the document is born is not a cap.
   if (family.memberUids.length >= FAMILY_CAP) {
@@ -1064,7 +1064,7 @@ export const FAMILY_JOIN_REFUSALS: Record<
 // W2-84. Until now a family could be created and joined and never left, and a
 // member's grant had no revoking event except the OWNER's own refund.
 //
-// 🔴 THAT IS A FREE-PRO VECTOR WITH A LONGER FUSE THAN THE INVITE ONE.
+// CRITICAL: THAT IS A FREE-PRO VECTOR WITH A LONGER FUSE THAN THE INVITE ONE.
 // `familyProExpiresAt` is a COPY of the owner's expiry, so a member who walks
 // away keeps Pro until that clock runs out — up to a full billing period of
 // entitlement funded by somebody who is no longer sharing anything with them.
@@ -1072,7 +1072,7 @@ export const FAMILY_JOIN_REFUSALS: Record<
 // write; a revoke that is a second step is a revoke that a crash skips.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE OWNER LEAVING: IT DISSOLVES THE FAMILY. My reading, and the argument.
+// CRITICAL: THE OWNER LEAVING: IT DISSOLVES THE FAMILY. My reading, and the argument.
 // ---------------------------------------------------------------------------
 //
 // Three options were open — refuse, transfer, dissolve — and the deciding fact
@@ -1110,7 +1110,7 @@ export type FamilyDepartureRefusal =
 /**
  * What a departure changes.
  *
- * 🔑 `revokedUids` IS SEPARATE FROM `memberUids` BECAUSE THEY ARE DIFFERENT
+ * KEY: `revokedUids` IS SEPARATE FROM `memberUids` BECAUSE THEY ARE DIFFERENT
  * WRITES TO DIFFERENT DOCUMENTS. The roster lives on the family; the grant
  * lives on each user. A plan that returned only the new roster would leave the
  * caller to infer who lost their grant, and inferring it is how the revoke gets
@@ -1137,14 +1137,14 @@ export type FamilyDeparturePlan =
 /**
  * One member leaves, or is removed by the owner.
  *
- * ⚠️ IDEMPOTENT BY DESIGN, AND "NOT A MEMBER" IS A SUCCESS RATHER THAN A
+ * WARNING: IDEMPOTENT BY DESIGN, AND "NOT A MEMBER" IS A SUCCESS RATHER THAN A
  * REFUSAL. The caller asked for an end state — this person is not in this
  * family — and that end state already holds. Reporting an error would say the
  * first attempt failed, and a client that believed it would retry forever or,
  * worse, tell the user their departure did not work. Same reasoning as W2-81's
  * union: the goal is a state, not an event.
  *
- * 🔑 IT DOES NOT REWRITE THE REMAINING MEMBERS' GRANTS. The owner still pays and
+ * KEY: IT DOES NOT REWRITE THE REMAINING MEMBERS' GRANTS. The owner still pays and
  * their entitlement is unchanged, so touching them would risk moving a correct
  * value based on an expiry this call had to re-read. Minimum blast radius: the
  * only grant that changes is the one that must.
@@ -1169,9 +1169,9 @@ export function planFamilyDeparture(args: {
   const isOwner = family.ownerUid === actorUid;
   if (!isSelf && !isOwner) return {ok: false, refusal: 'not-authorised'};
 
-  // 🔴 THE OWNER CANNOT LEAVE, AND THE REFUSAL NAMES THE ALTERNATIVE.
+  // CRITICAL: THE OWNER CANNOT LEAVE, AND THE REFUSAL NAMES THE ALTERNATIVE.
   //
-  // 📌 ITS POSITION ABOVE THE NO-OP BRANCH IS DEFENSIVE, NOT LOAD-BEARING, AND
+  // NOTE: ITS POSITION ABOVE THE NO-OP BRANCH IS DEFENSIVE, NOT LOAD-BEARING, AND
   // I CHECKED RATHER THAN ASSUMED. Moving it below changes nothing today,
   // proven by mutation: `isValidFamily` refuses `owner-not-a-member`, so the
   // owner is ALWAYS in `memberUids` and can never reach the "not a member"
@@ -1205,12 +1205,12 @@ export function planFamilyDeparture(args: {
     ok: true,
     noop: false,
     memberUids: remaining,
-    // 🔑 PRUNED, NOT LEFT BEHIND. A departed member's name lingering on the
+    // KEY: PRUNED, NOT LEFT BEHIND. A departed member's name lingering on the
     // family document is readable by everyone still in it — a small leak about
     // somebody who left, and stale by definition.
     memberNames: memberMapFor(family.memberNames, {keepOnly: remaining}),
     memberAvatars: memberMapFor(family.memberAvatars, {keepOnly: remaining}),
-    // 🔴 THE REVOKE IS THE POINT OF THIS FUNCTION. Without it the leaver keeps a
+    // CRITICAL: THE REVOKE IS THE POINT OF THIS FUNCTION. Without it the leaver keeps a
     // copied expiry worth up to a full billing period.
     revokedUids: [targetUid],
     dissolved: false,
@@ -1220,7 +1220,7 @@ export function planFamilyDeparture(args: {
 /**
  * The owner dissolves the family.
  *
- * 🔴 EVERY MEMBER IS REVOKED, INCLUDING THE OWNER'S OWN `familyProExpiresAt`.
+ * CRITICAL: EVERY MEMBER IS REVOKED, INCLUDING THE OWNER'S OWN `familyProExpiresAt`.
  * The owner's `subscriptionTier` is a different field and is NOT touched — they
  * keep the subscription they are paying for; what ends is the family grant
  * derived from it. Leaving their family grant in place would make
@@ -1287,7 +1287,7 @@ export type FamilyBinDayPlan =
 /**
  * Whether [value] is a weekday this app can key a bin date from.
  *
- * 🔑 ONE VALIDATOR, USED BY BOTH WRITERS, AND THAT IS THE WHOLE REASON IT IS A
+ * KEY: ONE VALIDATOR, USED BY BOTH WRITERS, AND THAT IS THE WHOLE REASON IT IS A
  * FUNCTION. `planFamilyBinDay` (the owner changing it) and
  * `planFamilyCreation` (the family being born) both decide what a legal bin
  * weekday is. Two copies of `>= 1 && <= 7 && Number.isInteger` would agree on
@@ -1296,7 +1296,7 @@ export type FamilyBinDayPlan =
  * whose stored weekday one path accepts and the other rejects, which is a
  * worse version of the bug this whole feature exists to close.
  *
- * ⚠️ INTEGER, NOT JUST IN RANGE. `0` and `8` are the obvious rejects; `2.5`,
+ * WARNING: INTEGER, NOT JUST IN RANGE. `0` and `8` are the obvious rejects; `2.5`,
  * `NaN` and `Infinity` are the ones that pass a bare comparison and produce a
  * bin date that never arrives.
  */
@@ -1312,18 +1312,18 @@ export function isValidBinWeekday(value: unknown): value is number {
 /**
  * Whether [actorUid] may set this family's shared bin day, and to what.
  *
- * 🔴 ONLY THE OWNER SETS IT — the same authority split `assignFamilyChore` and
+ * CRITICAL: ONLY THE OWNER SETS IT — the same authority split `assignFamilyChore` and
  * `removeMember` draw. A bin day any member can change is a household argument
  * encoded as a race: two members alternating writes would each see the other's
  * takeover vanish, which is the SAME symptom as the bug this fixes and a
  * harder one to explain.
  *
- * ⚠️ AUTHORITY IS CHECKED BEFORE THE VALUE, deliberately and for the reason
+ * WARNING: AUTHORITY IS CHECKED BEFORE THE VALUE, deliberately and for the reason
  * `planChoreAssignment` records: a non-owner who could tell `invalid-weekday`
  * from `not-the-owner` learns whether their guess was well-formed, and a
  * refusal that varies by input is a probe.
  *
- * 🔑 THE WEEKDAY IS VALIDATED AS AN INTEGER 1–7 RATHER THAN "A NUMBER".
+ * KEY: THE WEEKDAY IS VALIDATED AS AN INTEGER 1–7 RATHER THAN "A NUMBER".
  * `8` and `0` are the obvious rejects; `2.5` and `NaN` are the ones that would
  * survive a range check and produce a bin DATE that never arrives, which is
  * indistinguishable at the client from the bug this brief exists to fix.

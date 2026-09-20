@@ -4,7 +4,7 @@
 // be bought.
 //
 // ---------------------------------------------------------------------------
-// 🔴 WHY THIS EXISTS: THE SAME BUG, TWICE, ONE FLOOR APART
+// CRITICAL: WHY THIS EXISTS: THE SAME BUG, TWICE, ONE FLOOR APART
 // ---------------------------------------------------------------------------
 //
 // #415 found `premium_offer_spring` — a weekly-offer product id that existed
@@ -16,7 +16,7 @@
 // being paid: `FAMILY_PRODUCT_ID` is `sub_family_monthly`, which this gate found
 // registered NOWHERE the repo could see.
 //
-// 📌 CORRECTED 2026-08-24. This paragraph used to end "and App Store Connect has
+// NOTE: CORRECTED 2026-08-24. This paragraph used to end "and App Store Connect has
 // never had it … the level the family plan would occupy is EMPTY". That was
 // wrong, and wrong in the direction that costs the most work: the product had
 // existed in ASC the whole time — Apple ID 6801924400, sitting at level 4 and
@@ -25,7 +25,7 @@
 // was reasoning from this comment. A gate may say "I cannot find this"; it may
 // not promote that into "it does not exist."
 //
-// 🔑 AND THE FAMILY FAILURE IS QUIETER THAN THE SHOP ONE, WHICH IS WHY IT
+// KEY: AND THE FAMILY FAILURE IS QUIETER THAN THE SHOP ONE, WHICH IS WHY IT
 // SURVIVED LONGER. A missing shop product THROWS at the client. A missing
 // subscription product throws nothing: `planFamilyFanOutForEffect` returns `[]`
 // unless `effect.productId === FAMILY_PRODUCT_ID`, so no notification for that
@@ -37,7 +37,7 @@
 // THE BELIEVED SET IS DERIVED FROM THE CODE, NEVER RETYPED
 // ---------------------------------------------------------------------------
 //
-// ⚠️ A HAND-WRITTEN LIST OF "ids the backend uses" RECREATES THE BUG INSIDE THE
+// WARNING: A HAND-WRITTEN LIST OF "ids the backend uses" RECREATES THE BUG INSIDE THE
 // GATE: the same typo, the same omission, and a green suite either way. So the
 // importable constants are IMPORTED — a rename that breaks the import fails to
 // compile rather than silently parsing to an empty set — and the one table that
@@ -57,7 +57,7 @@ const REPO = path.resolve(__dirname, '../../..');
  * Products the app can actually buy, from the one machine-readable registry
  * this repo has.
  *
- * 📌 `ios/Configuration.storekit` is a proxy for App Store Connect, not a copy
+ * NOTE: `ios/Configuration.storekit` is a proxy for App Store Connect, not a copy
  * of it — it is what the SIMULATOR serves. It is the best available registry
  * and its limits are stated in the ledger below rather than assumed away.
  */
@@ -77,7 +77,7 @@ function registryIds(): Set<string> {
 /**
  * The sponge packs, parsed from `index.ts`.
  *
- * ⚠️ PARSED RATHER THAN IMPORTED BECAUSE `SPONGE_PACKS` IS FUNCTION-LOCAL. That
+ * WARNING: PARSED RATHER THAN IMPORTED BECAUSE `SPONGE_PACKS` IS FUNCTION-LOCAL. That
  * is a weaker link than the imports above and is fenced accordingly: anchored
  * to the declaration, and asserted to find exactly three, so a moved or renamed
  * table fails LOUD instead of contributing an empty set to a check about
@@ -100,7 +100,7 @@ function spongePackIds(): string[] {
  * Every product id the backend believes a player can buy, mapped to EVERY place
  * that believes it.
  *
- * 🔑 ALL SOURCES, NOT THE LAST ONE. An earlier draft used a last-wins map and
+ * KEY: ALL SOURCES, NOT THE LAST ONE. An earlier draft used a last-wins map and
  * the live red named only `SUBSCRIPTION_PRODUCT_TIERS` for `sub_family_monthly`
  * — while `FAMILY_PRODUCT_ID` believes in it too, and fixing the product means
  * touching BOTH. A gate that names one of two sites sends the reader to do half
@@ -129,13 +129,13 @@ function believedIds(): Map<string, string[]> {
  * Believed but NOT registered — AND THAT IS A DEFECT, kept here so the omission
  * is visible and counted rather than blessed.
  *
- * 🔑 Same construction as `KNOWN_UNREACHABLE` in moduleReachability.test.ts:
+ * KEY: Same construction as `KNOWN_UNREACHABLE` in moduleReachability.test.ts:
  * you cannot silence this gate by pasting an id, only by writing what breaks
  * because of it. Fixing one means creating the product or changing the code, not
  * deleting the entry.
  */
 const KNOWN_MISSING: Record<string, string> = {
-  // 🔑 EMPTY, AND THAT IS THE POINT — the one entry EXPIRED BY ITS OWN TERMS.
+  // KEY: EMPTY, AND THAT IS THE POINT — the one entry EXPIRED BY ITS OWN TERMS.
   //
   // `sub_family_monthly` was ledgered as "THE FAMILY SUBSCRIPTION HAS NEVER
   // EXISTED … in neither ASC nor Configuration.storekit", and both clauses are
@@ -150,7 +150,7 @@ const KNOWN_MISSING: Record<string, string> = {
   // the first has happened. It is removed because that condition was MET, not
   // to quiet the gate; the assertion below caught it within hours of #587.
   //
-  // ⚠️ ONE THING IS STILL TRUE AND DELIBERATELY NOT PARKED HERE. At status
+  // WARNING: ONE THING IS STILL TRUE AND DELIBERATELY NOT PARKED HERE. At status
   // "Prepare for Submission" the product will NOT be returned by StoreKit in
   // production (appstore-connect-facts.md:88) — it EXISTS but does not yet
   // RESOLVE. That is a store-readiness fact, not a missing-product one, and

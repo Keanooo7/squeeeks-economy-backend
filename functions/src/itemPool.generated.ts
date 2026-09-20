@@ -88,12 +88,12 @@ export const SEED_ITEMS_GENERATED: SeedItem[] = [
   // The first per-character outfit set, which is what `SeedItem.subject`'s
   // "'character' until per-character outfit sets land" comment anticipated.
   //
-  // 🔑 THESE ARE THE ONLY CHARACTER ROWS WITH ART. The five profession rows
+  // KEY: THESE ARE THE ONLY CHARACTER ROWS WITH ART. The five profession rows
   // above (cleaner/gardener/chef/knight/astronaut) have never had an assetPath
   // and render as MaterialIcons glyphs; these eleven each ship an avatar and a
   // die-cut album card, and equipping one visibly changes the player's avatar.
   //
-  // 🔑 golden_suit IS RARE, NOT LEGENDARY, and that is a decision not an
+  // KEY: golden_suit IS RARE, NOT LEGENDARY, and that is a decision not an
   // oversight. decisions-2026-08-05-legendary-tier.md rules that a legendary
   // must change the SILHOUETTE; rendered correctly per Style B (no metal, no
   // gleam, no aura) the golden suit is the black suit in a warmer colour with
@@ -101,7 +101,7 @@ export const SEED_ITEMS_GENERATED: SeedItem[] = [
   // bubbles) do change the outline and carry the tier on their own, so the
   // legendary cell stays non-empty and the coverage test cannot go red.
   //
-  // ⚠️ 4 common / 5 rare / 2 legendary. The ladder is rare-heavy because the
+  // WARNING: 4 common / 5 rare / 2 legendary. The ladder is rare-heavy because the
   // golden suit moved down, not because a rare was authored to fill it.
   { id: 'char_fox_baseball_hat',       type: 'character', category: 'character',    subject: 'fox_outfit',     name: 'Baseball Cap',           rarity: 'common', artUrl: '' },
   { id: 'char_fox_graphic_tee',        type: 'character', category: 'character',    subject: 'fox_outfit',     name: 'Graphic Tee',            rarity: 'common', artUrl: '' },
@@ -119,7 +119,7 @@ export const SEED_ITEMS_GENERATED: SeedItem[] = [
   // set by FINISH: four commons that are palette swaps of the shipped mesh,
   // one rare two-tone of it, one legendary.
   //
-  // 📌 `furn_tv_stand_console` IS A LEGENDARY THAT DOES NOT CHANGE THE
+  // NOTE: `furn_tv_stand_console` IS A LEGENDARY THAT DOES NOT CHANGE THE
   // OUTLINE, which decisions-2026-08-05-legendary-tier.md otherwise forbids,
   // and it is argued rather than overlooked. #547 records tv_stand as
   // `verify_shape`-WAIVED (IoU 0.778/0.779 against an 0.80 floor), so a
@@ -127,7 +127,7 @@ export const SEED_ITEMS_GENERATED: SeedItem[] = [
   // all; its ladder is built from material-slot count instead. Do not
   // re-derive this as a defect.
   //
-  // 📌 BOTH SUBJECTS ARE NOW IN ROTATION (W2-130). Wiring the rows was not
+  // NOTE: BOTH SUBJECTS ARE NOW IN ROTATION (W2-130). Wiring the rows was not
   // unbenching them — that took the separate ruling recorded on
   // DAILY_SUBJECT_POOLS above, which Brendan gave on 2026-08-19. `furniture` is
   // ['sofa', 'armchair', 'tv_stand'], so sofa now appears one day in three.
@@ -206,7 +206,7 @@ export const SEED_ITEMS_GENERATED: SeedItem[] = [
   { id: 'furn_bed_single_ivory',       type: 'furniture', category: 'bed_single',   subject: 'bed_single',     name: 'Ivory Single Bed',       rarity: 'common', artUrl: '' },
   { id: 'furn_bed_single_sage',        type: 'furniture', category: 'bed_single',   subject: 'bed_single',     name: 'Sage Single Bed',        rarity: 'common', artUrl: '' },
   { id: 'furn_bed_single_two_tone',    type: 'furniture', category: 'bed_single',   subject: 'bed_single',     name: 'Two-Tone Single Bed',    rarity: 'rare', artUrl: '' },
-  // 🔴 RARITY AND FAMILY ARE PROVISIONAL - W1-201, pending Brendan's confirmation.
+  // CRITICAL: RARITY AND FAMILY ARE PROVISIONAL - W1-201, pending Brendan's confirmation.
   // They are the MECHANICAL derivation, not a ruling, and the two rules agree:
   //   . furn_bunk_race_car, the only other `race_car` token in the seed, is committed
   //     at legendary/oakhouse - one precedent, zero conflicts.
@@ -294,7 +294,7 @@ export const SEED_ITEMS_GENERATED: SeedItem[] = [
   { id: 'furn_bed_double_ivory',       type: 'furniture', category: 'bed_double',   subject: 'bed_double',     name: 'Ivory Double Bed',       rarity: 'common', artUrl: '' },
   { id: 'furn_bed_double_sage',        type: 'furniture', category: 'bed_double',   subject: 'bed_double',     name: 'Sage Double Bed',        rarity: 'common', artUrl: '' },
   { id: 'furn_bed_double_two_tone',    type: 'furniture', category: 'bed_double',   subject: 'bed_double',     name: 'Two-Tone Double Bed',    rarity: 'rare', artUrl: '' },
-  // 🔴 RARITY AND FAMILY ARE PROVISIONAL - W1-201, pending Brendan's confirmation.
+  // CRITICAL: RARITY AND FAMILY ARE PROVISIONAL - W1-201, pending Brendan's confirmation.
   // They are the MECHANICAL derivation, not a ruling, and the two rules agree:
   //   . furn_bunk_race_car, the only other `race_car` token in the seed, is committed
   //     at legendary/oakhouse - one precedent, zero conflicts.

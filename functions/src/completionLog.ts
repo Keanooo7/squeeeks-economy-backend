@@ -5,7 +5,7 @@
 // W2-11. Brendan's ruling: "they are done then document — work started during
 // that day still counts towards it."
 //
-// 🔑 WHAT THIS CHANGES, AND WHY IT IS A DESIGN FIX RATHER THAN A GUARD.
+// KEY: WHAT THIS CHANGES, AND WHY IT IS A DESIGN FIX RATHER THAN A GUARD.
 //
 // Before this, the only trace of a completion was `completedDate` on the task
 // document itself — a single scalar the client sets on completion and NULLS on
@@ -23,7 +23,7 @@
 // timestamp: un-completion cannot retract it, and the record is the history that
 // recomputation needs.
 //
-// ⚠️ UN-COMPLETION WRITES NOTHING. It is not an event, it is the absence of one.
+// WARNING: UN-COMPLETION WRITES NOTHING. It is not an event, it is the absence of one.
 // Do NOT add retraction records — that reintroduces exactly the retractability
 // this removes, one level up, and it would be harder to see the second time.
 //
@@ -49,11 +49,11 @@
 //
 // READ cost is bounded and does NOT grow with history: every query here filters
 // on `dayKey`, so a completion reads O(tasks completed today), never O(all
-// completions). ⚠️ That is the property to protect. A future `orderBy` over the
+// completions). WARNING: That is the property to protect. A future `orderBy` over the
 // whole collection, or a quest that scans all history on the hot path, converts
 // a fixed cost into one that grows forever.
 //
-// ⚠️ W2-14 ADDED A FIELD, AND HERE IS WHAT IT COSTS — computed, not waved
+// WARNING: W2-14 ADDED A FIELD, AND HERE IS WHAT IT COSTS — computed, not waved
 // through, because "a small number times a large one" is exactly the shape that
 // gets nodded past. Firestore charges the field NAME on every document:
 //
@@ -66,7 +66,7 @@
 // bounded-read property below is untouched. The field is cheap; it is worth
 // knowing that it is cheap rather than assuming it.
 //
-// ⚠️ NOTHING PRUNES THIS COLLECTION TODAY. That is a deliberate, stated choice,
+// WARNING: NOTHING PRUNES THIS COLLECTION TODAY. That is a deliberate, stated choice,
 // not an oversight: the recompute ability the log exists to provide is exactly
 // the thing a prune destroys, so the retention window is a product decision
 // about how far back a quest may be recomputed. `loggedAt` is written as a real
@@ -84,7 +84,7 @@ export interface CompletionRecord {
   /**
    * The task's title AS IT WAS WHEN COMPLETED.
    *
-   * 📌 D93 (task documents have no stable semantic key) is NOT fixed here and
+ * NOTE: D93 (task documents have no stable semantic key) is NOT fixed here and
    * this does not pretend to fix it. But recording the title at completion time
    * preserves what the task was CALLED when it was done, which is strictly more
    * than the mutable task document retains — rename a task and its own doc
@@ -98,14 +98,14 @@ export interface CompletionRecord {
   /**
    * How many tasks EXISTED in `room` at the moment this completion was recorded.
    *
-   * 🔑 W2-14. THE ONLY FIELD HERE THAT IS NOT A FACT ABOUT THE TASK — it is a
+ * KEY: W2-14. THE ONLY FIELD HERE THAT IS NOT A FACT ABOUT THE TASK — it is a
    * fact about the room, and it is on the record because a SWEEP IS A RATIO,
    * not a count. "Every task in the bathroom" cannot be judged from a list of
    * completions alone; it needs the denominator, and the denominator is the one
    * thing that is unrecoverable after the fact. A room's task list changes, and
    * nothing anywhere records what it used to be.
    *
-   * ⚠️ THIS FIELD EXISTS BECAUSE IT WAS FREE TO ADD AND IMPOSSIBLE TO ADD LATER.
+ * WARNING: THIS FIELD EXISTS BECAUSE IT WAS FREE TO ADD AND IMPOSSIBLE TO ADD LATER.
    * W2-13 found sweeps unrecomputable and the log already a year cheaper to fix
    * than it would ever be again: it was EMPTY. Backfilling it would mean
    * stamping today's census onto old records, which is exactly the guess that
@@ -122,13 +122,13 @@ export interface CompletionRecord {
    * Whether THIS task was the day's 2x bonus task, as the server determined it
    * at the moment of writing.
    *
-   * 🔑 W2-16. `bonusTaskIdFor` picks `TASK_LIBRARY_IDS[hash(dayKey) % length]` —
+ * KEY: W2-16. `bonusTaskIdFor` picks `TASK_LIBRARY_IDS[hash(dayKey) % length]` —
    * AN INDEX INTO A MUTABLE LIST. Reordering or extending that list changes
    * which task was the bonus on EVERY PAST DAY, and the historical list is
    * stored nowhere and cannot be reconstructed. Recording the answer here makes
    * history immune to both operations.
    *
-   * ⚠️ THE TRIGGER IS AN ORDINARY EDIT, WHICH IS WHAT MAKES IT WORSE THAN THE
+ * WARNING: THE TRIGGER IS AN ORDINARY EDIT, WHICH IS WHAT MAKES IT WORSE THAN THE
    * CENSUS. The census needed someone to change a room. This needs someone to
    * add a task to the library, or sort it — an obviously-safe, well-tested
    * change that silently rewrites the past. Nothing else in the repo warns them.
@@ -144,7 +144,7 @@ export interface CompletionRecord {
 /**
  * The document id for a completion.
  *
- * 🔑 THE IDEMPOTENCY IS THE ID. One id per (day, task) means re-completing the
+ * KEY: THE IDEMPOTENCY IS THE ID. One id per (day, task) means re-completing the
  * same task on the same day cannot create a second record, and the callable
  * firing five times in a day cannot create five. There is no counter to get
  * wrong and no read-modify-write to race.
@@ -160,7 +160,7 @@ export function completionDocId(dayKey: string, taskId: string): string {
 /**
  * Merges the durable log with what the task documents currently claim.
  *
- * 🔴 THIS UNION IS THE EXPLOIT FIX. `logged` is what actually happened today and
+ * CRITICAL: THIS UNION IS THE EXPLOIT FIX. `logged` is what actually happened today and
  * cannot be retracted; `currentlyComplete` is the mutable view the client can
  * toggle. Taking the union means:
  *

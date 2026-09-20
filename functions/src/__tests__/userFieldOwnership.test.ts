@@ -3,7 +3,7 @@
 // A two-way ledger over the fields Cloud Functions write to `users/{uid}`.
 //
 // ---------------------------------------------------------------------------
-// 🔴 WHY THIS EXISTS — it has already cost one live exploit
+// CRITICAL: WHY THIS EXISTS — it has already cost one live exploit
 // ---------------------------------------------------------------------------
 //
 // `firestore.rules` guards the user document with a DENYLIST:
@@ -28,7 +28,7 @@
 // not a lock. This is the lock.
 //
 // ---------------------------------------------------------------------------
-// ⚠️ WHAT THIS GATE CAN AND CANNOT DO — read before trusting it
+// WARNING: WHAT THIS GATE CAN AND CANNOT DO — read before trusting it
 // ---------------------------------------------------------------------------
 //
 // Part 1 (rules ↔ ledger) is AIRTIGHT. Both sides are literal string lists, and
@@ -113,7 +113,7 @@ const CF_OWNED: Record<string, string> = {
 /**
  * Fields the SERVER writes that are deliberately NOT CF-owned.
  *
- * 🔑 This ledger is why the gate cannot simply assert "everything the server
+ * KEY: This ledger is why the gate cannot simply assert "everything the server
  * writes is CF-owned". That is false, and knowing WHICH exceptions are intended
  * is a judgement that has to be written down rather than inferred — the same
  * construction as moduleReachability's KNOWN_UNREACHABLE and rulesAllowlist.
@@ -134,7 +134,7 @@ const SERVER_WRITTEN_CLIENT_OWNED: Record<string, string> = {
 /**
  * `users/{uid}/profile/data`'s Cloud-Function-owned fields.
  *
- * 🔴 A LARGER BLAST RADIUS THAN THE USER DOCUMENT. `profile/data` has its own
+ * CRITICAL: A LARGER BLAST RADIUS THAN THE USER DOCUMENT. `profile/data` has its own
  * denylist (`profileCfOwnedFields`) with the same fail-open shape, and the two
  * fields on it are the CURRENCY and the PROGRESSION. A missed field beside
  * `subscriptionNotifiedAt` cost a refund window; a missed field beside
@@ -158,7 +158,7 @@ const PROFILE_CF_OWNED: Record<string, string> = {
  * Fields the SERVER writes to `profile/data` that are deliberately NOT
  * CF-owned.
  *
- * 📌 EMPTY ON PURPOSE, and asserted to be. The user document needs this escape
+ * NOTE: EMPTY ON PURPOSE, and asserted to be. The user document needs this escape
  * hatch because `housemates` is genuinely written from both sides; nothing on
  * profile/data is. An entry appearing here later is a real decision — someone
  * deciding a client may write a field a Cloud Function also writes — and it
@@ -185,7 +185,7 @@ type TargetKind = keyof typeof TARGETS;
 /**
  * Local `const NAME = 'literal'` bindings, for resolving COMPUTED KEYS.
  *
- * 🔴 `xp.ts` writes `{ [XP_FIELD]: FieldValue.increment(amount) }`. The field
+ * CRITICAL: `xp.ts` writes `{ [XP_FIELD]: FieldValue.increment(amount) }`. The field
  * name `totalXp` DOES NOT APPEAR at the write site at all — it appears once,
  * as `export const XP_FIELD = 'totalXp'`. A scanner that only understands
  * `name:` sees an empty object there and reports, truthfully and uselessly,
@@ -207,7 +207,7 @@ function stringConsts(code: string): Map<string, string> {
  * Local `const f = (args) => \`template\`` bindings, for resolving INDIRECT doc
  * paths.
  *
- * 🔴 `xp.ts` writes to `admin.firestore().doc(xpDocPath(uid))`, where
+ * CRITICAL: `xp.ts` writes to `admin.firestore().doc(xpDocPath(uid))`, where
  * `xpDocPath` is `(uid) => \`users/${uid}/profile/data\``. The path never
  * appears at the call site. Again general rather than file-specific: any
  * single-expression arrow returning a template literal is resolved to that
@@ -256,7 +256,7 @@ function writtenFields(kind: TargetKind): Map<string, string[]> {
     const setCall = new RegExp(`(?:${alts.join('|')})`, 'g');
 
     for (let m = setCall.exec(code); m; m = setCall.exec(code)) {
-      // ⚠️ WHICH `(` OPENS THE CALL depends on the shape, and getting it wrong
+      // WARNING: WHICH `(` OPENS THE CALL depends on the shape, and getting it wrong
       // is silent: paren-matching from `db.doc(`'s bracket closes immediately,
       // finds no object literal, and contributes nothing — a miss that looks
       // exactly like "this site writes no fields".
@@ -278,7 +278,7 @@ function writtenFields(kind: TargetKind): Map<string, string[]> {
 /**
  * Top-level keys of every data object inside one `set(...)` call.
  *
- * ⚠️ EVERY object, not the first — because a write may be a TERNARY over two
+ * WARNING: EVERY object, not the first — because a write may be a TERNARY over two
  * shapes (`effect.kind === 'entitle' ? {…} : {…}` in appStoreNotificationsV2),
  * and taking only the first branch would let a field that appears solely in the
  * other branch go unledgered.
@@ -333,7 +333,7 @@ function topLevelKeys(code: string, open: number, consts: Map<string, string>): 
   for (let i = open; i < code.length; i++) {
     const c = code[i];
 
-    // 🔴 KEY DETECTION RUNS BEFORE DEPTH ACCOUNTING, and the order is the whole
+    // CRITICAL: KEY DETECTION RUNS BEFORE DEPTH ACCOUNTING, and the order is the whole
     // correctness of the computed-key branch. `[` is BOTH a depth token and the
     // opening of `[XP_FIELD]:`. Counting depth first pushes the scan to 2
     // before the key is ever examined, so every computed key is invisible — and
@@ -392,7 +392,7 @@ function rulesProfileCfOwnedFields(): string[] {
  */
 const EXPECTED_PROFILE_WRITE_SITES = [
   'spongeBalance',
-  // 🔴 THE ONE THAT PROVES THE INDIRECTIONS STILL RESOLVE. `totalXp` reaches
+  // CRITICAL: THE ONE THAT PROVES THE INDIRECTIONS STILL RESOLVE. `totalXp` reaches
   // profile/data from xp.ts as `{ [XP_FIELD]: … }` on `db.doc(xpDocPath(uid))`
   // — the field name and the document path BOTH absent from the call site. If
   // either resolution regresses this goes red, which is the only reason the
@@ -414,7 +414,7 @@ describe('the extractor is actually reading the source', () => {
   const written = writtenUserFields();
 
   test('it finds every write site we already know about', () => {
-    // 🔴 If this goes red, the EXTRACTOR broke — not the rules. Fix the parser
+    // CRITICAL: If this goes red, the EXTRACTOR broke — not the rules. Fix the parser
     // before trusting anything below it, because a parser that finds nothing
     // makes every assertion in this file vacuously true.
     for (const field of EXPECTED_WRITE_SITES) {
@@ -492,7 +492,7 @@ describe('the extractor reads profile/data too', () => {
   const written = writtenFields('profile');
 
   test('it finds both known profile write sites', () => {
-    // 🔴 Red here means the EXTRACTOR broke, not the rules. In particular
+    // CRITICAL: Red here means the EXTRACTOR broke, not the rules. In particular
     // `totalXp` arrives through two indirections, and a regression in either
     // makes every profile assertion below vacuously true.
     for (const field of EXPECTED_PROFILE_WRITE_SITES) {
@@ -562,7 +562,7 @@ describe('🔴 every field a Cloud Function writes to profile/data is accounted 
   });
 
   test('the profile client-owned exception list is empty ON PURPOSE', () => {
-    // 📌 Not an oversight. The user document needs that escape hatch because
+    // NOTE: Not an oversight. The user document needs that escape hatch because
     // `housemates` is genuinely written from both sides; nothing on
     // profile/data is. If this ever gains an entry it is a real decision and
     // the entry must argue for itself.

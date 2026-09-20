@@ -2,7 +2,7 @@
 //
 // The directory's own invariants and the lookup, as pure data.
 //
-// 🔑 The shipped directory is checked by the SAME validator that guards a
+// KEY: The shipped directory is checked by the SAME validator that guards a
 // console override, so the bundled list cannot hold a defect the override path
 // would refuse. That is the whole reason `validatePlantDirectory` takes a
 // directory rather than reading the constant.
@@ -116,7 +116,7 @@ describe('validatePlantDirectory — what it refuses', () => {
   });
 
   test('an empty directory is a problem, not a pass', () => {
-    // 🔑 The vacuous case. A validator that returned [] for an empty list would
+    // KEY: The vacuous case. A validator that returned [] for an empty list would
     // wave through a console edit that deleted every row.
     expect(validatePlantDirectory([])).toEqual(['directory is empty']);
   });

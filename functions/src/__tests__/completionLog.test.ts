@@ -2,7 +2,7 @@
 //
 // W2-11. The completion log, and the exploit it exists to kill.
 //
-// 🔴 THE EXPLOIT TEST IS THE DELIVERABLE. A fix for an exploit with no test
+// CRITICAL: THE EXPLOIT TEST IS THE DELIVERABLE. A fix for an exploit with no test
 // reproducing the exploit is a hope. So the first describe block below performs
 // the actual attack — complete, un-complete, re-complete — and asserts the tally
 // moves exactly once. It is written so that REMOVING the fix makes it fail: the
@@ -97,7 +97,7 @@ describe('🔴 the un-complete / re-complete exploit (D94-4)', () => {
     expect(payouts.filter((p) => p.questId === 'no_dish_left_standing')).toEqual([]);
   });
 
-  // ⚠️ The control. WITHOUT the log the same evaluator IS exploitable across
+  // WARNING: The control. WITHOUT the log the same evaluator IS exploitable across
   // days, which is what made this a defect. If someone deletes mergeCompletions
   // and passes the raw flags through, this is the behaviour that returns.
   test('CONTROL: with no log, the same evaluator double-counts across days', () => {

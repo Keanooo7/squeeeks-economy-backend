@@ -2,7 +2,7 @@
  * The push-token census — the number that gates the last two moves.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT IS DECISIVE HERE, AND WHY IT IS NOT THE OBVIOUS ONE
+ * CRITICAL: WHAT IS DECISIVE HERE, AND WHY IT IS NOT THE OBVIOUS ONE
  * ---------------------------------------------------------------------------
  *
  * The tempting reading of this census is "how many users are un-migrated", and
@@ -15,12 +15,12 @@
  * states ("drop the legacy read only once that population is empty") could then
  * never be met, and the migration freezes permanently.
  *
- * ⚠️ THE MUTATION TO BEAT: reorder `classifyPushTokenMigration` so `both` is
+ * WARNING: THE MUTATION TO BEAT: reorder `classifyPushTokenMigration` so `both` is
  * tested after `legacy`, i.e. classify a both-present user as legacy-only. That
  * reddens `both-present is NOT legacy-only` and the resolver-agreement test
  * here, and NOTHING ELSE in the suite — measured, not assumed.
  *
- * 📌 EVERY FIXTURE TOKEN VALUE IN THIS FILE IS DISTINCT, including the two a
+ * NOTE: EVERY FIXTURE TOKEN VALUE IN THIS FILE IS DISTINCT, including the two a
  * both-present user carries. Identical values hide a wrong lookup: a census
  * that read the legacy field into the private slot still passes when both
  * documents say 'token-abc'.
@@ -172,7 +172,7 @@ describe('classifyPushTokenMigration — the four states of the two documents', 
 });
 
 describe('the census and the resolver can never disagree', () => {
-  // 🔑 The census exists to decide when the resolver may stop reading the
+  // KEY: The census exists to decide when the resolver may stop reading the
   // legacy field. If the two read "is there a token here" differently, the
   // number is measuring a population the senders do not have. All nine
   // combinations, checked as one property rather than picked by hand.
@@ -323,7 +323,7 @@ describe('readPushTokenCensus against a fake Firestore', () => {
 
 describe('the instrument has no write path', () => {
   const SOURCE = fs.readFileSync(SCRIPT, 'utf8');
-  // 🔑 A CODE assertion, so it is stripped: this file's own comments discuss
+  // KEY: A CODE assertion, so it is stripped: this file's own comments discuss
   // deleting the legacy field at length, and an unstripped scan would go red on
   // its documentation rather than on its behaviour.
   const SOURCE_CODE = codeOf(SOURCE);

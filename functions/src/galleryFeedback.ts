@@ -8,7 +8,7 @@
 // button are lib/ and W1's.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE DISPROOF, ANSWERED — AND THE BRIEF'S PREMISE NEEDED CORRECTING
+// CRITICAL: THE DISPROOF, ANSWERED — AND THE BRIEF'S PREMISE NEEDED CORRECTING
 // ---------------------------------------------------------------------------
 //
 // The question was: must a lasso be stored against a RENDERED FRAME, or is a
@@ -20,14 +20,14 @@
 // A stored pixel copy of what the tester saw would be a cache of something
 // reproducible.
 //
-// ⚠️ BUT "gallerySpecimens() RETURNS ~50 STABLE IDS" IS NOT TRUE, AND THE PART
+// WARNING: BUT "gallerySpecimens() RETURNS ~50 STABLE IDS" IS NOT TRUE, AND THE PART
 // THAT IS FALSE IS "IDS". `Specimen` (lib/gallery/specimen.dart:10) HAS NO id
 // FIELD. Its identity is the composite (group, label, state) — three
 // human-authored display strings. Renaming `label: 'Login'` to `'Sign in'`
 // silently orphans every comment ever filed against it, and nothing anywhere
 // would notice.
 //
-// 🔑 That is the THIRD instance of one defect class in this codebase, and by now
+// KEY: That is the THIRD instance of one defect class in this codebase, and by now
 // it should be named rather than rediscovered:
 //   · task documents have no stable key, so quests match on title text (W2-10)
 //   · bonusTaskIdFor indexes into a mutable list, so a reorder rewrites history
@@ -37,7 +37,7 @@
 // label. Adding one to Specimen is a lib/ change and therefore W1's — specified
 // in the return, not invented here.
 //
-// ⚠️ AND A SECOND CONDITION THE BRIEF DID NOT NAME: a specimen key alone does
+// WARNING: AND A SECOND CONDITION THE BRIEF DID NOT NAME: a specimen key alone does
 // not say WHAT THE TESTER SAW. A comment on `Home/Dashboard/default` filed
 // against build 42 points at a screen build 60 may have redesigned. So every
 // record stores the BUILD IT WAS FILED FROM. Without that the coordinates are
@@ -45,7 +45,7 @@
 // render is not a stale render" trap, one layer up.
 //
 // ---------------------------------------------------------------------------
-// ⚠️ COST — AND IT IS A DIFFERENT SHAPE FROM EVERY OTHER BRIEF THIS SESSION
+// WARNING: COST — AND IT IS A DIFFERENT SHAPE FROM EVERY OTHER BRIEF THIS SESSION
 // ---------------------------------------------------------------------------
 //
 // This takes writes from strangers. A feedback item is NOT currency, so the
@@ -61,7 +61,7 @@
 //     bounded per tester per calendar day, enforced in the same transaction
 //     that increments it.
 //
-// 🔴 WHAT STILL DOES NOT BOUND IT, stated so the cap is not mistaken for
+// CRITICAL: WHAT STILL DOES NOT BOUND IT, stated so the cap is not mistaken for
 // airtight:
 //   · NOTHING RATE-LIMITS THE CALLABLE ITSELF. A caller can burn the day's 100
 //     in a second, and can keep calling after that — each refused call is a
@@ -79,7 +79,7 @@
 /**
  * Most submissions one tester may file in a calendar day.
  *
- * 🔑 THE NUMBER HAS A REASON, because a number without one is a number the next
+ * KEY: THE NUMBER HAS A REASON, because a number without one is a number the next
  * window changes on a hunch. The gallery has 51 specimens
  * (lib/gallery/registry.dart), so a THOROUGH PASS filing one submission per
  * screen is ~51. A hundred is therefore two complete passes in a day, which no
@@ -87,7 +87,7 @@
  * may carry up to MAX_LASSOS_PER_SUBMISSION comments, so the real ceiling is
  * 100 x 20 = 2,000 comments per tester per day.
  *
- * ⚠️ Deliberately generous. A cap that breaks a real day-three gallery pass is
+ * WARNING: Deliberately generous. A cap that breaks a real day-three gallery pass is
  * worse than no cap: it turns a working feature into a mysterious refusal, and
  * the tester's response is to stop reporting bugs. This bounds a RUNAWAY CLIENT
  * — a retry loop, or someone with a script — not a person.
@@ -104,7 +104,7 @@ export const MAX_LASSOS_PER_SUBMISSION = 20;
  * A normalised region of a specimen, in [0,1] against the specimen's own
  * rendered box.
  *
- * 🔑 NORMALISED, NEVER DEVICE PIXELS. A tester on a phone and one on a tablet
+ * KEY: NORMALISED, NEVER DEVICE PIXELS. A tester on a phone and one on a tablet
  * must produce comparable regions, and a pixel rect is unreadable a week later
  * without knowing the device that made it.
  */
@@ -120,7 +120,7 @@ export interface Lasso {
   /**
    * Which colour in the page's cycle this lasso is, as an INDEX.
    *
-   * 🔑 AN INDEX, NOT A HEX STRING. "Each new lasso gets a new colour for that
+ * KEY: AN INDEX, NOT A HEX STRING. "Each new lasso gets a new colour for that
    * page" is a per-page sequence, and the palette belongs to the client. Storing
    * `#FF00AA` would freeze a design decision into user data and mean a palette
    * change silently reinterprets every comment ever filed.
@@ -134,7 +134,7 @@ export interface FeedbackSubmission {
   /**
    * `group/label/state`, e.g. `Auth/Login/error`.
    *
-   * ⚠️ Composite and renamable — see the header. This is the best key available
+ * WARNING: Composite and renamable — see the header. This is the best key available
    * today, not a good one.
    */
   specimenKey: string;
@@ -230,7 +230,7 @@ export interface FeedbackRecord extends FeedbackSubmission {
 /**
  * Renders every record as text a person can read.
  *
- * 🔑 THE TESTER'S SENTENCE IS REPRODUCED VERBATIM AND IS NEVER SUMMARISED,
+ * KEY: THE TESTER'S SENTENCE IS REPRODUCED VERBATIM AND IS NEVER SUMMARISED,
  * TRUNCATED OR REFLOWED. A feedback tool that summarises is one that loses the
  * sentence someone typed, and the sentence is the entire product. Everything
  * else in a record — the rect, the colour index, the build — is scaffolding

@@ -33,12 +33,12 @@ interface KeyPair {
 /**
  * Node's native P-256 generator, NOT `KEYUTIL.generateKeypair`.
  *
- * 🔑 jsrsasign generates keys with pure-JS bignum arithmetic. This file builds
+ * KEY: jsrsasign generates keys with pure-JS bignum arithmetic. This file builds
  * six keypairs at module scope and that cost **2603 ms** of the suite's wall
  * time, measured with `--cpu-prof` in W2-143 (`am1`, its multiply-accumulate
  * core, was 60.9% of the whole profile). Native does the same six in ~6 ms.
  *
- * ⚠️ The certificates below still get their SIGNATURES from jsrsasign and that
+ * WARNING: The certificates below still get their SIGNATURES from jsrsasign and that
  * cannot move — they carry Apple's two extension OIDs and node's crypto cannot
  * mint an x509 cert. Only key GENERATION moved.
  *
@@ -222,7 +222,7 @@ describe('appleJws — real signature verification', () => {
     // be CONSTRUCTED without appAppleId (it throws in the constructor, despite
     // the field being optional in the type signature).
     //
-    // ⚠️ The null is passed EXPLICITLY. This test used to drive the shared
+    // WARNING: The null is passed EXPLICITLY. This test used to drive the shared
     // `verify` above and so depended, silently, on the module constant still
     // being null — filling APP_APPLE_ID in turned it red. What it means to
     // assert is "a null appAppleId refuses Production", which is what it now
@@ -315,7 +315,7 @@ describe('appleJws — real signature verification', () => {
 // ---------------------------------------------------------------------------
 // App Store Server Notifications V2
 //
-// 🔑 A notification is a DIFFERENT JWS SHAPE from a transaction, and that is
+// KEY: A notification is a DIFFERENT JWS SHAPE from a transaction, and that is
 // the reason `makeVerifyNotification` exists rather than the endpoint reusing
 // `verify`. The envelope carries the bundle id, app id and environment in a
 // `data` block instead of on a transaction, and `verifyAndDecodeTransaction`

@@ -2,7 +2,7 @@
  * `syncPublicProfile` — the one hop of the deletion cascade that is a TRIGGER.
  *
  * ---------------------------------------------------------------------------
- * 🔴 NO FIRESTORE TRIGGER HAD EVER FIRED IN THIS PROJECT'S TEST SUITES
+ * CRITICAL: NO FIRESTORE TRIGGER HAD EVER FIRED IN THIS PROJECT'S TEST SUITES
  * ---------------------------------------------------------------------------
  *
  * `test:e2e` booted `--only firestore,auth`. `firebase.e2e.json` had no
@@ -20,12 +20,12 @@
  *     if (after === undefined) {
  *       await publicRef.delete();
  *
- * ✅ The code is right, and `deleteAccount` deliberately does NOT delete
+ * OK: The code is right, and `deleteAccount` deliberately does NOT delete
  * `publicProfiles/{uid}` itself — it leaves it to this trigger, and
  * `accountDeletion.test.ts` says so in a test that asserts the projection
  * SURVIVES in its fake, precisely because that fake runs no triggers.
  *
- * 🔴 SO THE WHOLE HOP RESTED ON A DOUBLE. `publicProfile.test.ts` proves the
+ * CRITICAL: SO THE WHOLE HOP RESTED ON A DOUBLE. `publicProfile.test.ts` proves the
  * handler calls `.delete()` when handed a synthetic event with `after`
  * undefined. Nothing had ever observed the platform DELIVER that event. A fake
  * cannot be wrong the way a trigger REGISTRATION can: a handler exported under
@@ -33,7 +33,7 @@
  * never fires — every one of those is green in a unit test and silent in
  * production.
  *
- * 🔑 AND IT IS THE 5.1.1(v) HALF A REVIEWER COULD CATCH. A public profile
+ * KEY: AND IT IS THE 5.1.1(v) HALF A REVIEWER COULD CATCH. A public profile
  * outliving a deleted account is "the associated data" surviving, in a
  * collection whose whole purpose is being discoverable by other people.
  *
@@ -46,12 +46,12 @@
  *
  * +7 s wall clock (+20%), all of it emulator boot and the `tsc` build the
  * functions emulator needs to load `lib/index.js`. Jest's own time did not
- * rise. ⚠️ AND ALL 77 PRE-EXISTING TESTS STILL PASS with `syncPublicProfile`
+ * rise. WARNING: AND ALL 77 PRE-EXISTING TESTS STILL PASS with `syncPublicProfile`
  * AND `onNewUserBefriendGibby` now live — which was the real risk, not speed:
  * turning triggers on changes the state every other e2e test asserts against.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT THIS STILL CANNOT PROVE
+ * CRITICAL: WHAT THIS STILL CANNOT PROVE
  * ---------------------------------------------------------------------------
  *
  *   · NOT PRODUCTION. This loads `lib/index.js` built from THIS working tree.
@@ -86,13 +86,13 @@ function call(name: string, uid: string | null, data: unknown): Promise<any> {
 /**
  * Poll until [path] exists (or stops existing), or give up.
  *
- * 🔴 POLLING IS NOT A CODE SMELL HERE, IT IS THE SUBJECT. A trigger is
+ * CRITICAL: POLLING IS NOT A CODE SMELL HERE, IT IS THE SUBJECT. A trigger is
  * asynchronous by definition: the write returns before the platform has
  * delivered anything. A test that read once immediately after the write would
  * be a race, and it would fail in the direction that looks like "the trigger is
  * broken" — the most expensive false negative available.
  *
- * ⚠️ IT RETURNS A BOOLEAN RATHER THAN THROWING, so the CALLER owns the
+ * WARNING: IT RETURNS A BOOLEAN RATHER THAN THROWING, so the CALLER owns the
  * assertion and the failure message names the property rather than the helper.
  * A helper that threw "timed out" would report a timeout where the finding is
  * "the projection was never created".
@@ -141,7 +141,7 @@ afterAll(async () => {
 
 describe('syncPublicProfile fires for real (W2-114)', () => {
   test('🔴 THE TRIGGER IS LIVE — writing users/{uid} CREATES the projection', async () => {
-    // 🔑 THIS IS THE ANTI-VACUITY SEED, AND IT IS STRONGER THAN SEEDING.
+    // KEY: THIS IS THE ANTI-VACUITY SEED, AND IT IS STRONGER THAN SEEDING.
     // The brief's warning is that "the profile is gone" passes against a store
     // where it never existed. The usual fix is to seed the profile and assert
     // it is present first. Better: DO NOT SEED IT AT ALL and let the trigger
@@ -149,7 +149,7 @@ describe('syncPublicProfile fires for real (W2-114)', () => {
     // the deletion assertion below cannot be satisfied by an absence that was
     // always there.
     //
-    // ⚠️ It is also the only assertion in this file that can fail because the
+    // WARNING: It is also the only assertion in this file that can fail because the
     // functions emulator did not boot — which is exactly the failure that
     // should be loud.
     await db.doc(`users/${SUBJECT}`).set({avatarUrl: 'fox', isPublic: true});

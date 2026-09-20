@@ -5,13 +5,13 @@
 // so a fresh clone must be able to run `tsc` and `jest` without generating
 // anything first. See the generator's header for why it is not gitignored.
 //
-// 🔴 THE VALUE COMMITTED ON `main` IS NOT THIS COMMIT'S SHA AND IS NOT MEANT
+// CRITICAL: THE VALUE COMMITTED ON `main` IS NOT THIS COMMIT'S SHA AND IS NOT MEANT
 // TO BE. It is whatever the last deploy stamped, so between a landing and the
 // next deploy it is stale BY DESIGN. Do not read this file to learn what is
 // live — read the cold-start log line, which comes from the copy inside the
 // DEPLOYED bundle. That is the whole point of the mechanism.
 //
-// 📌 A diff here after a deploy is EXPECTED, not drift.
+// NOTE: A diff here after a deploy is EXPECTED, not drift.
 
 /** The git sha this bundle was compiled from. */
 export const BUILD_SHA = '269123d02ded39063123fec13d9986b925ad241d';

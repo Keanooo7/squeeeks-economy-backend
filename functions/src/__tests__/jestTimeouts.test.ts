@@ -16,7 +16,7 @@ const REPO_FUNCTIONS = path.resolve(__dirname, '..', '..');
  * W2-140 · The emulator suite's fuse must stay a stated multiple of what it
  * actually takes.
  *
- * 🔴 WHAT THIS EXISTS TO STOP, and it is a specific future edit. The six e2e
+ * CRITICAL: WHAT THIS EXISTS TO STOP, and it is a specific future edit. The six e2e
  * concurrency tests run at 2765–3430 ms. Against the inherited 5000 ms default
  * that is a 1.46x margin, and the failure it eventually produces —
  * "Exceeded timeout of 5000 ms" on a test whose subject is two calls racing —
@@ -25,14 +25,14 @@ const REPO_FUNCTIONS = path.resolve(__dirname, '..', '..');
  * default, and nothing would notice until a concurrency test failed at 3am
  * looking exactly like the bug it was written to catch.
  *
- * 🔑 THE RATIO IS THE POLICY, NOT THE NUMBER. Pinning `testTimeout === 15000`
+ * KEY: THE RATIO IS THE POLICY, NOT THE NUMBER. Pinning `testTimeout === 15000`
  * would pass just as well and mean nothing: it could not tell a healthy 4.4x
  * from a 1.1x, because it never looks at what the tests cost. Asserting
  * `timeout >= 4 * worst case` is the thing actually worth keeping true, and it
  * makes adding a slower e2e test re-open the question by construction — the
  * new worst case has to be recorded, and recording it re-checks the margin.
  *
- * ⚠️ WHAT IT CANNOT DO, stated so it is not mistaken for more. It reads a
+ * WARNING: WHAT IT CANNOT DO, stated so it is not mistaken for more. It reads a
  * RECORDED worst case, not a live one; a test that silently gets slower without
  * anyone re-measuring is invisible to it. There is no cheap fix for that — a
  * gate that timed the suite from inside the suite would be measuring the

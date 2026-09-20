@@ -2,12 +2,12 @@
 //
 // W2-92. The half of the deployment check that needs NO credentials.
 //
-// 🔴 THE COMPARISON ITSELF CANNOT LIVE HERE. `check-deployed.cjs` asks
+// CRITICAL: THE COMPARISON ITSELF CANNOT LIVE HERE. `check-deployed.cjs` asks
 // production, which needs credentials, and CI is out of billing. What lives
 // here is everything that can fail WITHOUT asking production: the parser that
 // derives the declared set, and the ledger of deliberate omissions.
 //
-// 🔑 THAT SPLIT IS THE POINT. A check somebody has to remember to run is exactly
+// KEY: THAT SPLIT IS THE POINT. A check somebody has to remember to run is exactly
 // the kind this repo keeps being bitten by — so the parts that CAN be automatic
 // are, and the one part that cannot is loud about it (exit 3, ENVIRONMENT,
 // never confused with a pass).
@@ -27,7 +27,7 @@ const REPO = path.resolve(__dirname, '../../..');
 /**
  * The declared set, derived exactly as `check-deployed.cjs` derives it.
  *
- * ⚠️ A DELIBERATE SECOND COPY OF THE REGEX, and the reason is worth stating: the
+ * WARNING: A DELIBERATE SECOND COPY OF THE REGEX, and the reason is worth stating: the
  * script cannot import from `src/` (it reads `lib/`, the built output, and runs
  * before jest ever does). Keeping the two in step is what the count pin below
  * is for — if they diverge, one of them stops matching and the count moves.
@@ -132,7 +132,7 @@ describe('🔴 W2-92 the deliberately-undeployed ledger', () => {
 // A stale ledger entry has TWO opposite causes (W2-100)
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE MESSAGE USED TO KNOW ONLY ONE OF THEM. An entry in
+// CRITICAL: THE MESSAGE USED TO KNOW ONLY ONE OF THEM. An entry in
 // DELIBERATELY_UNDEPLOYED asserts two things at once — this function EXISTS in
 // index.ts, and it is deliberately NOT in production — and it goes stale when
 // either half stops holding. The two halves fail in OPPOSITE directions, and
@@ -145,7 +145,7 @@ describe('🔴 W2-92 the deliberately-undeployed ledger', () => {
 // erasing the record of the decision rather than acting on it, and leaving
 // nothing behind to show the question had been asked.
 //
-// 🔑 The script cannot tell "deployed on purpose" from "deployed by accident",
+// KEY: The script cannot tell "deployed on purpose" from "deployed by accident",
 // so it must not pick. This pins that it reports the two causes SEPARATELY —
 // because a classifier that lumps them can only ever print one remedy.
 

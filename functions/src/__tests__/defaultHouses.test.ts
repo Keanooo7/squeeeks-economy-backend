@@ -2,7 +2,7 @@
 //
 // W2-36. The four default houses.
 //
-// 🔴 THE ASSERTION THIS FILE EXISTS FOR IS `every furnitureId is real`. The
+// CRITICAL: THE ASSERTION THIS FILE EXISTS FOR IS `every furnitureId is real`. The
 // renderer SILENTLY SKIPS an id the catalogue does not know — no error, no
 // warning — so one typo produces an emptier house than was authored and it
 // looks like a design choice rather than a bug. Nothing else here matters as
@@ -14,7 +14,7 @@ import {DEFAULT_HOUSES, defaultHouseById, HouseLayout} from '../defaultHouses';
  * Transcribed from `RoomCatalogue.items` / `.rooms`
  * (lib/features/house_builder/domain/room_catalogue.dart).
  *
- * 📌 THIS IS A MIRROR, and this codebase has been bitten by mirrors repeatedly —
+ * NOTE: THIS IS A MIRROR, and this codebase has been bitten by mirrors repeatedly —
  * chest_drop_rates.dart, TASK_LIBRARY_IDS, the twice-written FNV-1a. It is
  * accepted here for one reason: the server cannot import from lib/, and an
  * UNCHECKED id is strictly worse than a checked copy. The non-vacuity tests
@@ -154,7 +154,7 @@ describe('these are homes, not furniture lists', () => {
 });
 
 describe('nothing overlaps and nothing escapes the grid', () => {
-  // ⚠️ The grid is 24 today and Brendan wants ~34. These are authored from an
+  // WARNING: The grid is 24 today and Brendan wants ~34. These are authored from an
   // origin of (0,0) and must fit BOTH, so the bound asserted is the small one.
   const GRID_TODAY = 24;
 

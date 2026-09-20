@@ -9,7 +9,7 @@
 // a merged fix could be reported "declared, and live" while production ran the
 // revision from before it.
 //
-// 🔴 THAT WAS NOT HYPOTHETICAL WHEN THIS WAS WRITTEN. On 2026-08-16, #472 fixed
+// CRITICAL: THAT WAS NOT HYPOTHETICAL WHEN THIS WAS WRITTEN. On 2026-08-16, #472 fixed
 // a restore path that could move a paid subscriber's expiry BACKWARDS. It
 // merged at 09:57:56Z. The deployed functions were built at 07:17:18Z. For
 // nearly three hours the fix was on `main`, green, and doing nothing for a
@@ -26,7 +26,7 @@
 //   3  ENVIRONMENT — could not ask, or could not tell
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE VERDICT WAS SET BY `max()` UNTIL 2026-08-25, AND THAT WAS WRONG IN BOTH
+// CRITICAL: THE VERDICT WAS SET BY `max()` UNTIL 2026-08-25, AND THAT WAS WRONG IN BOTH
 // DIRECTIONS. (W2-154.)
 // ---------------------------------------------------------------------------
 //
@@ -34,23 +34,23 @@
 // on `newest` alone. A single function redeployed on its own moves `newest` and
 // tells you nothing about the other forty-four.
 //
-// 🔴 IT UNDER-REPORTED BY NINETY-FOLD, MEASURED. On 2026-08-24 the fleet was
+// CRITICAL: IT UNDER-REPORTED BY NINETY-FOLD, MEASURED. On 2026-08-24 the fleet was
 // uploaded at 07:19Z, `sendStreakReminder` alone at 15:13Z, and the last
 // functions/src commit landed 15:19Z. `newest` gave "STALE by 5 minutes". The
 // true staleness for 44 of 45 functions was 7 h 59 min.
 //
-// 🔴 AND THE ALL-CLEAR IS THE MORE DANGEROUS HALF. Two hours later, after a real
+// CRITICAL: AND THE ALL-CLEAR IS THE MORE DANGEROUS HALF. Two hours later, after a real
 // full deploy, the same script printed `UP TO DATE` and was quoted as proof the
 // fleet was current. The verdict was right and the reasoning was worthless — a
 // `max()` cannot tell "everything moved" from "one thing moved" EITHER WAY, and
 // nobody re-checks a green. **When a gate's verdict logic is found broken, its
 // PASS is void too, not just its failure.**
 //
-// ⚠️ `oldest` IS NOT THE FIX AND IS DELIBERATELY NOT USED AS THE VERDICT. One
+// WARNING: `oldest` IS NOT THE FIX AND IS DELIBERATELY NOT USED AS THE VERDICT. One
 // rarely-touched function would pin this red forever, and a gate that cries wolf
 // gets relaxed rather than debugged — which is how this project loses gates.
 //
-// ✅ THE VERDICT IS NOW PER-FUNCTION: every measured function is compared against
+// OK: THE VERDICT IS NOW PER-FUNCTION: every measured function is compared against
 // the commit, and the output states COUNTS — how many are behind, by how much,
 // and how many could not be measured at all. `newest` and `oldest` are still
 // printed, because they are the diagnostic that exposed this.
@@ -61,7 +61,7 @@
 // asserts the verdicts. It asks production for nothing.
 //
 // ---------------------------------------------------------------------------
-// 🔴 WHAT A PER-FUNCTION VERDICT STILL CANNOT SEE — asked deliberately, because
+// CRITICAL: WHAT A PER-FUNCTION VERDICT STILL CANNOT SEE — asked deliberately, because
 // the max() defect was found by asking what an aggregate could not see.
 // ---------------------------------------------------------------------------
 //
@@ -79,17 +79,17 @@
 //    running the code on THIS branch" — but it means A STALE CHECKOUT PRODUCES A
 //    GREEN, and the green looks identical to a real one.
 //
-// ⚠️ Both are false-GREEN modes, and the lesson of the bug this replaced is that
+// WARNING: Both are false-GREEN modes, and the lesson of the bug this replaced is that
 // a green nobody re-checks is worse than a red nobody believes.
 //
-// ⚠️ `make` COLLAPSES 1 AND 3 TO 2. Run the script directly and read $? when you
+// WARNING: `make` COLLAPSES 1 AND 3 TO 2. Run the script directly and read $? when you
 // need to tell "production is behind" from "I could not find out".
 //
 // ---------------------------------------------------------------------------
 // WHAT `generation` ACTUALLY IS, BECAUSE THE ANSWER DECIDED THE DESIGN
 // ---------------------------------------------------------------------------
 //
-// 🔑 IT IS A MICROSECOND EPOCH TIMESTAMP, NOT AN OPAQUE OBJECT ID. Every gen2
+// KEY: IT IS A MICROSECOND EPOCH TIMESTAMP, NOT AN OPAQUE OBJECT ID. Every gen2
 // function carries `source.storageSource.generation` — the GCS object
 // generation of the uploaded source zip — and dividing by 1000 gives a real
 // deploy time:
@@ -102,12 +102,12 @@
 // absolute time, comparable directly against a commit date. Nothing to keep in
 // step, nothing to forget.
 //
-// ⚠️ IT IS NOT A GIT SHA, and this script never pretends otherwise. It cannot
+// WARNING: IT IS NOT A GIT SHA, and this script never pretends otherwise. It cannot
 // tell you WHICH commit was deployed — only whether the deploy happened before
 // or after the last commit that could have changed the deployed behaviour. That
 // is strictly weaker and it is enough for the question being asked.
 //
-// ⚠️ AND THE TWO TIMESTAMPS COME FROM DIFFERENT CLOCKS — a commit date is
+// WARNING: AND THE TWO TIMESTAMPS COME FROM DIFFERENT CLOCKS — a commit date is
 // stamped by the committer's machine, a generation by Google. Skew of seconds
 // is possible and this comparison does not try to be exact; the gap that
 // matters in practice is hours, and SKEW_TOLERANCE_MS makes a near-tie report
@@ -141,14 +141,14 @@ function fail(code, message) {
 /**
  * The last commit reachable from HEAD that touched DEPLOYED function source.
  *
- * 🔴 `__tests__` IS EXCLUDED, AND THE FIRST VERSION OF THIS SCRIPT PROVED WHY
+ * CRITICAL: `__tests__` IS EXCLUDED, AND THE FIRST VERSION OF THIS SCRIPT PROVED WHY
  * WITHIN A MINUTE OF LANDING. It compared against all of `functions/src`, so
  * the commit that ADDED THIS SCRIPT'S OWN TEST FILE became the newest "change
  * to functions/src" and production was reported 190 minutes stale — when the
  * last change to anything deployable was 30 minutes older than that and the
  * real staleness was 160.
  *
- * ⚠️ THE VERDICT HAPPENED TO BE RIGHT, WHICH IS WHAT MAKES IT DANGEROUS. Both
+ * WARNING: THE VERDICT HAPPENED TO BE RIGHT, WHICH IS WHAT MAKES IT DANGEROUS. Both
  * numbers said STALE, so nothing looked wrong. Left alone, every test-only
  * commit would report a deployment problem that does not exist — and a gate
  * that cries wolf gets relaxed rather than debugged, which is the specific
@@ -233,11 +233,11 @@ function listDeployed() {
 /**
  * Sort every deployed function into behind / current / too-close / unmeasured.
  *
- * 🔴 PURE ON PURPOSE. Everything above this line talks to git or to production;
+ * CRITICAL: PURE ON PURPOSE. Everything above this line talks to git or to production;
  * this does not, which is what lets `--self-test` replay two real historical
  * states without a network call or a credential.
  *
- * ⚠️ A FUNCTION WITH NO `generation` IS `unmeasured` AND IS NEVER A MEMBER OF
+ * WARNING: A FUNCTION WITH NO `generation` IS `unmeasured` AND IS NEVER A MEMBER OF
  * ANY OTHER BUCKET. `onNewUserBefriendGibby` is gcfv1 and exposes no
  * `storageSource`, so this script has never been able to speak for it — before
  * a deploy or after one. It must not be folded into an "N of N current" line:
@@ -278,12 +278,12 @@ function human(ms) {
 const iso = (ms) => new Date(ms).toISOString();
 
 /**
- * ⚠️ SUPERSEDED AS THE VERDICT, KEPT AS A DIAGNOSTIC AND AN EXPORT (W2-154).
+ * WARNING: SUPERSEDED AS THE VERDICT, KEPT AS A DIAGNOSTIC AND AN EXPORT (W2-154).
  *
  * Until 2026-08-25 `main()` decided on this function's `newest` alone, which is
  * the defect documented in the header. `classify()` below is what decides now.
  *
- * 🔴 IT IS NOT DEAD CODE AND MUST NOT BE DELETED: `deployedRevision.test.ts`
+ * CRITICAL: IT IS NOT DEAD CODE AND MUST NOT BE DELETED: `deployedRevision.test.ts`
  * imports it and pins the two fail-open cases — a garbage-but-finite `newest`,
  * and a `counted` that ignores gen1. Those properties are still worth pinning;
  * only the CALLER was wrong. Removing it turns nine jest suites red for a
@@ -292,7 +292,7 @@ const iso = (ms) => new Date(ms).toISOString();
 /**
  * The newest deploy time across all gen2 functions, plus what was skipped.
  *
- * 🔴 FUNCTIONS WITHOUT A GENERATION ARE EXCLUDED AND NAMED, NEVER TREATED AS
+ * CRITICAL: FUNCTIONS WITHOUT A GENERATION ARE EXCLUDED AND NAMED, NEVER TREATED AS
  * ZERO. `onNewUserBefriendGibby` is gcfv1 and exposes no `storageSource`, so a
  * naive `Math.min` over the whole list reports 1970-01-01 and any comparison
  * against it screams "catastrophically stale" forever. Skipping silently would
@@ -324,7 +324,7 @@ function summariseDeploys(listJson) {
 /**
  * Render the report and return the exit code. Pure — see `classify`.
  *
- * 🔑 THE SPREAD IS A DIAGNOSTIC, NOT A VERDICT INPUT, AND THE DISTINCTION IS THE
+ * KEY: THE SPREAD IS A DIAGNOSTIC, NOT A VERDICT INPUT, AND THE DISTINCTION IS THE
  * WHOLE CRYING-WOLF BOUNDARY. A wide spread means several deploy events, which
  * is perfectly normal when nothing has changed since; it is only alarming when
  * something IS behind, and that is already its own line. Making a wide spread
@@ -362,7 +362,7 @@ function report(commit, c) {
   console.log(`  too close to call:        ${c.tooClose.length}`);
 
   if (c.unmeasured.length) {
-    // 🔴 Named, every run, never counted. See classify().
+    // CRITICAL: Named, every run, never counted. See classify().
     for (const u of c.unmeasured) {
       console.log(
         `  NOT MEASURED:             ${u.id}  — ${u.platform || 'gcfv1'} exposes no ` +
@@ -415,11 +415,11 @@ function report(commit, c) {
 // --self-test — the two historical states, replayed
 // ---------------------------------------------------------------------------
 //
-// 🔑 THESE ARE CAPTURED FROM PRODUCTION, NOT INVENTED. Both arrays are the real
+// KEY: THESE ARE CAPTURED FROM PRODUCTION, NOT INVENTED. Both arrays are the real
 // `firebase functions:list --json` output reduced to the three fields the
 // verdict reads. DRIFT is 2026-08-25T01:54Z, CLEAN is 2026-08-25T04:02Z.
 //
-// 🔴 THE THIRD CASE IS THE ONE THAT MATTERS AND IT IS DRIFT SHIFTED BY SIX
+// CRITICAL: THE THIRD CASE IS THE ONE THAT MATTERS AND IT IS DRIFT SHIFTED BY SIX
 // MINUTES. In the real DRIFT state every function predates the commit, so the
 // old `newest` reading was merely WRONG ABOUT THE MAGNITUDE. Move
 // `sendStreakReminder` six minutes later — which is where it nearly landed — and
@@ -605,7 +605,7 @@ function main() {
   process.exit(report(commit, c));
 }
 
-// 🔑 THE PURE HALF IS EXPORTED AND TESTED, the credentialled half cannot be —
+// KEY: THE PURE HALF IS EXPORTED AND TESTED, the credentialled half cannot be —
 // same split as check-deployed.cjs and check-rules-deployed.cjs. And the
 // failure that matters here is FAILING OPEN: if `summariseDeploys` ever
 // returned a garbage-but-finite newest, or `lastFunctionSourceCommit` returned
@@ -613,12 +613,12 @@ function main() {
 // UP TO DATE for a production running anything at all. Both refuse instead, and
 // deployedRevision.test.ts pins that.
 //
-// 📌 `classify` joins them (W2-154). It is the function the verdict now reads,
+// NOTE: `classify` joins them (W2-154). It is the function the verdict now reads,
 // and `--self-test` is its reader; exporting it means a later brief can pin it
 // from jest without reshaping the file first.
 module.exports = {summariseDeploys, classify, SKEW_TOLERANCE_MS};
 
-// 🔴 GUARDED. deployedRevision.test.ts `require`s this file, and an unguarded
+// CRITICAL: GUARDED. deployedRevision.test.ts `require`s this file, and an unguarded
 // main() would run git, call production and process.exit() inside the jest
 // worker. This guard is load-bearing, not idiom.
 if (require.main === module) {

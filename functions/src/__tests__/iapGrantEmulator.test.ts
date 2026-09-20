@@ -2,7 +2,7 @@
  * `verifyIapAndGrant` — the money path — against a REAL Firestore.
  *
  * ---------------------------------------------------------------------------
- * 🔴 EIGHT UNIT FILES REFERENCE THIS CALLABLE AND NONE OF THEM CAN SEE THE BUG
+ * CRITICAL: EIGHT UNIT FILES REFERENCE THIS CALLABLE AND NONE OF THEM CAN SEE THE BUG
  * ---------------------------------------------------------------------------
  *
  * That is the question this file had to answer before it was worth writing, and
@@ -10,7 +10,7 @@
  * actually race for it.**
  *
  *   · `verifyIapAndGrant.test.ts` and its seven siblings drive the handler
- *     against the hand-written fake `firebase-admin`. ⚠️ A fake
+ * against the hand-written fake `firebase-admin`. WARNING: A fake
  *     `runTransaction` RUNS THE CALLBACK ONCE AND NEVER RETRIES — so the
  *     re-check inside the transaction is dead code there, and the fast-path
  *     read before it is indistinguishable from it.
@@ -24,11 +24,11 @@
  *      idempotency lock, so concurrent calls / retries can never double-apply
  *      the consumable sponge increment."
  *
- * 🔑 THAT SENTENCE HAD NEVER BEEN TESTED. A double grant is a player receiving
+ * KEY: THAT SENTENCE HAD NEVER BEEN TESTED. A double grant is a player receiving
  * twice what they paid for; the same race losing the other way is a player
  * paying and receiving nothing.
  *
- * 📌 AND THE RACE WINDOW IS GENUINELY OPEN HERE, which is not automatic — on
+ * NOTE: AND THE RACE WINDOW IS GENUINELY OPEN HERE, which is not automatic — on
  * W2-101 the equivalent test proved nothing because both calls contended on
  * CREATING a streak document first and Firestore serialised them upstream of
  * the code under test. For a sponge pack there is NO WRITE before the
@@ -44,14 +44,14 @@
  * `verifyIapAndGrant.test.ts` does. Offline JWS verification makes NO HTTP call,
  * so there is no transport to intercept and nothing here talks to Apple.
  *
- * ⚠️ SO THIS FILE PROVES NOTHING ABOUT SIGNATURE VERIFICATION. That is covered
+ * WARNING: SO THIS FILE PROVES NOTHING ABOUT SIGNATURE VERIFICATION. That is covered
  * once, against a generated certificate chain, in `appleJws.test.ts`. What is
  * real here is Firestore: the ledger document, the transaction, the increment
  * and the contention. Stating it because "an IAP e2e test" sounds like it
  * checks Apple, and it does not.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT THIS STILL CANNOT PROVE
+ * CRITICAL: WHAT THIS STILL CANNOT PROVE
  * ---------------------------------------------------------------------------
  *
  *   · Nothing about Apple's servers, sandbox, or a real receipt.
@@ -136,7 +136,7 @@ describe('verifyIapAndGrant against a real Firestore', () => {
     expect(res.success).toBe(true);
     expect(res.granted.sponges).toBe(PACK_SPONGES);
 
-    // 🔑 THE STORED DOCUMENTS, NOT THE RESPONSE — a handler can return the right
+    // KEY: THE STORED DOCUMENTS, NOT THE RESPONSE — a handler can return the right
     // numbers while writing nothing, and the response is what the fake-driven
     // unit tests already check.
     expect(await spongesOf(BUYER)).toBe(PACK_SPONGES);
@@ -156,7 +156,7 @@ describe('verifyIapAndGrant against a real Firestore', () => {
   });
 
   test('🔑 a DIFFERENT transaction id DOES grant — the lock is keyed, not blanket', async () => {
-    // ⚠️ THE CONTROL WITHOUT WHICH "granted once" IS MEANINGLESS. A callable
+    // WARNING: THE CONTROL WITHOUT WHICH "granted once" IS MEANINGLESS. A callable
     // that refused every second purchase for any reason would satisfy the
     // replay test and the concurrency test both, and would also mean a player
     // could never buy the same pack twice.
@@ -169,14 +169,14 @@ describe('verifyIapAndGrant against a real Firestore', () => {
   });
 
   test('🔴 CONCURRENT calls with the same transaction id grant ONCE', async () => {
-    // ⚠️ THE ASSERTION NO OTHER TEST IN THIS REPO CAN MAKE, and the reason this
+    // WARNING: THE ASSERTION NO OTHER TEST IN THIS REPO CAN MAKE, and the reason this
     // file exists. The dedup is a `tx.get(processedRef)` INSIDE the transaction;
     // move it outside and both calls read "not processed", both grant, and the
     // player receives twice what they paid for. The fake firestore cannot
     // produce that — its `runTransaction` never retries — and
     // `economyIdempotency`'s grep still sees the word `runTransaction`.
     //
-    // 📌 Nothing serialises these two calls before the lock: Apple verification
+    // NOTE: Nothing serialises these two calls before the lock: Apple verification
     // is local and stubbed, and the fast-path read is a read. That is what makes
     // the window real here and did not hold on W2-101.
     appleWillVerify(PACK, 'txn-race');
@@ -194,7 +194,7 @@ describe('verifyIapAndGrant against a real Firestore', () => {
     // is deliberately not asserted.
     expect([a.alreadyProcessed, b.alreadyProcessed].filter(Boolean)).toHaveLength(1);
 
-    // 🔴 AND THE BALANCE IS THE REAL ASSERTION. Two responses both reporting
+    // CRITICAL: AND THE BALANCE IS THE REAL ASSERTION. Two responses both reporting
     // 550 while the increment ran twice is exactly what a lost update looks
     // like from the outside.
     expect(await spongesOf(RACER)).toBe(PACK_SPONGES);

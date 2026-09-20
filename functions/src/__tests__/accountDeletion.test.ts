@@ -10,7 +10,7 @@ export {};
 // nothing else. This file covers the planner that decides what a deletion
 // touches, and the applier that carries it out.
 //
-// 🔴 THE VACUITY TRAP THIS FILE IS WRITTEN AGAINST, NAMED EXPLICITLY.
+// CRITICAL: THE VACUITY TRAP THIS FILE IS WRITTEN AGAINST, NAMED EXPLICITLY.
 // A deletion test is unusually easy to write so that it proves nothing: an
 // assertion that a document is ABSENT passes when the fixture never created it,
 // so a test with a broken seed and a broken cascade is green. Every absence
@@ -25,7 +25,7 @@ export {};
 // ---------------------------------------------------------------------------
 // Fake Firestore — a Map keyed by document path.
 //
-// 📌 PATH-KEYED RATHER THAN TREE-SHAPED ON PURPOSE. The bug this cascade exists
+// NOTE: PATH-KEYED RATHER THAN TREE-SHAPED ON PURPOSE. The bug this cascade exists
 // to prevent is an orphaned SUBCOLLECTION: `users/{uid}` deleted while
 // `users/{uid}/inventory/*` survives, invisible under a parent that no longer
 // exists. A tree-shaped fake would delete children with their parent and would
@@ -458,7 +458,7 @@ describe('🔑 W2-112 thirdPartyWrites — the fields touched on other people', 
       op: 'update',
       fields: ['memberUids', 'memberNames', 'memberAvatars'],
     });
-    // 🔑 The deleted user's own document is never listed as a third party —
+    // KEY: The deleted user's own document is never listed as a third party —
     // it is being deleted outright, and listing it would overstate the blast
     // radius in the very report written to bound it.
     expect(writes.some((w) => w.path === `users/${ME}`)).toBe(false);
@@ -502,7 +502,7 @@ describe('📌 W2-112 KNOWN_USER_SUBCOLLECTIONS is a pin, not the mechanism', ()
 // ---------------------------------------------------------------------------
 
 /**
- * 🔴 THE ANTI-VACUITY ASSERTION. Every absence check below is preceded by this
+ * CRITICAL: THE ANTI-VACUITY ASSERTION. Every absence check below is preceded by this
  * over the same key. Without it, a broken seed and a broken cascade both look
  * like a pass.
  */
@@ -541,7 +541,7 @@ function seedAccount(): void {
   _store.set('families/fam-1', {...familyOwnedByOther});
   _store.set('families/fam-1/chores/c1', {assignedToUid: ME, title: 'Bins'});
   _store.set('families/fam-1/chores/c2', {assignedToUid: OWNER, title: 'Dishes'});
-  // 🔴 TWO SENDERS, AND THE SECOND ONE IS THE POINT (W2-127). A test seeded
+  // CRITICAL: TWO SENDERS, AND THE SECOND ONE IS THE POINT (W2-127). A test seeded
   // only with this user's messages would pass against an applier that deleted
   // the WHOLE messages subcollection — which would erase other people's words
   // to remove one person's. The decoy is what makes the assertion mean
@@ -600,7 +600,7 @@ describe('🔴 W2-112 deleteAccount — the cascade', () => {
     expectPresent(`users/${FRIEND}/friends/${ME}`, `users/gibby/friends/${ME}`);
     await deleteAccount._handler({auth: {uid: ME}});
     expectAbsent(`users/${FRIEND}/friends/${ME}`, `users/gibby/friends/${ME}`);
-    // 🔴 CONTROL — the friends themselves survive. This is the assertion that
+    // CRITICAL: CONTROL — the friends themselves survive. This is the assertion that
     // separates "cleaned a dangling reference" from "deleted somebody else".
     expectPresent(`users/${FRIEND}`, 'users/gibby');
   });
@@ -619,7 +619,7 @@ describe('🔴 W2-112 deleteAccount — the cascade', () => {
     expectPresent('families/fam-1');
     expect(_store.get('families/fam-1')?.memberUids).toEqual([OWNER]);
     expect(_store.get('families/fam-1')?.memberNames).toEqual({[OWNER]: 'Owner'});
-    // 🔴 The seat AND the grant. FAMILY_CAP counts memberUids, and
+    // CRITICAL: The seat AND the grant. FAMILY_CAP counts memberUids, and
     // sharesFamilyWith resolves off it — a retained uid consumes both.
     expect(_store.get(`users/${ME}`)).toBeUndefined();
   });
@@ -653,7 +653,7 @@ describe('🔴 W2-112 deleteAccount — the cascade', () => {
       'housemateTokens/TOK1',
       'familyInvites/INV1',
     );
-    // 🔴 CONTROL — the row belonging to somebody else survives. Without it,
+    // CRITICAL: CONTROL — the row belonging to somebody else survives. Without it,
     // "delete everything in the collection" passes every assertion above.
     expectPresent('subscriptionOwners/tx-2');
   });
@@ -717,7 +717,7 @@ describe('🔴 W2-112 deleteAccount — the cascade', () => {
     expectAbsent('families/fam-2');
     expect(_store.get(`users/${FRIEND}`)?.familyProExpiresAt).toBeNull();
     expect(_store.get(`users/${FRIEND}`)?.familyId).toBeNull();
-    // 🔴 CONTROL — their own paid tier is untouched. What ends is the family
+    // CRITICAL: CONTROL — their own paid tier is untouched. What ends is the family
     // grant, not a subscription somebody is paying for.
     expect(_store.get(`users/${FRIEND}`)?.subscriptionTier).toBe('free');
   });
@@ -743,10 +743,10 @@ describe('🔴 W2-112 deleteAccount — the cascade', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 🔴 W2-127 — the user's own messages, and nobody else's
+  // CRITICAL: W2-127 — the user's own messages, and nobody else's
   // -------------------------------------------------------------------------
   it("deletes this user's family messages and leaves other members' standing", async () => {
-    // 🔑 THE BEFORE-STATE IS LOAD-BEARING. Without `expectPresent` first, the
+    // KEY: THE BEFORE-STATE IS LOAD-BEARING. Without `expectPresent` first, the
     // absence of m1 afterwards is compatible with m1 never having existed —
     // which is the exact failure shape this file's header was written about.
     expectPresent('families/fam-1/messages/m1', 'families/fam-1/messages/m2');
@@ -754,7 +754,7 @@ describe('🔴 W2-112 deleteAccount — the cascade', () => {
     await deleteAccount._handler({auth: {uid: ME}});
 
     expectAbsent('families/fam-1/messages/m1');
-    // 🔴 THE DECOY, AND IT IS WHAT MAKES THE ASSERTION MEAN "SCOPED BY
+    // CRITICAL: THE DECOY, AND IT IS WHAT MAKES THE ASSERTION MEAN "SCOPED BY
     // senderUid" RATHER THAN "SOMETHING GOT DELETED". A suite seeded only with
     // this user's messages would pass against an applier that dropped the whole
     // subcollection — erasing other people's words to remove one person's.
@@ -765,10 +765,10 @@ describe('🔴 W2-112 deleteAccount — the cascade', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-127 — a deleted account's own messages go too
+// CRITICAL: W2-127 — a deleted account's own messages go too
 // ---------------------------------------------------------------------------
 //
-// 📌 THIS REVERSES A DOCUMENTED DECISION, AND THE REVERSAL IS THE TEST'S
+// NOTE: THIS REVERSES A DOCUMENTED DECISION, AND THE REVERSAL IS THE TEST'S
 // SUBJECT. `ALWAYS_RETAINED` used to carry
 // `families/{familyId}/messages where senderUid == uid` with the reasoning
 // "they are this user's own words, but they sit inside other people's
@@ -780,7 +780,7 @@ describe('🔴 W2-112 deleteAccount — the cascade', () => {
 // everything on request" has to be TRUE AS WRITTEN before it is written to
 // Apple.
 //
-// ⚠️ THE OLD COMMENT ALSO CLAIMED THE FLIP WAS "A ONE-LINE CHANGE". The index
+// WARNING: THE OLD COMMENT ALSO CLAIMED THE FLIP WAS "A ONE-LINE CHANGE". The index
 // half was right — a single-field equality query inside one known
 // subcollection is auto-indexed — and the cost half was wrong: the planner is
 // pure over already-fetched data, so it took an argument, a field, a mapping,

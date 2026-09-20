@@ -8,19 +8,19 @@ export {};
 // W2-139 · A run that selected nobody and a run that sent to somebody must not
 // look the same in the logs.
 //
-// 🔴 THE DEFECT, STATED AS THE THING THIS FILE MEASURES. `sendDailyGiftReminder`
+// CRITICAL: THE DEFECT, STATED AS THE THING THIS FILE MEASURES. `sendDailyGiftReminder`
 // and `sendStreakReminder` return early when nothing is selected (index.ts:439,
 // :474) and log nothing when they do send: the only console.log on the send path
 // sits AFTER `if (dead.length === 0) return []` in sendEachAndPruneDeadTokens
 // (pushTokens.ts:176,194), so a clean fan-out is silent too. `grep -c 'logger.'
 // functions/src/index.ts` is 0 for the whole file.
 //
-// 🔑 WHAT IT COST, WHICH IS WHY THIS IS A GATE AND NOT A NICETY. W2-138 spent a
+// KEY: WHAT IT COST, WHICH IS WHY THIS IS A GATE AND NOT A NICETY. W2-138 spent a
 // whole brief answering "did the daily reminder fire?" and had to settle it from
 // Cloud Scheduler status plus Brendan's own Firestore document, because the logs
 // could not distinguish "ran and correctly excluded him" from "never ran".
 //
-// ⚠️ WHAT THIS DOES NOT ASSERT, stated so it is not mistaken for more: it proves
+// WARNING: WHAT THIS DOES NOT ASSERT, stated so it is not mistaken for more: it proves
 // the process EMITS a distinguishing line. It cannot prove the line reaches Cloud
 // Logging, and it cannot prove anything is deployed.
 

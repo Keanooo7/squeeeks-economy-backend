@@ -120,7 +120,7 @@ function stubItems(_byType: Record<string, Array<Record<string, unknown>>> = {})
 /// Wires users/{uid} reads and captures every tx.set so a test can assert what
 /// was actually written. `orientationCompleted` drives the idempotency guards.
 ///
-/// ⚠️ `tx.get` USED TO ANSWER WITH THE USER SNAPSHOT FOR EVERY REF, whatever was
+/// WARNING: `tx.get` USED TO ANSWER WITH THE USER SNAPSHOT FOR EVERY REF, whatever was
 /// asked for. That was harmless while the only in-transaction read was the user
 /// document, and it stopped being harmless in W2-161 when the grant loop started
 /// asking whether each item was already owned: the user snapshot carries no
@@ -202,7 +202,7 @@ describe('claimWelcomeChest', () => {
   // W2-161 — the bare `tx.set` that replaced the document
   // -------------------------------------------------------------------------
   //
-  // 🔴 RED ON `main` AT ed008c0 — verified by restoring index.ts to that sha and
+  // CRITICAL: RED ON `main` AT ed008c0 — verified by restoring index.ts to that sha and
   // re-running this test alone. The grant loop wrote every pick unconditionally
   // with a bare `tx.set`, which REPLACES the document rather than updating it,
   // so an item the player already held had its `ownedAt` reset to today, its
@@ -213,7 +213,7 @@ describe('claimWelcomeChest', () => {
   // it sits behind the once-per-account `orientationCompleted` throw — but
   // "narrow" describes today's callers, not the write, and it is the same defect.
   //
-  // ⚠️ THE ASSERTION IS THE ABSENCE OF A WRITE. A blanket `merge: true` would
+  // WARNING: THE ASSERTION IS THE ABSENCE OF A WRITE. A blanket `merge: true` would
   // preserve `equipped` and STILL move `ownedAt` forward; only "no write at all"
   // is an assertion a merge cannot satisfy.
   test('does not touch the inventory document of an item the player already owns', async () => {
@@ -231,7 +231,7 @@ describe('claimWelcomeChest', () => {
   });
 
   test('THE CONTROL: an unowned welcome item is still written', async () => {
-    // 🔑 Without this, `if (false)` around the grant would satisfy the test
+    // KEY: Without this, `if (false)` around the grant would satisfy the test
     // above. The guard has to be selective rather than a stop — and this control
     // passes on `main` too, which is what makes the pair meaningful: one test
     // changed behaviour, the other pins behaviour that must NOT change.

@@ -2,7 +2,7 @@
 //
 // W2-23. Tester feedback storage and export.
 //
-// 🔑 The assertion this file exists for is `the tester's sentence survives
+// KEY: The assertion this file exists for is `the tester's sentence survives
 // exactly`. Everything else here — rects, colour indices, builds — is
 // scaffolding around one string that someone typed on a phone, and a feedback
 // tool that mangles it has failed at the only thing it does.
@@ -137,7 +137,7 @@ describe('what bounds a write from a stranger', () => {
 
 describe('an unknown specimenKey is STORED, not rejected', () => {
   test('the server does not mirror the specimen registry', () => {
-    // 🔑 The registry lives in lib/. A copy here would be a second definition
+    // KEY: The registry lives in lib/. A copy here would be a second definition
     // that drifts — the defect this codebase keeps filing. And rejecting an
     // unknown key loses the tester's sentence, while storing it exports as an
     // unknown key: visible and recoverable.
@@ -184,7 +184,7 @@ describe('🔑 the export is readable by a human', () => {
       record({specimenKey: 'Shop/Chests/default', lassos: [{rect: rect(), colourIndex: 1, comment: 'CCC'}]}),
     ]);
     expect(out.indexOf('Auth/Login/error')).toBeLessThan(out.indexOf('Shop/Chests/default'));
-    // 🔑 Both Shop comments sit under ONE heading. The heading appearing
+    // KEY: Both Shop comments sit under ONE heading. The heading appearing
     // exactly once despite two records IS the grouping — an ungrouped report
     // would print it twice.
     expect(out.split('Shop/Chests/default').length - 1).toBe(1);
@@ -222,12 +222,12 @@ describe('🔑 the export is readable by a human', () => {
 // W2-24 — who can read everyone else's feedback
 // ---------------------------------------------------------------------------
 //
-// 🔴 The export was a callable, so ANY signed-in user could read EVERY tester's
+// CRITICAL: The export was a callable, so ANY signed-in user could read EVERY tester's
 // comments. These assertions pin the gate that closed it, and pin the shape of
 // the refusal — because a refused caller who is not told how to proceed turns a
 // working feature into what looks like a bug.
 //
-// ⚠️ THE LIMIT, STATED RATHER THAN PAPERED OVER: this is source-level. There is
+// WARNING: THE LIMIT, STATED RATHER THAN PAPERED OVER: this is source-level. There is
 // no functions-emulator harness in this repo, so no test here executes the
 // endpoint, and nothing in this window can verify the secret is bound on a real
 // deployment — that needs the squeeeks project, which this account cannot reach
@@ -240,7 +240,7 @@ describe('🔴 the export is admin-only, and refuses in a way you can act on', (
   /**
    * The endpoint body with COMMENTS STRIPPED.
    *
-   * 🔴 W2-27 caught why this matters. Before stripping, `it reuses the EXISTING
+ * CRITICAL: W2-27 caught why this matters. Before stripping, `it reuses the EXISTING
    * admin gate` passed AFTER the gate stopped being reused — because the body
    * still mentioned `SEED_OPTS` in a comment, and mentioned `x-seed-secret` in a
    * sentence saying the endpoint NO LONGER ACCEPTS IT. The assertion was
@@ -269,7 +269,7 @@ describe('🔴 the export is admin-only, and refuses in a way you can act on', (
     expect(handler()).toContain('onRequest');
   });
 
-  // 🔑 THIS TEST INVERTED IN W2-27, and it is the third time a ledger-style
+  // KEY: THIS TEST INVERTED IN W2-27, and it is the third time a ledger-style
   // assertion has caught its own author. It used to assert the export shared
   // SEED_OPTS with the write endpoints. Splitting the secret by blast radius
   // made that false — and the un-stripped version PASSED ANYWAY on comment
@@ -358,7 +358,7 @@ describe('the SUBMIT path stays open, and that is a decision', () => {
     require('fs').readFileSync(require('path').join(__dirname, '..', 'index.ts'), 'utf8');
 
   test('submitGalleryFeedback is still a callable for any signed-in user', () => {
-    // 🔑 DELIBERATE, not an oversight. Testers must be able to file feedback —
+    // KEY: DELIBERATE, not an oversight. Testers must be able to file feedback —
     // that is the entire feature — and gating writes behind an admin secret
     // would mean only Brendan could report a bug. The write is already narrow:
     // create-only, owner-stamped so nobody can file under another name, no
@@ -380,7 +380,7 @@ describe('the SUBMIT path stays open, and that is a decision', () => {
 // W2-26 — the per-day cap
 // ---------------------------------------------------------------------------
 //
-// 🔴 The item raised in three consecutive returns: nothing bounded how many
+// CRITICAL: The item raised in three consecutive returns: nothing bounded how many
 // documents one tester could create. These pin the cap AND the two things that
 // make a cap survivable — a refusal the tester can act on, and a limit generous
 // enough that a real gallery pass never meets it.
@@ -398,7 +398,7 @@ describe('the per-day submission cap', () => {
   }
 
   test('the limit is generous enough for a real gallery pass', () => {
-    // 🔑 The gallery has 51 specimens, so a thorough pass filing one submission
+    // KEY: The gallery has 51 specimens, so a thorough pass filing one submission
     // per screen is ~51. The cap must clear that with room, or it breaks the
     // exact user it exists to serve — a tester on day three.
     expect(MAX_SUBMISSIONS_PER_DAY).toBeGreaterThan(51);

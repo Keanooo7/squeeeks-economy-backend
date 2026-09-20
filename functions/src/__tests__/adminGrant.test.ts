@@ -1,6 +1,6 @@
 // functions/src/__tests__/adminGrant.test.ts — the admin grant planner (W2-122)
 //
-// 🔴 THE QUESTION ASKED OF EVERY TEST BELOW: what single line could I delete
+// CRITICAL: THE QUESTION ASKED OF EVERY TEST BELOW: what single line could I delete
 // that SHOULD turn this red?
 //
 // The dangerous half of this feature is not sponges — a sponge is a number and
@@ -40,7 +40,7 @@ describe('🔴 W2-122 the grant id is the idempotency key, so it is checked hard
     expect(d.refusal).toBe('no-grant-id');
   });
 
-  // 🔑 THE SLASH CASE IS NOT PEDANTRY. `adminGrants/{grantId}` is a document
+  // KEY: THE SLASH CASE IS NOT PEDANTRY. `adminGrants/{grantId}` is a document
   // path: a grantId of `x/y` addresses a different collection entirely, so the
   // idempotency lock would be written somewhere no retry would ever look —
   // and the retry would apply a SECOND grant while reporting success. Same
@@ -68,7 +68,7 @@ describe('🔴 W2-122 a skin id that does not exist is refused — the WHOLE req
     expect(d.detail).toBe('char_does_not_exist');
   });
 
-  // 🔴 THE CONTROL THAT MAKES THIS MEAN SOMETHING. A partial grant is the worst
+  // CRITICAL: THE CONTROL THAT MAKES THIS MEAN SOMETHING. A partial grant is the worst
   // outcome available — the admin sees success, the recipient gets some of what
   // was promised, and the audit row records a grant that did not fully happen.
   // Mutating the planner to filter bad ids instead of refusing turns ONLY this
@@ -80,7 +80,7 @@ describe('🔴 W2-122 a skin id that does not exist is refused — the WHOLE req
     expect(d.refusal).toBe('unknown-item');
   });
 
-  // ⚠️ THE CASE #518 CREATED, AND IT IS THE SUBTLE ONE. #518 withdrew the FOX
+  // WARNING: THE CASE #518 CREATED, AND IT IS THE SUBTLE ONE. #518 withdrew the FOX
   // CUTS of char_chef and char_cleaner on a design measurement. Their ATLASES
   // STILL SHIP, so an id check against files on disk would pass them — but the
   // items themselves are still sold and still wearable by a bear or a duck, so
@@ -117,7 +117,7 @@ describe('🔴 W2-122 sponges: a typo guard, not a game rule', () => {
     const d = ok({ sponges: MAX_SPONGES_PER_GRANT + 1 });
     expect(d.ok).toBe(false);
     if (d.ok) throw new Error('unreachable');
-    // 🔑 A DIFFERENT REFUSAL ON PURPOSE. "50001 is not a whole number" would be
+    // KEY: A DIFFERENT REFUSAL ON PURPOSE. "50001 is not a whole number" would be
     // a lie, and the fix for the two cases is different: one is a typo, the
     // other is a deliberate amount that needs splitting into two grants.
     expect(d.refusal).toBe('sponges-over-cap');

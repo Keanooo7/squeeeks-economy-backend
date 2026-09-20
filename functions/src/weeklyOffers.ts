@@ -43,7 +43,7 @@ export interface WeeklyOfferConfig {
   /// Dedup key for purchases. Required — rotateWeeklyOffer throws without it.
   id: string;
   title: string;
-  /// 🔴 THERE IS DELIBERATELY NO PRICE FIELD ON THIS INTERFACE. W2-176, on
+  /// CRITICAL: THERE IS DELIBERATELY NO PRICE FIELD ON THIS INTERFACE. W2-176, on
   /// Brendan's ruling 2026-09-13: "Read the real price from the store. Stop
   /// carrying a written-in 2.99."
   ///
@@ -54,28 +54,28 @@ export interface WeeklyOfferConfig {
   /// resolved StoreKit product (premium_offer_card.dart `_priceLabel`), which
   /// is also the only source that is right for a player charged in GBP.
   ///
-  /// ⚠️ THE GUARD THAT USED TO LIVE HERE WAS THE DEFECT'S OWN ALIBI.
+  /// WARNING: THE GUARD THAT USED TO LIVE HERE WAS THE DEFECT'S OWN ALIBI.
   /// `offerIntegrity.test.ts` compared this number against
   /// ios/Configuration.storekit and passed, which made a believed price look
   /// verified. Both the field and that comparison are gone; two tests in that
   /// file now fail if either comes back.
   ///
-  /// 📌 A hand-seeded `shopConfig/weeklyOffers` document can STILL smuggle one
+  /// NOTE: A hand-seeded `shopConfig/weeklyOffers` document can STILL smuggle one
   /// through: `rotateWeeklyOffer` spreads `{...offer}` and that path is typed
   /// `DocumentData`, so this interface does not police it. Surfaced in the
   /// W2-176 return, deliberately not fixed here — index.ts was out of scope.
   currency: string;
-  /// 🔴 MUST EXIST IN APP STORE CONNECT, or the client throws
+  /// CRITICAL: MUST EXIST IN APP STORE CONNECT, or the client throws
   /// `Product not found: <id>` (shop_purchase_provider.dart:76) before any
   /// callable is reached. StoreKit resolves by EXACT id.
   ///
-  /// ⚠️ THE PREVIOUS VERSION OF THIS LINE SAID "as a NON-CONSUMABLE" AND THAT
+  /// WARNING: THE PREVIOUS VERSION OF THIS LINE SAID "as a NON-CONSUMABLE" AND THAT
   /// WAS WRONG IN BOTH HALVES. The real product is a CONSUMABLE — and a
   /// consumable is CORRECT, because this offer ROTATES: a non-consumable can be
   /// bought once ever, so a player could never buy a second week's bundle. The
   /// old comment encoded an assumption that was never true of a rotating offer.
   ///
-  /// 📌 AND THE TYPE WAS NEVER THE THING THAT THREW. On iOS `buyConsumable`
+  /// NOTE: AND THE TYPE WAS NEVER THE THING THAT THREW. On iOS `buyConsumable`
   /// DELEGATES to `buyNonConsumable` (recorded at shop_purchase_provider.dart
   /// :203), so the two calls are identical there; the throw is the id not
   /// resolving. The type still matters for repeat purchases and for Android,
@@ -89,7 +89,7 @@ export const WEEKLY_OFFERS: WeeklyOfferConfig[] = [
   {
     id: 'offer_seed_001',
     title: 'Spring Bundle',
-    // 🔴 NO PRICE. Removed 2026-09-13 (W2-176) rather than corrected.
+    // CRITICAL: NO PRICE. Removed 2026-09-13 (W2-176) rather than corrected.
     //
     // The history is worth keeping because it is the argument for the removal:
     // this seed said 9.99 while the reference art drew 2.99, for months, and
@@ -102,7 +102,7 @@ export const WEEKLY_OFFERS: WeeklyOfferConfig[] = [
     // copy is gone. `iapProductId` below is the whole contract: it names the
     // product, and StoreKit answers for what it costs.
     currency: 'USD',
-    // 🔴 THE REAL APP STORE CONNECT ID. `premium_offer_spring` was a
+    // CRITICAL: THE REAL APP STORE CONNECT ID. `premium_offer_spring` was a
     // placeholder that existed NOWHERE — 0 hits outside this repo's own
     // references — so `queryProductDetails` returned it in `notFoundIDs` and
     // the client threw before reaching any callable. A Product ID is IMMUTABLE
@@ -121,7 +121,7 @@ export const WEEKLY_OFFERS: WeeklyOfferConfig[] = [
 // Offer content validation — W2-39
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE DEFECT THIS CLOSES: `verifyIapAndGrant` validates NOTHING about
+// CRITICAL: THE DEFECT THIS CLOSES: `verifyIapAndGrant` validates NOTHING about
 // `contents[].itemId`. index.ts pushes the string straight into
 // `grantedItems` and writes `users/{uid}/inventory/{itemId}`. SEED_ITEMS
 // appears zero times in the whole grant path.
@@ -130,17 +130,17 @@ export const WEEKLY_OFFERS: WeeklyOfferConfig[] = [
 // The player pays real money and receives an inventory row pointing at nothing.
 // No throw, no log, no refund path.
 //
-// ⚠️ An unknown id in a LAYOUT is silently SKIPPED — an emptier house. An
+// WARNING: An unknown id in a LAYOUT is silently SKIPPED — an emptier house. An
 // unknown id in a GRANT is silently WRITTEN — a paid-for nothing. Same class of
 // bug, and only one of them takes money.
 //
-// 🔑 VALIDATED AT WRITE TIME, NOT AT GRANT TIME, and the difference is the whole
+// KEY: VALIDATED AT WRITE TIME, NOT AT GRANT TIME, and the difference is the whole
 // design: catching it at rotation is free, catching it at purchase is a refund.
 // A grant-side throw would also punish the wrong person — it cannot distinguish
 // "this offer is malformed" from "this player owns something the pool no longer
 // lists", and a purchase that succeeded yesterday must not start failing today.
 //
-// ⚠️ VALIDATING AT ROTATION IS NECESSARY BUT NOT SUFFICIENT. `shop/current` has
+// WARNING: VALIDATING AT ROTATION IS NECESSARY BUT NOT SUFFICIENT. `shop/current` has
 // THREE writers: rotateMarket (dailyChests only), rotateWeeklyOffer, and
 // seedShopData — which wrote its own hardcoded copy of the offer, bypassing
 // rotation entirely. That copy is now deleted and both paths import WEEKLY_OFFERS
@@ -150,7 +150,7 @@ export const WEEKLY_OFFERS: WeeklyOfferConfig[] = [
 /**
  * The only content types the grant path understands.
  *
- * ⚠️ verifyIapAndGrant branches `if type === 'sponges' … else if content.itemId`,
+ * WARNING: verifyIapAndGrant branches `if type === 'sponges' … else if content.itemId`,
  * so an UNKNOWN type does not error — it falls through to the itemId branch and
  * grants whatever that names. `'stlye'` is one keystroke from `'style'` and
  * would have granted silently. Narrow now that ids are checked, but it costs a
@@ -213,7 +213,7 @@ export function validateOfferContents(
       continue;
     }
     if (!knownItemIds.has(content.itemId)) {
-      // 🔴 THE ONE THAT TAKES MONEY.
+      // CRITICAL: THE ONE THAT TAKES MONEY.
       problems.push(
         `contents[${i}]: itemId '${content.itemId}' is in no seed pool — ` +
           'a purchase would grant an inventory row pointing at nothing',
@@ -232,14 +232,14 @@ export function validateOfferContents(
 // `startsAt` and `endsAt`. Its dry run never printed them either, so the operator
 // running it to CHECK got the same blind answer as the operator running it to FIX.
 //
-// 🔴 AND THE WINDOW CANNOT BE PATCHED FROM THE SEED, WHICH IS WHY THIS IS A
+// CRITICAL: AND THE WINDOW CANNOT BE PATCHED FROM THE SEED, WHICH IS WHY THIS IS A
 // REPORT AND NOT A REPAIR. `WEEKLY_OFFERS` carries no `startsAt`/`endsAt` at all
 // — deliberately, per the header above: `rotateWeeklyOffer` generates them
 // server-side and overrides anything supplied here. So there is no seed value to
 // patch a live window TO, and inventing one in the script would put a third
 // author on a field the cron owns.
 //
-// 🔑 THE HAZARD RUNS THE OPPOSITE WAY FROM THE OBVIOUS ONE, AND IT IS MEASURED
+// KEY: THE HAZARD RUNS THE OPPOSITE WAY FROM THE OBVIOUS ONE, AND IT IS MEASURED
 // RATHER THAN REASONED. The worry was that a patch would stomp a live window
 // back to a stale seed value. It cannot: Firestore's `{merge: true}` DEEP-MERGES
 // a nested map, so writing `{weeklyOffer: seed}` leaves `startsAt`/`endsAt`
@@ -249,7 +249,7 @@ export function validateOfferContents(
 //     write   set({weeklyOffer:{id:'seed', price:2.99}}, {merge:true})
 //     after   {startsAt:'LIVE-START', endsAt:'LIVE-END', price:2.99, id:'seed'}
 //
-// ⚠️ WHICH MEANS A SUCCESSFUL PATCH CAN LEAVE THE OFFER INVISIBLE. The price and
+// WARNING: WHICH MEANS A SUCCESSFUL PATCH CAN LEAVE THE OFFER INVISIBLE. The price and
 // the product id are corrected, the old window survives the merge, and if that
 // window has closed the player still sees nothing — while the script prints "OK
 // — the live offer now matches the seed". A green that is silent about a field
@@ -271,7 +271,7 @@ export type OfferWindowState =
 /**
  * Milliseconds from the several shapes a stored timestamp arrives in.
  *
- * 📌 The same subset `weeklyOfferPurchaseKey` already decodes (index.ts:610):
+ * NOTE: The same subset `weeklyOfferPurchaseKey` already decodes (index.ts:610):
  * a Firestore `Timestamp` exposes `toMillis()`, the emulator suites use a plain
  * number, and a hand-seeded document may carry an ISO string. Returns null
  * rather than NaN, so an undecodable value reports as `malformed` instead of

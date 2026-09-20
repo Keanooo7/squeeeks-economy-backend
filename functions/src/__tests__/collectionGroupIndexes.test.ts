@@ -7,7 +7,7 @@ const REPO = path.resolve(__dirname, '..', '..', '..');
 /**
  * W2-138 · Every filtered collection-group query needs a COLLECTION_GROUP index.
  *
- * 🔴 THE DEFECT THIS EXISTS FOR RAN IN PRODUCTION FOR 23 CONSECUTIVE NIGHTS WITH
+ * CRITICAL: THE DEFECT THIS EXISTS FOR RAN IN PRODUCTION FOR 23 CONSECUTIVE NIGHTS WITH
  * EVERY TEST GREEN. `sendStreakReminder` (index.ts:424) queries
  * `collectionGroup('streaks').where('currentStreak','>',0)`. A single-field index
  * is automatic at COLLECTION scope and NOT at COLLECTION_GROUP scope, so the
@@ -17,7 +17,7 @@ const REPO = path.resolve(__dirname, '..', '..', '..');
  * collection streaks and field currentStreak` on EVERY run from 2026-08-01 (its
  * first ever scheduled run) through 2026-08-23. It never once succeeded.
  *
- * 🔑 WHY 1474 PASSING TESTS SAID NOTHING, AND WHY THIS GATE IS STATIC.
+ * KEY: WHY 1474 PASSING TESTS SAID NOTHING, AND WHY THIS GATE IS STATIC.
  * Nothing in this repo executes the query against a real Firestore: the unit
  * suite mocks the Admin SDK, and the emulator does not enforce composite or
  * collection-group index requirements — it answers the query the production
@@ -25,7 +25,7 @@ const REPO = path.resolve(__dirname, '..', '..', '..');
  * we add. The only checkable relationship is between the SOURCE and the INDEX
  * FILE, and that is what this asserts.
  *
- * ⚠️ AN UNFILTERED `collectionGroup(c).get()` NEEDS NO INDEX and must not be
+ * WARNING: AN UNFILTERED `collectionGroup(c).get()` NEEDS NO INDEX and must not be
  * flagged — `index.ts:457` does exactly that against 'shop' and succeeds nightly.
  * The parser therefore keys on a `.where(...)` in the same call chain, not on the
  * presence of `collectionGroup` alone.
@@ -138,14 +138,14 @@ describe('every filtered collection-group query has a COLLECTION_GROUP index', (
 /**
  * W2-142 · A queried collection group must be one something actually WRITES.
  *
- * 🔴 THIS FILE ALREADY EXISTED AND DID NOT CATCH THE WORST BUG IT WAS NEAR.
+ * CRITICAL: THIS FILE ALREADY EXISTED AND DID NOT CATCH THE WORST BUG IT WAS NEAR.
  * `#584` swept every `collectionGroup(c).where(f, …)` and demanded an index for
  * it. `sendStreakReminder` queried `collectionGroup('streaks')` — a collection
  * group that has NEVER EXISTED, since every writer in the codebase uses the
  * singular `streak` — and this suite happily confirmed the plural had an index
  * and went green. It pinned the WRONG NAME and passed.
  *
- * 🔑 WHAT IT WOULD HAVE TAKEN, WHICH IS THE POINT OF THIS BLOCK. The original
+ * KEY: WHAT IT WOULD HAVE TAKEN, WHICH IS THE POINT OF THIS BLOCK. The original
  * asked "does this query have an index?" The question it could not answer is
  * "does this query have a SUBJECT?" — and no runtime test can answer it either,
  * because a collection-group query against a name nothing has ever written is
@@ -158,7 +158,7 @@ describe('every filtered collection-group query has a COLLECTION_GROUP index', (
  * `users/${uid}/shop/data`. `streaks` was written nowhere, by anyone, ever —
  * which is exactly the signal this asserts on.
  *
- * ⚠️ THE LIMIT, STATED SO IT IS NOT MISTAKEN FOR MORE. This proves a name is
+ * WARNING: THE LIMIT, STATED SO IT IS NOT MISTAKEN FOR MORE. This proves a name is
  * SPELLED the same way somewhere else in `functions/src`. It cannot prove the
  * collection has documents, and it would raise a false alarm for a collection
  * written only by the Dart client and never by a function. Neither live query

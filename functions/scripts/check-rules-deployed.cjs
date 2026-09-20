@@ -6,7 +6,7 @@
 // W2-98. The sibling `check-deployed.cjs` asks production which CALLABLES are
 // live. It greps for `rules` exactly once, and never asks about them.
 //
-// 🔴 SO DEPLOYMENT HAD A GATE FOR FUNCTIONS AND NONE FOR THE HALF THAT DECIDES
+// CRITICAL: SO DEPLOYMENT HAD A GATE FOR FUNCTIONS AND NONE FOR THE HALF THAT DECIDES
 // WHO MAY READ ANOTHER PLAYER'S DATA. That gap let two records of record
 // contradict each other for a fortnight with no way to settle it:
 //
@@ -20,7 +20,7 @@
 // separately; THIS file is the instrument that made the question answerable,
 // and the reason it will not need answering by hand again.
 //
-// ⚠️ THE FILE ON DISK IS NOT EVIDENCE OF ANYTHING PRODUCTION ENFORCES. Rules
+// WARNING: THE FILE ON DISK IS NOT EVIDENCE OF ANYTHING PRODUCTION ENFORCES. Rules
 // are dead text until deployed, a merged PR deploys nothing, and a reviewer's
 // natural reading of "the rules now require X" is that they require X today.
 //
@@ -32,11 +32,11 @@
 //   1  DRIFT — production is running something else
 //   3  ENVIRONMENT — could not ask (no credentials, token expired, API down)
 //
-// 🔑 3 IS SEPARATE FROM 1 ON PURPOSE. A network failure reporting DRIFT is
+// KEY: 3 IS SEPARATE FROM 1 ON PURPOSE. A network failure reporting DRIFT is
 // worse than no checker: it trains people to ignore the one alarm that means
 // "a player's data is not protected by what you think protects it".
 //
-// ⚠️ `make` COLLAPSES 1 AND 3 TO 2, exactly as it does for check-deployed —
+// WARNING: `make` COLLAPSES 1 AND 3 TO 2, exactly as it does for check-deployed —
 // make reports its own exit code for a failed recipe. Run the script directly
 // when you need to tell DRIFT from ENVIRONMENT.
 //
@@ -44,7 +44,7 @@
 // HOW IT READS PRODUCTION, WRITTEN DOWN SO THE NEXT WINDOW DOES NOT RE-DERIVE IT
 // ---------------------------------------------------------------------------
 //
-// 🔴 `firebase firestore:rules` DOES NOT EXIST. Not in v15.25.1 — `firestore`
+// CRITICAL: `firebase firestore:rules` DOES NOT EXIST. Not in v15.25.1 — `firestore`
 // has delete, bulkdelete, indexes, locations, operations, databases and backups,
 // and nothing that reads the live ruleset. `firebase deploy --only
 // firestore:rules --dry-run` compiles the local file and proves you hold deploy
@@ -54,7 +54,7 @@
 //   GET /v1/projects/{project}/releases/cloud.firestore   -> rulesetName
 //   GET /v1/{rulesetName}                                 -> source files
 //
-// ⚠️ AND THE TOKEN IS PER-DIRECTORY, WHICH IS THE TRAP. firebase-tools binds an
+// WARNING: AND THE TOKEN IS PER-DIRECTORY, WHICH IS THE TRAP. firebase-tools binds an
 // account to an ABSOLUTE PATH in `activeAccounts`. The root checkout is bound to
 // the account that owns the project; a FRESH WORKTREE IS NOT, and falls back to
 // the default `user`, which here is a different person entirely and 403s in a
@@ -63,13 +63,13 @@
 // it falls back it SAYS SO, because a 403 explained as "wrong account" is a
 // two-second fix and a 403 explained as nothing is an afternoon.
 //
-// 🔑 THE OAUTH CLIENT IS READ FROM THE INSTALLED firebase-tools, NEVER COPIED
+// KEY: THE OAUTH CLIENT IS READ FROM THE INSTALLED firebase-tools, NEVER COPIED
 // HERE. Its id and secret are public constants of that package, but a literal
 // copy in this repo would (a) rot silently when they rotate and (b) read as a
 // committed credential to every scanner and every human. Resolved at runtime or
 // we exit 3.
 //
-// 🔴 NO TOKEN IS EVER PRINTED OR WRITTEN, INCLUDING IN ERROR PATHS — and the
+// CRITICAL: NO TOKEN IS EVER PRINTED OR WRITTEN, INCLUDING IN ERROR PATHS — and the
 // error path is the one that needs saying out loud. When the OAuth token
 // endpoint rejects a refresh it can echo the REQUEST PARAMETERS back in its
 // response body, and those parameters include the refresh token itself. So the
@@ -233,7 +233,7 @@ async function accessToken(cred) {
     fail(ENVIRONMENT, `could not reach Google's token endpoint — ${e.message}`);
   }
   if (!res.ok) {
-    // 🔴 The BODY is not printed: a token-endpoint error can echo request
+    // CRITICAL: The BODY is not printed: a token-endpoint error can echo request
     // parameters, and those include the refresh token.
     fail(
       ENVIRONMENT,
@@ -275,14 +275,14 @@ async function getJson(url, token, cred) {
 /**
  * Comparable form of a ruleset: comments stripped, whitespace collapsed.
  *
- * 🔴 BYTE EQUALITY WOULD NEVER HOLD AND MUST NOT BE THE TEST. The deployed copy
+ * CRITICAL: BYTE EQUALITY WOULD NEVER HOLD AND MUST NOT BE THE TEST. The deployed copy
  * is whatever was uploaded, comments and all, and a checker that cries wolf on
  * a reflowed comment gets switched off within a week. What matters is whether
  * production ENFORCES what this file says, so comments and layout — the two
  * things that change constantly and enforce nothing — are removed before
  * comparing.
  *
- * ⚠️ Comments are stripped BEFORE whitespace is collapsed, and block comments
+ * WARNING: Comments are stripped BEFORE whitespace is collapsed, and block comments
  * before line comments, so a `//` inside a `/* … *\/` is not mistaken for the
  * start of a line comment.
  */
@@ -410,7 +410,7 @@ async function main() {
   );
 }
 
-// 🔑 THE COMPARISON HALF IS EXPORTED AND TESTED, THE CREDENTIALLED HALF CANNOT
+// KEY: THE COMPARISON HALF IS EXPORTED AND TESTED, THE CREDENTIALLED HALF CANNOT
 // BE. Same split as check-deployed.cjs / deployedFunctions.test.ts: this script
 // needs credentials so it cannot be a jest test while CI is out of billing, but
 // `normalise`, `digest` and `matchPaths` are pure — and a silently-broken

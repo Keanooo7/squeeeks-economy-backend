@@ -366,7 +366,7 @@ describe('backfillPublicProfiles Auth lookups', () => {
 // W2-122 — adminGrant's gate
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE MUTATION THIS BLOCK EXISTS FOR: prove the gate FAILS CLOSED when the
+// CRITICAL: THE MUTATION THIS BLOCK EXISTS FOR: prove the gate FAILS CLOSED when the
 // secret is unset, and that a WRONG secret and a MISSING one are
 // distinguishable to the operator without either message leaking the value.
 //
@@ -375,7 +375,7 @@ describe('backfillPublicProfiles Auth lookups', () => {
 // line of defence behind it.
 
 describe('🔴 W2-122 adminGrant — the secret gate', () => {
-  // 🔑 THE ASSERTION THAT CATCHES THE TRAP THAT ALREADY BIT THIS PROJECT.
+  // KEY: THE ASSERTION THAT CATCHES THE TRAP THAT ALREADY BIT THIS PROJECT.
   // SEED_OPTS' own docstring records it: both sibling endpoints were declared
   // as bare `onRequest`, so `firebase functions:secrets:set SEED_SECRET`
   // created a Secret Manager entry that NEVER REACHED THE RUNTIME.
@@ -476,7 +476,7 @@ describe('🔴 W2-122 adminGrant — dry run is the default', () => {
     expect(_db.runTransaction).not.toHaveBeenCalled();
   });
 
-  // 🔴 `apply` MUST BE THE BOOLEAN. A stray `"apply": "false"` is a STRING and
+  // CRITICAL: `apply` MUST BE THE BOOLEAN. A stray `"apply": "false"` is a STRING and
   // therefore truthy — under a truthiness check that request would issue a real
   // grant while the operator believed they had disabled it. This is the one
   // that turns a preview into a production write.

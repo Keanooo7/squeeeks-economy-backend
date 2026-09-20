@@ -139,7 +139,7 @@ const balance = (uid = 'uid-a') =>
 // document no longer describes a subscriber at all — it describes someone whose
 // entitlement cannot be established, which resolves to free.
 //
-// 🔑 The refusal cases therefore seed a live expiry. Their subject is unchanged
+// KEY: The refusal cases therefore seed a live expiry. Their subject is unchanged
 // and they still fail if the free-only gate is removed; what changed is that
 // stating "this user is a pro" now requires saying until when. The lapsed
 // counterparts added beneath each one are the new behaviour, and they are a
@@ -253,7 +253,7 @@ describe('claimWeeklyGift', () => {
   });
 
   test('a pro account with NO expiry is paid — fails closed to free', async () => {
-    // ⚠️ THE DIRECTION IS THE OPPOSITE OF EVERY OTHER FAIL-CLOSED CASE HERE, and
+    // WARNING: THE DIRECTION IS THE OPPOSITE OF EVERY OTHER FAIL-CLOSED CASE HERE, and
     // it is still fail-closed. Failing closed means refusing to certify a PAID
     // entitlement, not refusing to pay. An unreadable expiry means "not proven
     // to be a subscriber", and someone who is not a subscriber gets the free

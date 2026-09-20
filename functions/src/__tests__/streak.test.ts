@@ -180,7 +180,7 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// ⚠️ THE SERVER CLOCK IS PINNED TO THE SIMULATED DAY (W2-174)
+// WARNING: THE SERVER CLOCK IS PINNED TO THE SIMULATED DAY (W2-174)
 // ---------------------------------------------------------------------------
 //
 // `recordTaskCompletion` now BOUNDS the client's day key against the server's
@@ -188,13 +188,13 @@ beforeEach(() => {
 // point of the fix, and which makes every `2026-06-29` call below an
 // `invalid-argument` when the real clock is some other month.
 //
-// 🔑 PINNING THE CLOCK IS THE HONEST REPAIR, NOT FLOATING THE DATES. These
+// KEY: PINNING THE CLOCK IS THE HONEST REPAIR, NOT FLOATING THE DATES. These
 // cases assert day-boundary behaviour — the cap resetting on the next day,
 // yesterday's completions not paying again — and a floating date would make
 // them assert it against a moving target. The simulated day is the fixture;
 // the server clock simply has to agree with it.
 //
-// 📌 Declared AFTER the hook above so it runs after `jest.clearAllMocks()`,
+// NOTE: Declared AFTER the hook above so it runs after `jest.clearAllMocks()`,
 // which would otherwise wipe the spy on the first test of every file.
 const SIMULATED_SERVER_NOW = Date.parse('2026-06-29T12:00:00.000Z');
 beforeEach(() => {

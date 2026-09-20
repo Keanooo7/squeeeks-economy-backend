@@ -6,14 +6,14 @@
 // the chat line and no links or bad words allowed. this chat should be family
 // friendly fully"
 //
-// 🔴 ENFORCED SERVER-SIDE, AND THAT IS THE WHOLE REASON THIS FILE EXISTS.
+// CRITICAL: ENFORCED SERVER-SIDE, AND THAT IS THE WHOLE REASON THIS FILE EXISTS.
 // A client-side cap is a suggestion: the callable is reachable directly by
 // anyone with the app's config, and this is the one surface where that matters.
 // The client should ALSO cap, for the typing experience — but the client's cap
 // is a courtesy and this one is the rule.
 //
 // ---------------------------------------------------------------------------
-// 🔴 EVERY REFUSAL IS NAMED SEPARATELY, AND THAT IS NOT DECORATION
+// CRITICAL: EVERY REFUSAL IS NAMED SEPARATELY, AND THAT IS NOT DECORATION
 // ---------------------------------------------------------------------------
 //
 // "Too long", "no links" and "watch your language" are three different things a
@@ -23,7 +23,7 @@
 // client renders the reason; this file names it.
 //
 // ---------------------------------------------------------------------------
-// ⚠️ THE SUBSTRING TRAP, WHICH IS THE ONE THAT WOULD HAVE SHIPPED
+// WARNING: THE SUBSTRING TRAP, WHICH IS THE ONE THAT WOULD HAVE SHIPPED
 // ---------------------------------------------------------------------------
 //
 // A wordlist checked with `contains` flags "classic", "assignment",
@@ -36,7 +36,7 @@
 /**
  * The word cap, exactly as asked for.
  *
- * 🔑 "WORD" IS DEFINED HERE BECAUSE "15 words" HAS SEVERAL READINGS. A word is
+ * KEY: "WORD" IS DEFINED HERE BECAUSE "15 words" HAS SEVERAL READINGS. A word is
  * a run of non-whitespace: split on whitespace, discard empty tokens. So
  * "don't" is one word, "5PM" is one word, and "hello   there" is two. Anything
  * cleverer (hyphens? contractions? emoji?) would be a rule nobody could predict
@@ -47,7 +47,7 @@ export const MAX_WORDS = 15;
 /**
  * The character cap.
  *
- * ⚠️ NOT REDUNDANT WITH THE WORD CAP. Fifteen words of two hundred characters
+ * WARNING: NOT REDUNDANT WITH THE WORD CAP. Fifteen words of two hundred characters
  * each is a wall of text and a storage bill; the word cap bounds the sentence
  * and this bounds the abuse of it. 280 is chosen as a familiar public limit —
  * comfortably more than fifteen ordinary words (~90 characters) so it never
@@ -58,17 +58,17 @@ export const MAX_CHARACTERS = 280;
 /**
  * Words that do not belong on a family board.
  *
- * 🔑 DELIBERATELY SHORT, AND THE SHORTNESS IS THE DESIGN. Every entry is a
+ * KEY: DELIBERATELY SHORT, AND THE SHORTNESS IS THE DESIGN. Every entry is a
  * false-positive surface, and on this board a false positive is a child being
  * told their message is offensive when it is not. A long list catches marginally
  * more and misfires far more, so this covers the obvious and stops.
  *
- * ⚠️ MATCHED ON WHOLE TOKENS ONLY — see `containsBlockedWord`. Substring
+ * WARNING: MATCHED ON WHOLE TOKENS ONLY — see `containsBlockedWord`. Substring
  * matching on this list would flag "classic", "assignment", "grape" and
  * "analysis", which is the documented Scunthorpe problem and is asserted
  * against in the tests.
  *
- * 📌 ONE CONSTANT, NOT SCATTERED. Anything that needs to know the policy reads
+ * NOTE: ONE CONSTANT, NOT SCATTERED. Anything that needs to know the policy reads
  * this; nothing re-states it.
  */
 export const BLOCKED_WORDS: readonly string[] = [
@@ -114,7 +114,7 @@ function normaliseToken(token: string): string {
 /**
  * Whether [text] contains a blocked word as a WHOLE TOKEN.
  *
- * 🔴 THE `contains` IMPLEMENTATION IS THE BUG. `'classic'.includes('ass')` is
+ * CRITICAL: THE `contains` IMPLEMENTATION IS THE BUG. `'classic'.includes('ass')` is
  * true, and so is "assignment", "grape", "analysis", "Scunthorpe". This checks
  * membership of the normalised token set instead, so a blocked word must BE a
  * word rather than merely appear inside one.
@@ -126,11 +126,11 @@ export function containsBlockedWord(text: string): boolean {
 /**
  * Whether [text] contains something that is trying to be a link.
  *
- * 🔴 THE WELL-FORMED HALF STOPS NOBODY. Anyone posting a link they know is
+ * CRITICAL: THE WELL-FORMED HALF STOPS NOBODY. Anyone posting a link they know is
  * disallowed writes "foo dot com" or "foo[.]com" — so obfuscation is the half
  * that matters and the plain `https://` check is the easy part.
  *
- * ⚠️ AND OVER-MATCHING IS THE WORSE FAILURE. "I'll do it tonight. Thanks."
+ * WARNING: AND OVER-MATCHING IS THE WORSE FAILURE. "I'll do it tonight. Thanks."
  * contains a dot between two words and MUST pass; a board that rejects ordinary
  * sentences is worse than one that lets a link through. So the separator forms
  * require a KNOWN TLD immediately after the separator, which is what
@@ -146,7 +146,7 @@ export function containsLink(text: string): boolean {
   // A dotted domain: `foo.com`, and the bracketed evasions `foo[.]com`,
   // `foo(.)com`, `foo{.}com`, plus the spelled-out `foo dot com`.
   //
-  // 🔑 THE TLD LIST IS WHAT KEEPS THIS FROM EATING PUNCTUATION. Requiring a
+  // KEY: THE TLD LIST IS WHAT KEEPS THIS FROM EATING PUNCTUATION. Requiring a
   // known TLD immediately after the separator means "tonight. Thanks" cannot
   // match — `thanks` is not a TLD — while "foo dot com" cannot escape.
   const tld = '(?:com|net|org|io|co|uk|me|gg|xyz|link|app|dev|ru|tv|info|biz)';
@@ -168,7 +168,7 @@ export function checkMessage(raw: unknown): MessageCheck {
   const text = raw.trim();
   if (text.length === 0) return {ok: false, refusal: 'empty'};
 
-  // 📌 CHEAP AND UNAMBIGUOUS CHECKS FIRST, CONTENT JUDGEMENT LAST. A 5,000-word
+  // NOTE: CHEAP AND UNAMBIGUOUS CHECKS FIRST, CONTENT JUDGEMENT LAST. A 5,000-word
   // paste should be told it is too long rather than have its every token
   // scanned — and a message that breaks two rules is told about the structural
   // one, which is the one the writer can fix without argument.
@@ -187,13 +187,13 @@ export function checkMessage(raw: unknown): MessageCheck {
 export interface FamilyMessageDoc {
   senderUid: string;
   /**
-   * 🔑 THE SENDER'S NAME IS STORED ON THE MESSAGE, not resolved by the reader.
+ * KEY: THE SENDER'S NAME IS STORED ON THE MESSAGE, not resolved by the reader.
    * This is the W2-87 problem one level up: a client cannot read another
    * member's `publicProfiles` document, so a message carrying only a uid would
    * render as an unnamed bubble. Denormalised at post time from the family's
    * own `memberNames`, which the sender can already read.
    *
-   * ⚠️ Stale on a rename, exactly as `memberNames` is, and for the same reason —
+ * WARNING: Stale on a rename, exactly as `memberNames` is, and for the same reason —
    * except more so: a message is a historical record, so the name it carries is
    * arguably the RIGHT one to keep.
    */

@@ -4,7 +4,7 @@
 // them until now.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE BRIEF'S PREMISE WAS FALSE, AND IT WAS MY CLAIM
+// CRITICAL: THE BRIEF'S PREMISE WAS FALSE, AND IT WAS MY CLAIM
 // ---------------------------------------------------------------------------
 //
 // W2-20's return said: "a skipped run is indistinguishable from a green one at a
@@ -25,7 +25,7 @@
 // this session has spent all day cataloguing in other people's instruments.
 //
 // ---------------------------------------------------------------------------
-// 🔑 SO WHAT IS WORTH BUILDING IS THE THING THAT MAKES THAT TRUE
+// KEY: SO WHAT IS WORTH BUILDING IS THE THING THAT MAKES THAT TRUE
 // ---------------------------------------------------------------------------
 //
 // The safety property is: ENVIRONMENT IS NOT SUCCESS. Exit 3 rather than 0 is
@@ -34,7 +34,7 @@
 // says "an unmeasured suite must never be reported as a passing one" — and
 // NOTHING ASSERTED IT.
 //
-// ⚠️ That absence is the real exposure, and it is one careless edit wide. A
+// WARNING: That absence is the real exposure, and it is one careless edit wide. A
 // future someone unblocking CI, reasonably enough, makes the environment case
 // exit 0 so a machine without a JDK stops failing the build. The comment stays,
 // the message stays, and the hole the brief imagined becomes real. These tests
@@ -52,7 +52,7 @@ const CHECKER_PATH = path.join(__dirname, '..', '..', 'scripts', 'check-test-flo
 const CHECKER = fs.readFileSync(CHECKER_PATH, 'utf8');
 
 /**
- * 🔑 W2-29. CHECKER is the raw file and STAYS raw, because most of this suite
+ * KEY: W2-29. CHECKER is the raw file and STAYS raw, because most of this suite
  * deliberately asserts DOCUMENTATION — that the exit-code contract is written
  * down, that the environment failure names its cause. Those must read comments.
  *
@@ -149,7 +149,7 @@ describe('the environment failure tells a human what to do', () => {
 // W2-166 · The advisory that cannot fail
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE DEFECT, MEASURED RATHER THAN ARGUED. On every run over a rise this
+// CRITICAL: THE DEFECT, MEASURED RATHER THAN ARGUED. On every run over a rise this
 // checker printed the delta, named it, and gave the instruction:
 //
 //   floor: unit OK — 1596 (floor 1572, +24). Raise the floor in this commit
@@ -159,19 +159,19 @@ describe('the environment failure tells a human what to do', () => {
 // stopped protecting 24 tests. So this was never a missing detector — it is an
 // ADVISORY THAT CANNOT FAIL, and CI reads exit 0 as success.
 //
-// ⚠️ AND THE FIX CANNOT BE "MAKE THE DEFAULT NON-ZERO". `npm run floor` runs
+// WARNING: AND THE FIX CANNOT BE "MAKE THE DEFAULT NON-ZERO". `npm run floor` runs
 // legitimately mid-work, including inside /land, before anything is banked. A
 // default that fails on the correct workflow is a gate that cries wolf and then
 // gets RELAXED rather than debugged. So the failing behaviour is opt-in, and
 // the tests below pin BOTH halves — that --ratchet fails, and that the default
 // still does not.
 //
-// 🔑 WHY THESE ARE BEHAVIOURAL AND NOT SOURCE GREPS, unlike everything above.
+// KEY: WHY THESE ARE BEHAVIOURAL AND NOT SOURCE GREPS, unlike everything above.
 // The decision is extracted into pure exported functions, so a test can drive
 // the real logic without running two emulator suites for minutes. A grep for
 // `fail(4` would pass against a branch that computes the wrong outcome.
 //
-// 📌 THE HOLE THIS CLOSES BEHIND ITSELF. Before this brief, a fifth exit code
+// NOTE: THE HOLE THIS CLOSES BEHIND ITSELF. Before this brief, a fifth exit code
 // would have been guarded by NOTHING: the suite asserted membership of 1, 2 and
 // 3, and the adjacent `codes.length` assertion counts `fail(` CALL SITES, not
 // distinct codes — 7 of them, so deleting a new one leaves 6 and stays green.

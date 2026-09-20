@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// 🔴 THIS FILE IS NOT DEPLOYED. DO NOT PATCH IT AND EXPECT AN EFFECT.
+// CRITICAL: THIS FILE IS NOT DEPLOYED. DO NOT PATCH IT AND EXPECT AN EFFECT.
 // ---------------------------------------------------------------------------
 //
 // It exports `sendStreakReminder` and `sendDailyGiftReminder`, but nothing
@@ -8,7 +8,7 @@
 // one of each). The live copies are in `index.ts`, under "Push notification
 // scheduled functions"; index.ts:166 says the same thing from the other side.
 //
-// ⚠️ THE READS BELOW ARE THE OLD SHAPE ON PURPOSE. They fetch `users/{uid}`
+// WARNING: THE READS BELOW ARE THE OLD SHAPE ON PURPOSE. They fetch `users/{uid}`
 // and take `.fcmToken` off it — the friend-readable location the token moved
 // off in W2-132. The live crons read `users/{uid}/private/push` first and fall
 // back to that field; see pushTokens.ts. This copy is left as it was rather

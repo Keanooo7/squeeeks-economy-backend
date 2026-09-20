@@ -5,7 +5,7 @@
 // rather than a derivation over `users/{uid}.housemates`.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE QUESTION ASKED OF EVERY TEST BELOW: what single line could I delete
+// CRITICAL: THE QUESTION ASKED OF EVERY TEST BELOW: what single line could I delete
 // that SHOULD turn this red?
 // ---------------------------------------------------------------------------
 //
@@ -229,14 +229,14 @@ describe('planFamilyFanOut — a member who has left', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-79 — the fan-out finally has a caller, and the falsifier changed it
+// CRITICAL: W2-79 — the fan-out finally has a caller, and the falsifier changed it
 // ---------------------------------------------------------------------------
 //
 // W2-76 left the residual: a mid-period REFUND moves the owner's expiry
 // BACKWARDS and a copy made yesterday does not know. `planFamilyFanOutForEffect`
 // is the decision half of the caller that closes it.
 //
-// 🔑 THE BRIEF ASKED WHETHER REFUND IS THE ONLY BACKWARDS MOVER. IT IS NOT.
+// KEY: THE BRIEF ASKED WHETHER REFUND IS THE ONLY BACKWARDS MOVER. IT IS NOT.
 // `effectOf` collapses REFUND, REVOKE, EXPIRED and GRACE_PERIOD_EXPIRED into
 // one `revoke` effect, so this keys off the EFFECT rather than the type — which
 // also means a type added to REVOKING_TYPES tomorrow is covered without anyone
@@ -417,7 +417,7 @@ describe('🔑 it is keyed off the EFFECT, so every revoking type is covered', (
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-82 — planFamilyCreation, and the gate that the obvious call gets wrong
+// CRITICAL: W2-82 — planFamilyCreation, and the gate that the obvious call gets wrong
 // ---------------------------------------------------------------------------
 //
 // Two failures are asserted here and neither is a validation error:
@@ -428,13 +428,13 @@ describe('🔑 it is keyed off the EFFECT, so every revoking type is covered', (
 //      control below IS that person, and it must be refused.
 //   2. A SECOND FAMILY. `ownedFamilies` reads `.limit(1)` against an invariant
 //      nothing enforced until this callable.
-//   3. 🔴 A PERSONAL PRO SUBSCRIPTION (W2-177). Both paid products map to the
+//   3. CRITICAL: A PERSONAL PRO SUBSCRIPTION (W2-177). Both paid products map to the
 //      tier `pro`, so the tier check cannot see the difference and the gate
 //      reads the PRODUCT as well. This block used to assert the opposite —
 //      see `a personal Pro subscription cannot fund a family`, which is the
 //      same test with its expectation reversed by Brendan's 2026-09-04 ruling.
 //
-// ⚠️ And the control that keeps both honest: an ordinary paying subscriber with
+// WARNING: And the control that keeps both honest: an ordinary paying subscriber with
 // no family must SUCCEED. Without it, `return {ok: false}` passes every test
 // above and the feature is inert in the way #389's tier table was.
 
@@ -534,7 +534,7 @@ describe('🔴 W2-82 THE EMPTY SHELL — the wrong resolver admits the case it r
     const wrong = planFamilyCreation({
       ownerUid: 'uid-bob',
       ownPaidTier: resolveEffectiveTier(BOB_DOC, NOW),
-      // 🔑 HELD AT THE ADMITTING VALUE ON PURPOSE. This test isolates ONE
+      // KEY: HELD AT THE ADMITTING VALUE ON PURPOSE. This test isolates ONE
       // variable — which resolver feeds `ownPaidTier` — so every other input
       // must be the one that would pass. Passing Bob's real (absent) product
       // here would refuse for the W2-177 reason and the counterfactual would
@@ -546,7 +546,7 @@ describe('🔴 W2-82 THE EMPTY SHELL — the wrong resolver admits the case it r
     expect(wrong.ok).toBe(true);
   });
 
-  // 🔴 REVERSED BY BRENDAN'S RULING, 2026-09-04 (W2-177). This test asserted
+  // CRITICAL: REVERSED BY BRENDAN'S RULING, 2026-09-04 (W2-177). This test asserted
   // `.ok === true` and carried the reasoning for it: "Family is a SOURCE of pro,
   // not a tier above it (W2-76), so requiring the family product specifically
   // would make an existing subscriber cancel and rebuy to invite their
@@ -560,7 +560,7 @@ describe('🔴 W2-82 THE EMPTY SHELL — the wrong resolver admits the case it r
       subscriptionProductId: 'sub_pro_monthly',
       subscriptionExpiresAt: NOW + 30 * 24 * 60 * 60 * 1000,
     };
-    // 🔑 THE ASSERTION THAT STOPS THIS BEING THE FREE-ACCOUNT TEST AGAIN. This
+    // KEY: THE ASSERTION THAT STOPS THIS BEING THE FREE-ACCOUNT TEST AGAIN. This
     // owner IS paying and IS on a paid tier: they clear the tier gate in full,
     // so the refusal below can only come from the product.
     expect(resolveOwnPaidTier(personal, NOW)).toBe('pro');
@@ -694,14 +694,14 @@ describe('📌 W2-82 FAMILY_CAP is 5 INCLUDING the owner, and is not HOUSEMATE_C
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-83 — planFamilyJoin
+// CRITICAL: W2-83 — planFamilyJoin
 // ---------------------------------------------------------------------------
 //
 // The join is gated by an INVITE, not by a family id. `joinFamily(familyId)`
 // would let anyone who learns an id collect Pro, since the fan-out copies
 // `familyProExpiresAt` to every member — and a document id is not a secret.
 //
-// ⚠️ The double-pay flag is the piece most likely to rot into decoration, so it
+// WARNING: The double-pay flag is the piece most likely to rot into decoration, so it
 // has a NEGATIVE control: it must be FALSE for a joiner with no subscription of
 // their own. A flag that is always true is not a warning, it is a banner.
 
@@ -870,7 +870,7 @@ describe('🔴 W2-83 the double-pay warning', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-84 — leaving, removing, disbanding
+// CRITICAL: W2-84 — leaving, removing, disbanding
 // ---------------------------------------------------------------------------
 //
 // The failure these exist to stop: `familyProExpiresAt` is a COPY of the
@@ -878,7 +878,7 @@ describe('🔴 W2-83 the double-pay warning', () => {
 // out — up to a full billing period funded by someone they no longer share
 // anything with. A free-Pro vector with a longer fuse than the invite one.
 //
-// ⚠️ THE CROSS-FAMILY CONTROL SEEDS THE DECOY FIRST, per #390: a fixture where
+// WARNING: THE CROSS-FAMILY CONTROL SEEDS THE DECOY FIRST, per #390: a fixture where
 // the right answer happens to come first cannot distinguish the rule from the
 // ordering, and that is exactly how a scoping bug survived a green suite.
 
@@ -929,7 +929,7 @@ describe('🔴 W2-84 planFamilyDeparture — the grant is revoked', () => {
   });
 
   test('📌 the INVARIANT that makes the owner check order moot', () => {
-    // 🔑 THIS REPLACED A TEST THAT ASSERTED NOTHING. The original pinned "the
+    // KEY: THIS REPLACED A TEST THAT ASSERTED NOTHING. The original pinned "the
     // owner is refused BEFORE the no-op branch" and passed in BOTH orders —
     // caught by mutating the order and watching the suite stay green.
     //
@@ -938,7 +938,7 @@ describe('🔴 W2-84 planFamilyDeparture — the grant is revoked', () => {
     // memberUids. That invariant is what holds this up, so that is what is
     // pinned. If it ever weakens, the ordering becomes load-bearing and this
     // goes red first.
-    // ⚠️ AND THE FIRST VERSION OF THIS REPLACEMENT WAS ALSO VACUOUS. It used
+    // WARNING: AND THE FIRST VERSION OF THIS REPLACEMENT WAS ALSO VACUOUS. It used
     // `memberUids: [KID]` — one member — so isValidFamily returned false for
     // TOO FEW MEMBERS, not for the owner being absent, and it stayed green when
     // the owner check was mutated away. The roster below has enough members, so
@@ -1072,7 +1072,7 @@ describe('🔴 W2-84 planFamilyDisband — the owner ends it for everyone', () =
 describe('🔴 W2-84 CONTROL — a DIFFERENT family is untouched', () => {
   const NOW = 1_760_000_000_000;
 
-  // ⚠️ THE DECOY IS BUILT FIRST AND ITS MEMBERS ARE DISJOINT, per #390. A
+  // WARNING: THE DECOY IS BUILT FIRST AND ITS MEMBERS ARE DISJOINT, per #390. A
   // fixture where the right family happens to be examined first cannot tell the
   // rule from the ordering — that is precisely how a scoping bug survived a
   // green suite, and it cost a landed PR to find.
@@ -1121,7 +1121,7 @@ describe('🔴 W2-84 CONTROL — a DIFFERENT family is untouched', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-86 — the state createFamily actually produces
+// CRITICAL: W2-86 — the state createFamily actually produces
 // ---------------------------------------------------------------------------
 //
 // Every W2-83 fixture seeded `familyOf([OWNER, KID])` — a two-member roster —
@@ -1129,7 +1129,7 @@ describe('🔴 W2-84 CONTROL — a DIFFERENT family is untouched', () => {
 // succeed, because `isValidFamily` includes `too-few-members` and createFamily
 // writes ONE member. So the suite was green about a path that could never run.
 //
-// 🔑 A FIXTURE ASSERTING A STATE THE SYSTEM CANNOT PRODUCE describes an
+// KEY: A FIXTURE ASSERTING A STATE THE SYSTEM CANNOT PRODUCE describes an
 // intention rather than the code. Same class as a control that passes on seed
 // order: green, specific, and about nothing.
 
@@ -1224,7 +1224,7 @@ describe('🔴 W2-86 a NEW family — one member, exactly as createFamily writes
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-87 — memberNames, the only readable source of a member's name
+// CRITICAL: W2-87 — memberNames, the only readable source of a member's name
 // ---------------------------------------------------------------------------
 //
 // The family page needs a name per member and had NO readable source for one:
@@ -1385,7 +1385,7 @@ describe('🔴 W2-87 names flow through every membership change', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-88 part 2 — memberAvatars
+// CRITICAL: W2-88 part 2 — memberAvatars
 // ---------------------------------------------------------------------------
 //
 // Ruled: a member's avatar is visible to their family. Denormalised for the
@@ -1530,13 +1530,13 @@ describe('🔴 W2-88 memberAvatars are IDS, not asset paths', () => {
 // W2-118 — the shared bin day
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE BUG THESE CLOSE. `#490` keys the shared trash-day record by bin DATE
+// CRITICAL: THE BUG THESE CLOSE. `#490` keys the shared trash-day record by bin DATE
 // (`families/{id}/trashDay/YYYY-MM-DD`), and every member derived that date
 // from their OWN SharedPreferences weekday. A family that disagreed by one day
 // wrote and watched different documents: one member takes the bins out and for
 // everyone else nothing happens, silently, with nothing reporting it.
 //
-// 🔑 WHICH MUTATION TURNS ONLY THESE RED — and it is a FIXTURE mutation, which
+// KEY: WHICH MUTATION TURNS ONLY THESE RED — and it is a FIXTURE mutation, which
 // is the whole point. Making KID the owner in the not-the-owner fixture
 // (`familyOf([OWNER, KID], KID)`) reddens exactly the refusal test and leaves
 // every pre-existing test in this file green. The obvious CODE mutation —
@@ -1568,7 +1568,7 @@ describe('🔴 W2-118 planFamilyBinDay — one value, set by the owner', () => {
 });
 
 describe('🔴 W2-118 the refusal is about OWNERSHIP, and the fixture is what proves it', () => {
-  // ⚠️ KID IS A REAL MEMBER HERE, AND THAT IS THE ENTIRE VALUE OF THIS TEST.
+  // WARNING: KID IS A REAL MEMBER HERE, AND THAT IS THE ENTIRE VALUE OF THIS TEST.
   // W2-113 shipped four denial assertions that stayed green against a fixture
   // where nobody had ever joined — a refusal for the wrong reason reads
   // identically to a refusal for the right one. If KID were absent from
@@ -1583,7 +1583,7 @@ describe('🔴 W2-118 the refusal is about OWNERSHIP, and the fixture is what pr
     ).toEqual({ok: false, refusal: 'not-the-owner'});
   });
 
-  // 🔑 THE CONTROL THAT MAKES THE ABOVE MEAN "OWNERSHIP". A stranger who is in
+  // KEY: THE CONTROL THAT MAKES THE ABOVE MEAN "OWNERSHIP". A stranger who is in
   // no roster at all must be refused for the SAME reason — if this produced a
   // different refusal, the check above would be reading membership.
   test('CONTROL: a stranger is refused for the same reason, not a different one', () => {
@@ -1596,7 +1596,7 @@ describe('🔴 W2-118 the refusal is about OWNERSHIP, and the fixture is what pr
     ).toEqual({ok: false, refusal: 'not-the-owner'});
   });
 
-  // 🔴 THE PROBE GUARD. `planChoreAssignment` checks authority before anything
+  // CRITICAL: THE PROBE GUARD. `planChoreAssignment` checks authority before anything
   // else so a refusal cannot vary by input; a non-owner who could tell
   // `invalid-weekday` from `not-the-owner` learns whether their guess was
   // well-formed. Swapping the two checks in `planFamilyBinDay` turns ONLY this
@@ -1666,13 +1666,13 @@ describe('📌 W2-118 every refusal has text and a code', () => {
 // W2-120 — the family is born already agreeing
 // ---------------------------------------------------------------------------
 //
-// 🔑 THE DIFFERENCE THIS CLOSES. W2-118 gave the owner a way to set one shared
+// KEY: THE DIFFERENCE THIS CLOSES. W2-118 gave the owner a way to set one shared
 // bin day. Until they used it a NEW family had none, so every member fell back
 // to their own device weekday — meaning `#490`'s split-document bug was the
 // DEFAULT STATE of every family for as long as nobody opened the setting.
 // "The disagreement cannot occur" beats "the disagreement is fixable".
 //
-// 🔴 THE DECISIVE TEST HERE IS THE ABSENCE ONE, NOT THE PRESENCE ONE. Seeding
+// CRITICAL: THE DECISIVE TEST HERE IS THE ABSENCE ONE, NOT THE PRESENCE ONE. Seeding
 // a value that was supplied is the easy half and almost any implementation
 // gets it right. The half that is easy to get wrong — and impossible to notice
 // afterwards — is inventing a default when the founder has none: a family
@@ -1698,14 +1698,14 @@ describe('🔴 W2-120 planFamilyCreation seeds the founder\'s bin day', () => {
     expect(plan.family.binWeekday).toBe(BIN_TUESDAY);
   });
 
-  // 🔴 THE CONTROL THAT MATTERS, AND THE MEASURED RESULT RATHER THAN THE TIDY
+  // CRITICAL: THE CONTROL THAT MATTERS, AND THE MEASURED RESULT RATHER THAN THE TIDY
   // CLAIM. Mutating the planner to invent a default —
   // `binWeekday: isValidBinWeekday(x) ? x : 1` — turns 15 tests red across
   // this file and leaves all 58 OTHER suites green. It is not "only this test"
   // and saying so would be false: every assertion about ABSENCE fails,
   // including the drop-invalid cases and the shared-validator table.
   //
-  // 🔑 WHAT THE MUTATION ACTUALLY PROVES IS THE SPLIT. Under it, `the founder's
+  // KEY: WHAT THE MUTATION ACTUALLY PROVES IS THE SPLIT. Under it, `the founder's
   // weekday lands on the family document` and `seeding does not disturb what
   // creation already stamped` BOTH STAY GREEN — measured, not assumed. A suite
   // containing only the presence half would have shipped the invented default
@@ -1765,7 +1765,7 @@ describe('🔑 W2-120 ONE validator, so the two writers cannot drift', () => {
   // one of them learns about something the other does not — and the symptom is
   // a stored weekday one path accepts and the other rejects.
   //
-  // 🔑 PROVEN BY MUTATION, NOT BY INSPECTION: widening `isValidBinWeekday` to
+  // KEY: PROVEN BY MUTATION, NOT BY INSPECTION: widening `isValidBinWeekday` to
   // `value >= 0` reddens exactly three tests — the setter's zero case (W2-118),
   // the creator's zero case, and this table's zero row — with all 58 other
   // suites green. One edit, both writers. Two copies of the range check could
@@ -1810,7 +1810,7 @@ describe('🔑 W2-120 ONE validator, so the two writers cannot drift', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔑 W2-123 — the cap is FIVE, and this is the block that fails if it reverts
+// KEY: W2-123 — the cap is FIVE, and this is the block that fails if it reverts
 // ---------------------------------------------------------------------------
 //
 // Every other cap test in this file is written RELATIVE to the symbol —
@@ -1820,7 +1820,7 @@ describe('🔑 W2-120 ONE validator, so the two writers cannot drift', () => {
 // three that went red when 4 became 5 did so on hard-coded arithmetic, not on
 // anything that knew what the product decided.
 //
-// 🔑 SO THIS BLOCK NAMES FIVE PEOPLE AND NEVER MENTIONS THE SYMBOL. The
+// KEY: SO THIS BLOCK NAMES FIVE PEOPLE AND NEVER MENTIONS THE SYMBOL. The
 // fixture is a literal household — two parents and three children, which is
 // the family Brendan's 2026-08-19 decision was actually about — and the two
 // behavioural assertions pin the number from both sides at once:
@@ -1832,14 +1832,14 @@ describe('🔑 W2-120 ONE validator, so the two writers cannot drift', () => {
 // planners rather than reading a literal out of the source. A source-text
 // assertion could not tell 5 from 5 written somewhere it is never used.
 //
-// ⚠️ THE MUTATION THAT TURNS ONLY THIS BLOCK RED IS A FIXTURE MUTATION: drop
+// WARNING: THE MUTATION THAT TURNS ONLY THIS BLOCK RED IS A FIXTURE MUTATION: drop
 // one uid from HOUSEHOLD_OF_FIVE. Nothing else in the repo reads it, so the
 // 'family-full' assertion flips to a successful join while every pre-existing
 // test in every suite stays green. That is the property being bought. Mutating
 // FAMILY_CAP itself turns this red too — but it also turns three other tests
 // red, so it proves nothing about THIS block's own value.
 //
-// 📌 No `toHaveLength(5)` on the fixture on purpose. It would make the fixture
+// NOTE: No `toHaveLength(5)` on the fixture on purpose. It would make the fixture
 // mutation fail on a literal count instead of on behaviour, which is the
 // weaker of the two reds and would hide which assertion is load-bearing.
 describe('🔑 W2-123 a family holds FIVE, including whoever started it', () => {

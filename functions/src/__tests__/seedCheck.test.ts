@@ -16,14 +16,14 @@ const REPO = path.resolve(__dirname, '../../..');
  * Regenerates from the authored JSON and byte-compares against the committed
  * output. An edit to either side that is not mirrored in the other fails here.
  *
- * 🔴 THE VACUITY GUARD IS FIRST AND IT IS NOT A FORMALITY. A generator emitting
+ * CRITICAL: THE VACUITY GUARD IS FIRST AND IT IS NOT A FORMALITY. A generator emitting
  * NOTHING, diffed against an equally empty committed file, DIFFS CLEAN. Every
  * assertion below is worthless unless the parse found real rows — the same
  * reasoning dailyRotation.test.ts:590 gives about its own parse, and the same
  * shape as the anchor bug this suite caught during W2-135: a `Set<String>`
  * anchor that matched nothing would have compared two empty strings and passed.
  *
- * 🔑 WHAT THIS BUYS OVER THE GATE IT REPLACES. dailyRotation.test.ts:858 now
+ * KEY: WHAT THIS BUYS OVER THE GATE IT REPLACES. dailyRotation.test.ts:858 now
  * compares type/category/name/rarity across the two mirrors, so field drift was
  * already caught (#564). What was NEVER gated is kSkinDescriptions — it has no
  * TS counterpart at all — and row ORDER, which :858 cannot see because it keys

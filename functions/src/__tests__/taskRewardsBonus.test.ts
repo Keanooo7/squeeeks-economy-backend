@@ -2,7 +2,7 @@
 //
 // W2-15. The daily 2x task doubles SPONGES and not XP.
 //
-// 🔴 THIS FILE EXISTS BECAUSE NOTHING ASSERTED EITHER WAY. Today's behaviour is
+// CRITICAL: THIS FILE EXISTS BECAUSE NOTHING ASSERTED EITHER WAY. Today's behaviour is
 // unmultiplied XP; the history says that was never decided (see the comment at
 // the `const xp =` line in taskRewards.ts). An undecided asymmetry with no test
 // is indistinguishable from a deliberate one — which is precisely how the brief
@@ -13,7 +13,7 @@
 // reading the reasoning. If Brendan decides XP should be doubled, this file
 // fails, someone reads the comment, and the change is made deliberately.
 //
-// ⚠️ Nothing here stubs Math.random — bonusTaskIdFor is a seeded pure function
+// WARNING: Nothing here stubs Math.random — bonusTaskIdFor is a seeded pure function
 // of the date, so there is no randomness to stub, and stubbing it under Jest
 // kills the runner before any test executes.
 
@@ -33,7 +33,7 @@ import {codeOf} from './helpers/sourceText';
  * private copy of the rules, which is the failure mode a re-implemented fixture
  * always has.
  *
- * ⚠️ SINCE W2-66 THIS MODELS THE BELOW-CAP CASE ONLY. The source pays sponges on
+ * WARNING: SINCE W2-66 THIS MODELS THE BELOW-CAP CASE ONLY. The source pays sponges on
  * `newlyPaid` (capped) and XP on `newlyXp` (uncapped); the two coincide until a
  * player passes the cap, and every case here is below it. That is deliberate —
  * this file pins the BONUS asymmetry, and the bonus can only fire while the day
@@ -99,7 +99,7 @@ describe('🔴 and does NOT double XP — pinned in both directions', () => {
     );
     const xpLine = code.split('\n').find((l) => l.includes('const xp ='));
     expect(xpLine).toBeDefined();
-    // ⚠️ `newlyXp`, not `newlyPaid`, since W2-66 uncapped XP. The NUMERATOR
+    // WARNING: `newlyXp`, not `newlyPaid`, since W2-66 uncapped XP. The NUMERATOR
     // renamed; the decision this test pins did not. What it guards is the two
     // lines below — that no multiplier reaches XP — and that is untouched.
     expect(xpLine).toContain('newlyXp * XP_TASK');
@@ -129,7 +129,7 @@ describe('🔴 and does NOT double XP — pinned in both directions', () => {
 });
 
 describe('the bonus task is a pure function of the date', () => {
-  // 📌 This matters beyond this brief: it is what makes it possible to tell,
+  // NOTE: This matters beyond this brief: it is what makes it possible to tell,
   // from the completion log alone, whether the bonus TASK was completed on a
   // past day. The brief assumed a recompute could not know that. It can.
   test('the same day always yields the same bonus task', () => {

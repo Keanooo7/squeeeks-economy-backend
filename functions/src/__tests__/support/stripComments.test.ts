@@ -8,7 +8,7 @@ const INDEX_TS = path.join(REPO, 'functions', 'src', 'index.ts');
 /**
  * W2-142 · The control for the shared comment stripper.
  *
- * 🔑 WHICH MUTATION TURNS ONLY THIS FILE RED. Restoring the old two-regex
+ * KEY: WHICH MUTATION TURNS ONLY THIS FILE RED. Restoring the old two-regex
  * stripper. The fixtures below are synthetic and carry the hostile sequences on
  * purpose, so they fail on that mutation no matter what `index.ts` currently
  * contains — whereas the two gates that consume this helper only go red while
@@ -77,13 +77,13 @@ describe('stripComments — the sequences that broke two gates', () => {
 
 describe('stripComments — the assumption it makes about index.ts', () => {
   test('index.ts survives the scanner with both live queries still visible', () => {
-    // 📌 The documented limit of a scanner that is not a lexer: a regex literal
+    // NOTE: The documented limit of a scanner that is not a lexer: a regex literal
     // containing an unpaired quote would be misread as opening a string, and
     // everything after it would be garbage. `index.ts` has none today. This
     // pins that — if someone adds one, this goes red and names the reason
     // rather than letting the two consuming gates silently parse rubble.
     //
-    // ⚠️ IT COUNTS THE QUERIES AND DOES NOT NAME THEM, ON PURPOSE. Asserting
+    // WARNING: IT COUNTS THE QUERIES AND DOES NOT NAME THEM, ON PURPOSE. Asserting
     // `['streak','shop']` here would make this file go red for a collection
     // RENAME — someone else's finding, already covered next door in
     // collectionGroupIndexes.test.ts — and a test that fails for two unrelated

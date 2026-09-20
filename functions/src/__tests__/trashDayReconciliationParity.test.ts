@@ -2,7 +2,7 @@
  * The TypeScript half of the reconciliation parity contract.
  *
  * ---------------------------------------------------------------------------
- * 🔴 THE RULE IS IMPLEMENTED TWICE AND NOTHING CHECKED THAT THE TWO AGREE
+ * CRITICAL: THE RULE IS IMPLEMENTED TWICE AND NOTHING CHECKED THAT THE TWO AGREE
  * ---------------------------------------------------------------------------
  *
  *   · `functions/src/trashDay.ts` — `reconcileTrashDay`, the NORMATIVE
@@ -16,19 +16,19 @@
  * client disagrees with its own specification about whether a housemate has
  * already taken the bins out.
  *
- * ⚠️ AND AN EMULATOR TEST CANNOT CLOSE THIS. Driving reconciliation against a
+ * WARNING: AND AN EMULATOR TEST CANNOT CLOSE THIS. Driving reconciliation against a
  * real Firestore would exercise the TYPESCRIPT — the copy with no callers —
  * while the defect would live in the DART copy that ships. A gate can only
  * catch a divergence if it reads BOTH sides, and no single process runs both
  * languages. So: one table, two readers.
  *
  * This file is reader one. Reader two is `test/features/trash_day/
- * trash_day_reconciliation_test.dart` and is W1's lane — ⚠️ NOT YET WIRED, so
+ * trash_day_reconciliation_test.dart` and is W1's lane — WARNING: NOT YET WIRED, so
  * until it is, this fixture pins the TypeScript only and the parity claim is
  * half-built. Said plainly here rather than implied, because a half-built gate
  * that reads as finished is worse than none.
  *
- * 🔑 THE EXPECTATIONS ARE AUTHORED, NOT GENERATED. A table produced by running
+ * KEY: THE EXPECTATIONS ARE AUTHORED, NOT GENERATED. A table produced by running
  * `reconcileTrashDay` would agree with it by construction and could never fail
  * — the producer's own instrument grading the producer. Every row was derived
  * from the stated contract and then checked against the code, in that order.
@@ -62,7 +62,7 @@ function completionFor(binDateKey: string): TrashDayCompletion {
 }
 
 describe('reconcileTrashDay agrees with the shared truth table', () => {
-  // 🔴 THE GUARD THAT STOPS EVERY OTHER ASSERTION PASSING VACUOUSLY. `it.each`
+  // CRITICAL: THE GUARD THAT STOPS EVERY OTHER ASSERTION PASSING VACUOUSLY. `it.each`
   // over an empty array is a green suite that ran nothing, and a fixture that
   // failed to parse, moved, or lost its `cases` key would produce exactly that.
   // The space is 3 x 3 and the count is asserted, not merely non-zero, so a row

@@ -5,7 +5,7 @@
 // W2-13. This is the path W2-11 made possible and did not build: "the log makes
 // recomputation possible; nothing uses it."
 //
-// 🔑 THE PURITY PAYS OFF SOMEWHERE IT WAS NOT BUILT FOR. `evaluateQuests` was
+// KEY: THE PURITY PAYS OFF SOMEWHERE IT WAS NOT BUILT FOR. `evaluateQuests` was
 // made pure because the design at the time permitted NO recovery — there was no
 // history, so a mis-evaluating quest could never be re-run. That constraint is
 // gone, and the property it forced is exactly what makes a recompute three
@@ -15,7 +15,7 @@
 // recompute, because it would launder a bug into an authoritative-looking fix.
 //
 // ---------------------------------------------------------------------------
-// ⚠️ SWEEPS: WHY THIS IS EXACT NOW, AND INERT WHEN IT CANNOT BE.
+// WARNING: SWEEPS: WHY THIS IS EXACT NOW, AND INERT WHEN IT CANNOT BE.
 // ---------------------------------------------------------------------------
 //
 // W2-13 found that `evaluateQuests` takes four inputs and the log carried only
@@ -29,12 +29,12 @@
 // is now RECONSTRUCTED FROM THE RECORDS THEMSELVES — see `censusForDay` — so
 // all four quest kinds replay exactly.
 //
-// 🔴 BUT ONLY FOR RECORDS THAT CARRY IT. A record written before the field
+// CRITICAL: BUT ONLY FOR RECORDS THAT CARRY IT. A record written before the field
 // existed has `roomTaskCount: undefined`, and that is the honest value: nobody
 // knows. Such a room is EXCLUDED from the day's census, which leaves the sweep
 // inert exactly as before.
 //
-// ⚠️ IT MUST NEVER BE DEFAULTED. Zero would read as "the room was empty", which
+// WARNING: IT MUST NEVER BE DEFAULTED. Zero would read as "the room was empty", which
 // makes every partial clean a completed sweep. Today's live count would be the
 // original W2-13 error: judging a three-month-old sweep by a census that has
 // since changed fails in BOTH directions — a room that gained tasks
@@ -45,14 +45,14 @@
 // approximate when it does. Silence is not an option the API offers.
 //
 // ---------------------------------------------------------------------------
-// 📌 BLIND-BEFORE, AND WHY IT IS IN THE OUTPUT RATHER THAN A COMMENT
+// NOTE: BLIND-BEFORE, AND WHY IT IS IN THE OUTPUT RATHER THAN A COMMENT
 // ---------------------------------------------------------------------------
 //
 // The log begins when it begins. Everything a player completed before it
 // shipped is unrecorded and unrecoverable — the first cohort's window starts
 // empty rather than at signup.
 //
-// ⚠️ A recompute reporting "0 progress" and one reporting "no data before
+// WARNING: A recompute reporting "0 progress" and one reporting "no data before
 // 2026-08-12" are the same output unless it says which. Someone reading the
 // first concludes the quest is broken; the truth is that it is BLIND. So every
 // report carries `earliestRecord` and `blindBefore`, and a window that starts
@@ -72,7 +72,7 @@ export interface RecomputeOptions {
   /**
    * Inclusive `YYYY-MM-DD` window start. Omit for "everything the log holds".
    *
-   * ⚠️ DELIBERATELY AN ARGUMENT WITH NO DEFAULT WINDOW. How far back a quest may
+ * WARNING: DELIBERATELY AN ARGUMENT WITH NO DEFAULT WINDOW. How far back a quest may
    * be recomputed IS the retention decision, and that is a product call, not
    * this function's to make. Defaulting to a number here would silently cap a
    * feature nobody has designed.
@@ -101,7 +101,7 @@ export interface RecomputeReport {
   /**
    * Tiers that WOULD be claimed by this replay.
    *
-   * 🔴 "Would". Nothing here grants. See the note on the function.
+ * CRITICAL: "Would". Nothing here grants. See the note on the function.
    */
   payouts: QuestPayout[];
   /** Distinct days that had at least one record inside the window. */
@@ -137,7 +137,7 @@ export interface RecomputeReport {
  * PURE. Replays the completion log through the live evaluator and reports what
  * quest state it implies.
  *
- * 🔴 THIS FUNCTION NEVER GRANTS AND NEVER WRITES. It computes and reports, and
+ * CRITICAL: THIS FUNCTION NEVER GRANTS AND NEVER WRITES. It computes and reports, and
  * that is the entire contract. A recompute that silently pays out is a
  * migration that guesses — and with sweeps unverifiable (above) some of what it
  * would pay is guessed by construction. Granting is a separate, deliberate act
@@ -146,11 +146,11 @@ export interface RecomputeReport {
 /**
  * The room census for one day, reconstructed from that day's own records.
  *
- * 🔑 THE DENOMINATOR COMES FROM THE DATA, NOT FROM NOW. Each record carries the
+ * KEY: THE DENOMINATOR COMES FROM THE DATA, NOT FROM NOW. Each record carries the
  * count that was true when it was written, so a day judges itself by its own
  * census rather than by a room that has since changed.
  *
- * ⚠️ Two rules, both load-bearing:
+ * WARNING: Two rules, both load-bearing:
  *
  *  - A record with NO `roomTaskCount` contributes nothing. Its room is absent
  *    from the census, `total === 0`, and the sweep stays inert. Defaulting to 0
@@ -269,7 +269,7 @@ export function recomputeFromLog(
 /**
  * What a recompute would ADD to a player's existing state.
  *
- * 🔑 THIS IS THE ONLY SAFE QUESTION TO ASK BEFORE A GRANT, and the reason is
+ * KEY: THIS IS THE ONLY SAFE QUESTION TO ASK BEFORE A GRANT, and the reason is
  * `claimedTiers`. Replaying from scratch reports every tier the log implies,
  * INCLUDING the ones already paid. Handing that list to a granter would pay
  * them all a second time — a level-up farm assembled out of an audit tool.

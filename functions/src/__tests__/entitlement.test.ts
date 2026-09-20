@@ -14,7 +14,7 @@
 // written at all — an expiry boundary tested against `Date.now()` is a test that
 // passes for a different reason every time it runs.
 //
-// ⚠️ IT FAILS CLOSED, INCLUDING ON A MISSING EXPIRY. A paid tier string with no
+// WARNING: IT FAILS CLOSED, INCLUDING ON A MISSING EXPIRY. A paid tier string with no
 // readable expiry resolves to free. That is deliberate: the alternative — trust
 // the tier when the date is unreadable — is precisely the bug this file exists
 // to prevent, and it would be reachable by writing one malformed field.
@@ -33,7 +33,7 @@ function realTimestamp(ms: number) {
 /**
  * The shape the suite's own hand-rolled `admin.firestore.Timestamp` produces.
  *
- * ⚠️ Not a convenience — verifyIapAndGrant.test.ts asserts the subscription
+ * WARNING: Not a convenience — verifyIapAndGrant.test.ts asserts the subscription
  * write lands as `{ _type: 'ts', ms }`, so this is the representation every
  * OTHER test in this suite would feed the resolver. A resolver that only
  * understood the real Timestamp would fail closed on every mocked document and
@@ -240,7 +240,7 @@ describe('resolveEffectiveTier — a retired tier string', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔑 THE FAMILY GRANT — a SOURCE of pro, not a tier (W2-76)
+// KEY: THE FAMILY GRANT — a SOURCE of pro, not a tier (W2-76)
 // ---------------------------------------------------------------------------
 //
 // `SubscriptionTier` stays `enum { free, pro }`. A family member with no
@@ -248,7 +248,7 @@ describe('resolveEffectiveTier — a retired tier string', () => {
 // their user document is in the future — the fan-out's copy of the family
 // owner's own expiry (see family.ts).
 //
-// ⚠️ EVERY GRANT TEST HERE HAS A CONTROL, for the reason the brief gave: a
+// WARNING: EVERY GRANT TEST HERE HAS A CONTROL, for the reason the brief gave: a
 // test proving a family member resolves to pro is worthless if it also passes
 // with the family branch deleted. The controls below are the same documents
 // with the family field lapsed, unreadable or absent.

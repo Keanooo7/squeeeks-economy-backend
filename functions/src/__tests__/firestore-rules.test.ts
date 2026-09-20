@@ -59,7 +59,7 @@ const THIRD_UID = 'uid-bystander';
 let testEnv: RulesTestEnvironment;
 
 beforeAll(async () => {
-  // 🔴 REFUSE RATHER THAN JUDGE AN EMULATOR NOBODY STARTED (W2-95).
+  // CRITICAL: REFUSE RATHER THAN JUDGE AN EMULATOR NOBODY STARTED (W2-95).
   //
   // `initializeTestEnvironment` is given no host or port on purpose, so the
   // emulator comes from the environment. @firebase/rules-unit-testing resolves
@@ -67,7 +67,7 @@ beforeAll(async () => {
   // FIRESTORE_EMULATOR_HOST. `npm run test:rules` sets the last two via
   // `emulators:exec --config ../firebase.rules.json`.
   //
-  // ⚠️ WITHOUT THIS GUARD, RUNNING THE FILE UNDER BARE `jest` REACHES WHATEVER
+  // WARNING: WITHOUT THIS GUARD, RUNNING THE FILE UNDER BARE `jest` REACHES WHATEVER
   // EMULATOR HAPPENS TO BE ANSWERING. That is not hypothetical: for eleven
   // hours on 2026-08-16 the only way anyone ran this suite was the hand-rolled
   // `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 jest …`, which attaches to a
@@ -76,7 +76,7 @@ beforeAll(async () => {
   // green count from the wrong database is the failure this file exists to
   // prevent, not a result.
   //
-  // 📌 PRESENCE IS CHECKED, NOT VALUE, AND THAT IS DELIBERATE. Asserting a
+  // NOTE: PRESENCE IS CHECKED, NOT VALUE, AND THAT IS DELIBERATE. Asserting a
   // specific port here would copy firebase.rules.json into this file — and a
   // port pinned in the test is precisely the trap that would keep pointing at
   // the old emulator while the config innocently started a new one elsewhere.
@@ -96,7 +96,7 @@ beforeAll(async () => {
       rules: readFileSync(resolve(__dirname, '../../../firestore.rules'), 'utf8'),
     },
   });
-  // 🔴 AN EXPLICIT TIMEOUT, BECAUSE THE DEFAULT ONE LIES ABOUT WHAT FAILED.
+  // CRITICAL: AN EXPLICIT TIMEOUT, BECAUSE THE DEFAULT ONE LIES ABOUT WHAT FAILED.
   // jest's default hook timeout is 5s. `initializeTestEnvironment` loads the
   // ruleset over the wire, and on a loaded machine that can exceed it — at
   // which point EVERY test in the file reports failed (`Tests: 193 failed, 193
@@ -223,7 +223,7 @@ describe('users/{uid} update', () => {
     // the one ending that revokes MID-period, so freezing this buys back a full
     // paid month after Apple has returned the money, every cycle.
     //
-    // ⚠️ The field shipped in #348 and was NOT in userCfOwnedFields() for one
+    // WARNING: The field shipped in #348 and was NOT in userCfOwnedFields() for one
     // PR. The rule is a DENYLIST, so a new CF-written field on users/{uid} is
     // client-writable by default: forgetting one fails OPEN and in silence.
     await seedUserDoc({
@@ -259,7 +259,7 @@ describe('users/{uid} update', () => {
     // uniqueness inside a transaction and this rule stops the client from
     // rewinding the record it reads.
     //
-    // 📌 Added in the SAME COMMIT as the code that writes it. #348 shipped
+    // NOTE: Added in the SAME COMMIT as the code that writes it. #348 shipped
     // `subscriptionNotifiedAt` without its entry and #356 closed the resulting
     // refund bypass — this list is a DENYLIST, so a new CF-written field is
     // client-writable by default and the omission has no symptom.
@@ -327,7 +327,7 @@ describe('users/{uid} delete and read', () => {
 // of every friend they had. Firestore has no field-level read security, so the
 // only fix is to move the field to a document with a different rule.
 //
-// 🔑 THE PARENT RULE COULD NOT SIMPLY BE NARROWED TO THE OWNER. The friend
+// KEY: THE PARENT RULE COULD NOT SIMPLY BE NARROWED TO THE OWNER. The friend
 // read is live: friends_repository_impl.dart `_roster()` reads `housemates`
 // off users/{friendUid} for every accepted friend to answer "may I visit their
 // house?" — and it swallows the permission error and returns empty, so
@@ -335,7 +335,7 @@ describe('users/{uid} delete and read', () => {
 // Visit button into an Ask button with nothing going red. The last describe in
 // this file still asserts that friend read succeeds, deliberately.
 //
-// 🔴 BOTH DIRECTIONS ARE PROVEN BELOW. A rule that denied everybody would pass
+// CRITICAL: BOTH DIRECTIONS ARE PROVEN BELOW. A rule that denied everybody would pass
 // every deny assertion here and silently break push for the user themselves,
 // whose own device is the only thing that ever writes this document.
 describe('users/{uid}/private/push — owner-only push token', () => {
@@ -434,7 +434,7 @@ describe('users/{uid}/private/push — owner-only push token', () => {
   });
 
   it('rules do not cascade: the friend-readable parent does not open the child', async () => {
-    // 🔑 The control that names the mechanism. The parent IS readable by this
+    // KEY: The control that names the mechanism. The parent IS readable by this
     // friend — asserted here in the same test, on the same seeded state — and
     // the child still is not. Without the succeeding half, a reader cannot
     // tell this test from one where the friendship seed simply failed.
@@ -766,7 +766,7 @@ describe('users/{uid}/friends/{friendUid} — reads and the isFriend path', () =
 // edge. Neither half opens a house on its own.
 // ---------------------------------------------------------------------------
 
-// 📌 IMPORTED, NOT REDECLARED. This was a local `const HOUSEMATE_CAP = 4` — a
+// NOTE: IMPORTED, NOT REDECLARED. This was a local `const HOUSEMATE_CAP = 4` — a
 // THIRD copy of a number that already existed twice (housemateCap() in
 // firestore.rules, and the server-side constant the redemption callable
 // enforces). Importing it collapses one of the copies and makes the mirror test
@@ -902,7 +902,7 @@ describe('users/{uid}/house — the roster gates the read', () => {
 // the feature shipped chores, trash day and a message board, and then could
 // not show you the house they are all about.
 //
-// 🔑 THE GRANT IS NOT WRITTEN ANYWHERE. It is a second disjunct on
+// KEY: THE GRANT IS NOT WRITTEN ANYWHERE. It is a second disjunct on
 // canViewHouse, resolved from the READER's own uid: users/{me}.familyId →
 // families/{fid}.memberUids. `users/{uid}.housemates` is deliberately
 // untouched — see family.ts:12-57 for why a family is not a housemates array,
@@ -922,7 +922,7 @@ async function seedFamily(familyId: string, memberUids: string[]) {
 /**
  * Seeds the pointer half on each member's user document.
  *
- * ⚠️ A FULL setDoc, exactly like seedRoster above — so a test needing both a
+ * WARNING: A FULL setDoc, exactly like seedRoster above — so a test needing both a
  * roster and a familyId must seed them in ONE call, not one after the other.
  */
 async function seedFamilyPointer(
@@ -1033,7 +1033,7 @@ describe('users/{uid}/house — a family opens the door too', () => {
   });
 
   it('does NOT revoke a housemate edge the pair earned separately', async () => {
-    // ⚠️ The brief's warning. A and B were housemates by token BEFORE they
+    // WARNING: The brief's warning. A and B were housemates by token BEFORE they
     // were family; B leaving the family must not close a door B was let
     // through on its own consent. Nothing here needs provenance because the
     // grant was never copied into the roster — the two paths are independent
@@ -1575,7 +1575,7 @@ describe('users/{uid}/economy', () => {
 // users/{uid}/days/{dayKey} — the PER-DAY task-reward ledger (W2-174)
 // ---------------------------------------------------------------------------
 //
-// 🔴 THIS COLLECTION IS THE MONEY GUARD. `recordTaskCompletion` took its day key
+// CRITICAL: THIS COLLECTION IS THE MONEY GUARD. `recordTaskCompletion` took its day key
 // from the caller (`clientNowIso.slice(0, 10)`), and the three counters —
 // paidCount, xpPaidCount, bonusPaid — all reset when that key changed, so
 // alternating two well-formed dates re-minted the day's pay. Measured: 15
@@ -1585,7 +1585,7 @@ describe('users/{uid}/economy', () => {
 // A client that could write here would restore the exploit in one line, by
 // zeroing or deleting the document for a day it had already been paid.
 //
-// ⚠️ READ IS ALLOWED AND THAT IS DELIBERATE, unlike economy/ next door. Deploy 2
+// WARNING: READ IS ALLOWED AND THAT IS DELIBERATE, unlike economy/ next door. Deploy 2
 // of the migration drives the cap UI off a snapshot listener on today's
 // document so the counter moves on tap through the offline cache instead of
 // waiting on the callable. Watching is not writing.
@@ -1619,7 +1619,7 @@ describe('users/{uid}/days/{dayKey} — the per-day reward ledger', () => {
     );
   });
 
-  // 🔴 The exploit this block exists to stop, stated as an assertion: zeroing
+  // CRITICAL: The exploit this block exists to stop, stated as an assertion: zeroing
   // paidCount makes every completion on that day unpaid again.
   it('rejects an update that resets paidCount', async () => {
     await seedDay(UID);
@@ -1676,7 +1676,7 @@ describe('users/{uid}/days/{dayKey} — the per-day reward ledger', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 THE AMENDMENT'S OWN REGRESSION CHECK — users/{uid} STAYS CLIENT-WRITABLE
+// CRITICAL: THE AMENDMENT'S OWN REGRESSION CHECK — users/{uid} STAYS CLIENT-WRITABLE
 // ---------------------------------------------------------------------------
 //
 // `Projects/Cleaning/dayKey-migration-2026-09-13.md` proposes locking the day
@@ -1687,7 +1687,7 @@ describe('users/{uid}/days/{dayKey} — the per-day reward ledger', () => {
 //       match /days/{dayKey} { allow write: if false; }
 //     }
 //
-// 🔴 THE OUTER HALF MUST NOT BE APPLIED, AND IT WAS NOT. It breaks two live
+// CRITICAL: THE OUTER HALF MUST NOT BE APPLIED, AND IT WAS NOT. It breaks two live
 // client write paths, and the rules file already carries the argument at its
 // create/update split: a single `allow write` has to call
 // `resource.data.diff(...)`, which ERRORS — and therefore DENIES — on a create,
@@ -1744,7 +1744,7 @@ describe('🔴 locking the day ledger did not lock users/{uid} — the live writ
   });
 
   it('and the door did NOT swing open — a CF-owned field is still refused', async () => {
-    // 🔑 THE CONTROL. Four passing writes prove nothing on their own: they would
+    // KEY: THE CONTROL. Four passing writes prove nothing on their own: they would
     // also pass against a rules file with no user block at all, which is the
     // failure mode opposite to the one the amendment prevents.
     await seedUserDoc({subscriptionTier: 'free', housemates: []});
@@ -1774,7 +1774,7 @@ describe('users/{uid}/feedbackCounts', () => {
     await assertSucceeds(getDoc(doc(db, countPath(UID))));
   });
 
-  // 🔴 The exploit the cap exists to stop: zero the counter, file forever.
+  // CRITICAL: The exploit the cap exists to stop: zero the counter, file forever.
   it('rejects an update that resets the count', async () => {
     await seedCount(UID);
     const db = testEnv.authenticatedContext(UID).firestore();
@@ -1819,7 +1819,7 @@ describe('galleryFeedback', () => {
     await assertSucceeds(setDoc(doc(db, 'galleryFeedback/f1'), item(UID)));
   });
 
-  // 🔴 Owner-stamping: the uid ON THE DOCUMENT must be the caller's, or one
+  // CRITICAL: Owner-stamping: the uid ON THE DOCUMENT must be the caller's, or one
   // tester could file comments under another's name.
   it('rejects filing under someone else\'s uid', async () => {
     const db = testEnv.authenticatedContext(UID).firestore();
@@ -1849,7 +1849,7 @@ describe('galleryFeedback', () => {
     await assertFails(deleteDoc(doc(db, 'galleryFeedback/f5')));
   });
 
-  // ⚠️ Read is denied to the AUTHOR too, not just to strangers.
+  // WARNING: Read is denied to the AUTHOR too, not just to strangers.
   it('denies read to the author and to everyone else', async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), 'galleryFeedback/f6'), item(UID));
@@ -1863,14 +1863,14 @@ describe('galleryFeedback', () => {
 
 // W2-20 — the replay ledgers, and the default-deny that guards one of them.
 //
-// 🔴 users/{uid}/shieldPurchases/{id} HAS NO RULES BLOCK. It is protected by
+// CRITICAL: users/{uid}/shieldPurchases/{id} HAS NO RULES BLOCK. It is protected by
 // Firestore default-denying anything no `match` reaches — an ABSENCE, which is
 // what a well-meaning change deletes. A convenience `match /users/{uid}/{doc=**}`
 // would open it and nothing would go red. rulesNoCatchAll.test.ts guards against
 // that edit in the UNIT suite (which always runs); this proves the behaviour
 // against the real emulator.
 //
-// ⚠️ Deliberately NOT given a rules block. Default-deny is already correct, and
+// WARNING: Deliberately NOT given a rules block. Default-deny is already correct, and
 // a block that restates it is a block someone can later loosen.
 describe('users/{uid}/shieldPurchases — protected by having no rule at all', () => {
   const shieldPath = (uid: string) => `users/${uid}/shieldPurchases/pk_abc123`;
@@ -1883,7 +1883,7 @@ describe('users/{uid}/shieldPurchases — protected by having no rule at all', (
     });
   }
 
-  // 🔴 The one that matters: deleting a ledger row would let the player re-buy
+  // CRITICAL: The one that matters: deleting a ledger row would let the player re-buy
   // the shield they already paid for, undoing W2-19 entirely.
   it('rejects a delete by the owner', async () => {
     await seedShield(UID);
@@ -1902,7 +1902,7 @@ describe('users/{uid}/shieldPurchases — protected by having no rule at all', (
     await assertFails(updateDoc(doc(db, shieldPath(UID)), {spent: 0}));
   });
 
-  // ⚠️ Default-deny denies READ too, unlike its sibling chestPurchases which has
+  // WARNING: Default-deny denies READ too, unlike its sibling chestPurchases which has
   // an explicit owner-read block. Asserted so the asymmetry is a recorded fact
   // rather than a surprise the first time someone builds a purchase history.
   it('denies READ to the owner as well — the asymmetry with chestPurchases', async () => {
@@ -2007,7 +2007,7 @@ describe('users/{uid}/completions', () => {
     );
   });
 
-  // 🔴 The exploit itself: delete the record, re-complete, earn it twice.
+  // CRITICAL: The exploit itself: delete the record, re-complete, earn it twice.
   it('rejects a delete by the owner — this is the retraction the log forbids', async () => {
     await seedLog(UID);
     const db = testEnv.authenticatedContext(UID).firestore();
@@ -2212,12 +2212,12 @@ describe('users/{uid}/friends/{friendUid} — Gibby is permanent', () => {
 // housemateTokens/{code} — W4-36, the verification token
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE DOCUMENT ID IS THE SECRET. Everywhere else in this file a deny-write
+// CRITICAL: THE DOCUMENT ID IS THE SECRET. Everywhere else in this file a deny-write
 // block is about integrity; here read matters just as much, because a client
 // that could `list` this collection would hold every live code in the app and
 // could redeem them all without ever standing next to anybody.
 //
-// ⚠️ These rules are NOT what makes redemption safe. The callable writes through
+// WARNING: These rules are NOT what makes redemption safe. The callable writes through
 // the Admin SDK, which bypasses rules entirely — the transaction in
 // redeemHousemateToken is the enforcement, and housemateToken.ts explains why no
 // rule can do that job. What this block does is close the collection to
@@ -2404,7 +2404,7 @@ describe('processedNotifications/{notificationUUID} is closed to clients', () =>
   });
 
   it('a client cannot forge a ledger entry to suppress a real notification', async () => {
-    // 🔑 The write that would MATTER. The endpoint returns early when the lock
+    // KEY: The write that would MATTER. The endpoint returns early when the lock
     // exists, so a client able to create one could pre-empt its own EXPIRED or
     // REFUND and keep an entitlement it no longer has.
     const db = testEnv.authenticatedContext(UID).firestore();
@@ -2456,7 +2456,7 @@ describe('subscriptionOwners/{originalTransactionId} is closed in both direction
   });
 
   it('a client cannot claim an unowned subscription by creating a mapping', async () => {
-    // 🔴 THE WRITE THAT WOULD HAND OVER SOMEBODY ELSE'S SUBSCRIPTION. The
+    // CRITICAL: THE WRITE THAT WOULD HAND OVER SOMEBODY ELSE'S SUBSCRIPTION. The
     // notification endpoint trusts this document to say who a renewal belongs
     // to, so a forged entry redirects every future rebill of a real, paid
     // subscription onto the attacker's account.
@@ -2494,10 +2494,10 @@ describe('subscriptionOwners/{originalTransactionId} is closed in both direction
 });
 
 // ---------------------------------------------------------------------------
-// 🔑 families/{familyId} — the group document (W2-76)
+// KEY: families/{familyId} — the group document (W2-76)
 // ---------------------------------------------------------------------------
 //
-// ⚠️ MOST OF THIS BLOCK IS PINS, AND IT IS LABELLED AS SUCH. Firestore
+// WARNING: MOST OF THIS BLOCK IS PINS, AND IT IS LABELLED AS SUCH. Firestore
 // default-denies, so deleting the whole match block leaves every assertBails
 // below still passing — the same measurement W2-68 recorded when 12 new tests
 // survived the deletion of both match blocks they covered. Only the two
@@ -2643,13 +2643,13 @@ describe('families/{familyId} — every write is denied, including the owner\'s'
 });
 
 describe('🔴 users/{uid}.familyId is CF-owned (W2-82)', () => {
-  // Stamped by createFamily. 🔴 IT IS THE KEY EVERY FAMILY READ IS SCOPED BY:
+  // Stamped by createFamily. CRITICAL: IT IS THE KEY EVERY FAMILY READ IS SCOPED BY:
   // completeTrashDay verifies membership against the family the CLIENT names,
   // and the trash-day rules grant reads to members of the named family — so a
   // self-assigned familyId is how a client would choose which household to
   // point at in the first place.
   //
-  // 🔴 A CATCH, NOT A PIN: remove 'familyId' from userCfOwnedFields() and all
+  // CRITICAL: A CATCH, NOT A PIN: remove 'familyId' from userCfOwnedFields() and all
   // three below go red, because the surrounding `allow update` otherwise lets
   // an owner write their own document freely.
   async function seedUser(extra = {}) {
@@ -2703,7 +2703,7 @@ describe('🔴 users/{uid}.familyProExpiresAt is CF-owned', () => {
   // subscription, or any other document — an easier self-grant than
   // subscriptionExpiresAt guards, because there is no tier string to set too.
   //
-  // 🔴 THIS ONE IS A CATCH, NOT A PIN: remove 'familyProExpiresAt' from
+  // CRITICAL: THIS ONE IS A CATCH, NOT A PIN: remove 'familyProExpiresAt' from
   // userCfOwnedFields() and both tests below go red, because the surrounding
   // `allow update` otherwise permits an owner to write their own document.
   async function seedUser() {
@@ -2753,10 +2753,10 @@ describe('🔴 users/{uid}.familyProExpiresAt is CF-owned', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔑 users/{uid}/pendingChests and adminGrants/{grantId} — the grant path (W2-122)
+// KEY: users/{uid}/pendingChests and adminGrants/{grantId} — the grant path (W2-122)
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE WRITE DENIALS ARE THE POINT, AND THEY ARE NOT THE SAME DENIAL.
+// CRITICAL: THE WRITE DENIALS ARE THE POINT, AND THEY ARE NOT THE SAME DENIAL.
 // An unopened chest is a PROMISE OF A ROLL: a client that could write the
 // collection could mint itself chests, and one that could write `openedAt`
 // could re-open the same chest forever. The audit ledger is worse — a client
@@ -2764,7 +2764,7 @@ describe('🔴 users/{uid}.familyProExpiresAt is CF-owned', () => {
 // lock, and a real grant would then return `alreadyProcessed` having written
 // nothing. That is a denial of service against your own gift.
 //
-// ⚠️ Admin SDK writes bypass rules entirely, so the secret gate in `adminGrant`
+// WARNING: Admin SDK writes bypass rules entirely, so the secret gate in `adminGrant`
 // is the security boundary for ISSUING. These rules stop the CLIENT, which is
 // the only party they can stop.
 
@@ -2849,15 +2849,15 @@ describe('adminGrants/{grantId} — denied outright, including to the recipient'
 });
 
 // ---------------------------------------------------------------------------
-// 🔑 families/{familyId}.binWeekday — the shared bin day (W2-118)
+// KEY: families/{familyId}.binWeekday — the shared bin day (W2-118)
 // ---------------------------------------------------------------------------
 //
-// ✅ THIS BLOCK EXISTS TO PROVE A NEGATIVE: that W2-118 needed NO RULES CHANGE,
+// OK: THIS BLOCK EXISTS TO PROVE A NEGATIVE: that W2-118 needed NO RULES CHANGE,
 // and therefore no deploy. The claim is easy to assert and cheap to be wrong
 // about, so it is pinned from both directions — a member can read the field,
 // and nobody can write it.
 //
-// 🔴 THE WRITE DENIAL IS THE LOAD-BEARING HALF. `setFamilyBinDay` is a callable
+// CRITICAL: THE WRITE DENIAL IS THE LOAD-BEARING HALF. `setFamilyBinDay` is a callable
 // rather than a rules-scoped write because `allow write: if false` covers this
 // document; if that ever relaxed, the callable would become optional and the
 // owner-only authority would quietly become advisory.
@@ -2914,18 +2914,18 @@ describe('families/{familyId}.binWeekday — readable by members, writable by no
 });
 
 // ---------------------------------------------------------------------------
-// 🔑 families/{familyId}/trashDay/{binDateKey} — the shared completion (W2-77)
+// KEY: families/{familyId}/trashDay/{binDateKey} — the shared completion (W2-77)
 // ---------------------------------------------------------------------------
 //
 // The read half of "one person does it and it clears for all". The WRITE half
 // is completeTrashDay in index.ts and cannot be tested here — Admin SDK writes
 // bypass rules entirely, which is exactly why the callable is the gate.
 //
-// ⚠️ The deny-write tests below are PINS. Firestore default-denies, so deleting
+// WARNING: The deny-write tests below are PINS. Firestore default-denies, so deleting
 // the whole block leaves them passing. The read tests are CATCHES: weaken
 // isFamilyMember() to a bare isAuthenticated() and the non-member and
 // other-family tests go red while the member tests stay green.
-// 🔑 families/{familyId}/messages/{messageId} — the board (W2-88 part 4)
+// KEY: families/{familyId}/messages/{messageId} — the board (W2-88 part 4)
 describe('families/{familyId}/messages — a member reads them, nobody writes them', () => {
   const OUR_FAMILY = 'msg-family-ours';
   const MESSAGE = 'msg-1';
@@ -2991,7 +2991,7 @@ describe('families/{familyId}/messages — a member reads them, nobody writes th
   });
 });
 
-// 🔑 families/{familyId}/chores/{choreId} — the assigned chore (W2-88 part 3)
+// KEY: families/{familyId}/chores/{choreId} — the assigned chore (W2-88 part 3)
 //
 // Same split as trashDay and for the same reason: READ is membership, WRITE is
 // denied to everyone including members. The two authority questions live on
@@ -3060,7 +3060,7 @@ describe('families/{familyId}/chores — a member reads them, nobody writes them
 
   it('🔴 a MEMBER cannot mark a chore done directly — the callable is the gate', () => {
     // A member-writable completion is a member marking their own chore done
-    // without doing it. 📌 Counted as a PIN: Firestore default-denies, so this
+    // without doing it. NOTE: Counted as a PIN: Firestore default-denies, so this
     // passes with the block deleted.
     return seedChores().then(async () => {
       const db = testEnv.authenticatedContext(THIRD_UID).firestore();
@@ -3225,25 +3225,25 @@ describe('families/{familyId}/trashDay — a member reads it, nobody writes it',
 // The fridge — users/{uid}/fridgeItems/{itemId}  (W2-97)
 // ---------------------------------------------------------------------------
 //
-// 🔴 WRITTEN BEFORE THE CLIENT LANDS, ON PURPOSE. W4-76 is porting the fridge
+// CRITICAL: WRITTEN BEFORE THE CLIENT LANDS, ON PURPOSE. W4-76 is porting the fridge
 // against `users/{uid}/fridgeItems/{id}` (FridgeRepository), and that path had
 // no `match` block at all. Firestore default-denies, so the failure would not
 // have been loud: every write silently refused, and the client unable to say
 // why.
 //
-// ⚠️ AND W4'S OWN SUITE STRUCTURALLY CANNOT CATCH IT. `fake_cloud_firestore`
+// WARNING: AND W4'S OWN SUITE STRUCTURALLY CANNOT CATCH IT. `fake_cloud_firestore`
 // calls `maybeThrowSecurityException` only from mock_document_reference.dart,
 // so a DENIED COLLECTION READ COMES BACK EMPTY there — an empty fridge and a
 // forbidden fridge are one observation to every widget test. `watchItems()`
 // reads the collection, so that is exactly the shape this would take. The
 // assertion has to live here.
 //
-// 📌 THE SHAPE IS READ OFF THE REAL CLIENT, not invented: `name`, `emoji`,
+// NOTE: THE SHAPE IS READ OFF THE REAL CLIENT, not invented: `name`, `emoji`,
 // `category`, `purchasedOn`, `expiresOn`, `done`, `doneAt`, `fromReceipt` —
 // dates as ISO-8601 STRINGS (json_serializable), not Timestamps — and `id` is
 // the document key and is deliberately NOT stored inside the document.
 //
-// 🔑 NO FIELD-SHAPE VALIDATION IN THE RULE, AND THAT IS A CHOICE. Cut 2 adds
+// KEY: NO FIELD-SHAPE VALIDATION IN THE RULE, AND THAT IS A CHOICE. Cut 2 adds
 // receipt scanning and will add fields; a rule enumerating today's keys would
 // turn every additive client change into a rules deploy, and the blast radius
 // of a malformed value is one player's own fridge. Authority is the question
@@ -3266,7 +3266,7 @@ describe('fridgeItems — owner-only, and NOT friend-readable', () => {
         doneAt: null,
         fromReceipt: false,
       });
-      // 🔑 THE DECOY. Without a second, populated fridge, "a stranger cannot
+      // KEY: THE DECOY. Without a second, populated fridge, "a stranger cannot
       // read UID's" also passes for credentials that authenticate nobody and
       // for a ruleset that denies everyone — and the list denial would be over
       // an empty collection, which is not a denial at all.
@@ -3322,7 +3322,7 @@ describe('fridgeItems — owner-only, and NOT friend-readable', () => {
     await assertFails(getDoc(doc(stranger, 'users', UID, 'fridgeItems', ITEM)));
     await assertFails(getDocs(collection(stranger, 'users', UID, 'fridgeItems')));
 
-    // 🔑 THE PAIR that makes those two mean "scoped" rather than "broken": the
+    // KEY: THE PAIR that makes those two mean "scoped" rather than "broken": the
     // same credentials read their OWN fridge, which is populated, in the same
     // moment.
     await assertSucceeds(getDocs(collection(stranger, 'users', OTHER_UID, 'fridgeItems')));
@@ -3362,7 +3362,7 @@ describe('fridgeItems — owner-only, and NOT friend-readable', () => {
   });
 
   it('🔴 an ACCEPTED FRIEND still cannot read it — rules do not cascade', async () => {
-    // ⚠️ THE ONE A READER IS MOST LIKELY TO GET WRONG. `users/{uid}` allows
+    // WARNING: THE ONE A READER IS MOST LIKELY TO GET WRONG. `users/{uid}` allows
     // isFriend(uid), and a subcollection does NOT inherit that — so this pins
     // the intended answer rather than leaving it to be re-derived. OTHER_UID is
     // a genuinely accepted friend here, not merely a stranger, which is what
@@ -3374,7 +3374,7 @@ describe('fridgeItems — owner-only, and NOT friend-readable', () => {
     await assertFails(getDoc(doc(friend, 'users', UID, 'fridgeItems', ITEM)));
     await assertFails(getDocs(collection(friend, 'users', UID, 'fridgeItems')));
 
-    // 🔑 THE CONTROL PROVING THE FRIENDSHIP IS REAL AND ACCEPTED. Without it
+    // KEY: THE CONTROL PROVING THE FRIENDSHIP IS REAL AND ACCEPTED. Without it
     // this test also passes when seedAcceptedFriendship() silently wrote
     // nothing — and would then be asserting that a stranger is denied, which
     // the test above already covers.

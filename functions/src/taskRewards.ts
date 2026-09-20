@@ -41,9 +41,9 @@ export const TASK_SPONGE_REWARD = 5;
 /**
  * Maximum task completions that PAY OUT in one calendar day, by tier.
  *
- * 🔑 THE TIER LEVER MOVED HERE ON 2026-08-10, and the product reason matters.
+ * KEY: THE TIER LEVER MOVED HERE ON 2026-08-10, and the product reason matters.
  * The subscription used to sell `dailyTaskSlots` — how many tasks you were
- * ALLOWED to do. 📌 Those numbers were free 1 / pro 5 / premium 10, and they
+ * ALLOWED to do. NOTE: Those numbers were free 1 / pro 5 / premium 10, and they
  * describe the RETIRED lever, not this table — they are past tense on purpose
  * and are NOT stale. `PAID_TASK_CAP_BY_TIER` below is the live one, and the two
  * are different quantities: slots you may USE versus completions that PAY.
@@ -55,12 +55,12 @@ export const TASK_SPONGE_REWARD = 5;
  * than permission to tidy) and removes the strange incentive to stop cleaning,
  * which is the opposite of what a habit app wants.
  *
- * ⚠️ FOR SCALE, AND DELIBERATELY WITHOUT ARITHMETIC. A player's daily earning
+ * WARNING: FOR SCALE, AND DELIBERATELY WITHOUT ARITHMETIC. A player's daily earning
  * is `PAID_TASK_CAP_BY_TIER[tier] × TASK_SPONGE_REWARD`; a chest is 100 sponges
  * and a streak shield 150. Work it out from the constants — do not restate it
  * here.
  *
- * 🔴 THE LINE THAT USED TO SIT HERE SAID "Free tops out at 40/day, so an active
+ * CRITICAL: THE LINE THAT USED TO SIT HERE SAID "Free tops out at 40/day, so an active
  * free player affords a chest in ~2.5 days" AND HAD BEEN WRONG BY 8× FOR TWO
  * RELEASES. It was written in #128 when the free cap was 8 (8 × 5 = 40), and it
  * survived #318 lowering that cap to 4 and #341 lowering it to 1 — because a
@@ -68,7 +68,7 @@ export const TASK_SPONGE_REWARD = 5;
  * derived from. Free actually earns 5/day now, so that chest is 20 days, not
  * 2.5.
  *
- * 🔑 SO THE FIX IS NOT A NEW NUMBER — a new number goes stale the next time a
+ * KEY: SO THE FIX IS NOT A NEW NUMBER — a new number goes stale the next time a
  * cap moves. It is to name the CONSTANTS and let the reader compute, which is
  * the only form of this sentence that cannot silently drift. Nothing reads
  * prose, so prose must not carry values that can be checked.
@@ -84,7 +84,7 @@ export const DEFAULT_PAID_TASK_CAP = PAID_TASK_CAP_BY_TIER.free;
 /**
  * Retired tier strings that may still be stored on a user document.
  *
- * ⚠️ DECODED, NOT DELETED, and the distinction is the whole point. `premium`
+ * WARNING: DECODED, NOT DELETED, and the distinction is the whole point. `premium`
  * retired in #314, but documents written before then still carry it, and
  * nothing migrates them. Deleting the string without decoding it would send
  * those users through the fail-closed default below and drop them to the FREE
@@ -100,7 +100,7 @@ export const LEGACY_TIER_ALIASES: Record<string, string> = {
 /**
  * The current tier string for a possibly-legacy stored value.
  *
- * ⚠️ Fails CLOSED for a non-string, and passes an UNRECOGNISED string through
+ * WARNING: Fails CLOSED for a non-string, and passes an UNRECOGNISED string through
  * unchanged so the caller's own fail-closed default decides. It resolves
  * history; it does not grant anything.
  */
@@ -112,7 +112,7 @@ export function normalizeTier(tier: unknown): string {
 /**
  * `subscriptionExpiresAt` in milliseconds, or null if it cannot be read.
  *
- * ⚠️ RETURNING NULL IS THE FAIL-CLOSED PATH, and every branch that cannot
+ * WARNING: RETURNING NULL IS THE FAIL-CLOSED PATH, and every branch that cannot
  * produce a finite number takes it. The field arrives in more than one shape:
  * `verifySubscriptionReceipt` writes a Firestore `Timestamp`, this suite's
  * hand-rolled admin mock writes `{ _type: 'ts', ms }`, and the Dart `User`
@@ -144,7 +144,7 @@ function expiryMillis(value: unknown): number | null {
 /**
  * The tier a user is entitled to RIGHT NOW, from their `users/{uid}` document.
  *
- * 🔑 THIS IS THE ONLY AUTHORITY ON ENTITLEMENT. The stored `subscriptionTier`
+ * KEY: THIS IS THE ONLY AUTHORITY ON ENTITLEMENT. The stored `subscriptionTier`
  * is an audit record of what was last granted; it is not a permission, because
  * nothing rewrites it when a subscription ends. Before W2-67 every consumer
  * read that field directly and `subscriptionExpiresAt` was written by
@@ -152,7 +152,7 @@ function expiryMillis(value: unknown): number | null {
  * cancelled months ago kept the paid task cap and the paid invite allowance
  * indefinitely, and was still refused the free tier's weekly gift.
  *
- * ⚠️ Fails CLOSED, and that includes a MISSING or unreadable expiry: a paid
+ * WARNING: Fails CLOSED, and that includes a MISSING or unreadable expiry: a paid
  * tier the server cannot date is not a paid tier. The one thing failing closed
  * does NOT mean is refusing a benefit — see `claimWeeklyGift`, where free is
  * the tier that gets paid, and resolving to free correctly pays it.
@@ -188,7 +188,7 @@ export function resolveEffectiveTier(data: unknown, nowMs: number): string {
 /**
  * The tier this account pays for ITSELF, ignoring any family grant.
  *
- * 🔴 THIS IS NOT `resolveEffectiveTier` AND THE DIFFERENCE IS A HOLE IF YOU USE
+ * CRITICAL: THIS IS NOT `resolveEffectiveTier` AND THE DIFFERENCE IS A HOLE IF YOU USE
  * THE WRONG ONE. `resolveEffectiveTier` answers "is this account entitled",
  * which is correct for granting a feature and WRONG for asking "can this
  * account fund a family". A member of someone else's family has
@@ -201,7 +201,7 @@ export function resolveEffectiveTier(data: unknown, nowMs: number): string {
  * only ever runs on a notification for the owner's OWN family product, and B's
  * owner has none. The check would admit the case it was written to reject.
  *
- * 📌 It is deliberately the same code as `resolveEffectiveTier` with the family
+ * NOTE: It is deliberately the same code as `resolveEffectiveTier` with the family
  * branch removed, and it sits here rather than in family.ts so the two are
  * visibly siblings. A reader comparing them sees one difference, which is the
  * whole point.
@@ -220,14 +220,14 @@ export function resolveOwnPaidTier(data: unknown, nowMs: number): string {
 /**
  * The owner's OWN paid expiry in milliseconds, or null when they are not paying.
  *
- * 🔴 THE COMPANION TO `resolveOwnPaidTier`, AND IT EXISTS FOR THE SAME REASON.
+ * CRITICAL: THE COMPANION TO `resolveOwnPaidTier`, AND IT EXISTS FOR THE SAME REASON.
  * A family grant is the owner's expiry COPIED, so the copy must come from what
  * the owner PAYS FOR. Reading `familyProExpiresAt` here instead would let a
  * family whose owner is themselves a member of another family grant off a
  * COPIED GRANT — entitlement chaining one family off another's subscription,
  * with no payer anywhere in the chain beyond the first.
  *
- * 📌 Returns null rather than 0 for "not paying", so a caller cannot
+ * NOTE: Returns null rather than 0 for "not paying", so a caller cannot
  * accidentally treat it as an expiry in 1970 that merely looks lapsed. The
  * fan-out's `entitled` check tests `!== null` explicitly.
  */
@@ -242,14 +242,14 @@ export function resolveOwnPaidExpiryMs(data: unknown, nowMs: number): number | n
  * Whether this user document carries a family Pro grant that is live at
  * [nowMs].
  *
- * 🔑 THE FIELD IS A DATE, NEVER A FLAG, AND THAT IS THE SAFETY ARGUMENT. It is
+ * KEY: THE FIELD IS A DATE, NEVER A FLAG, AND THAT IS THE SAFETY ARGUMENT. It is
  * written by the family fan-out (`planFamilyFanOut` in family.ts) as a COPY of
  * the family owner's own `subscriptionExpiresAt`, so a member can never be
  * entitled past the period the owner actually paid for — even if no revoke
  * ever runs. A boolean would fail OPEN forever and would need code to execute
  * in order to revoke, which is precisely the assumption a refund cannot make.
  *
- * ⚠️ Fails CLOSED on an unreadable value, via the same `expiryMillis` decoder
+ * WARNING: Fails CLOSED on an unreadable value, via the same `expiryMillis` decoder
  * as the paid path — not a second one. `familyProExpiresAt` is CF-owned in
  * firestore.rules for the same reason `subscriptionExpiresAt` is: a client
  * that could write it would grant itself Pro indefinitely, and would not even
@@ -266,7 +266,7 @@ function familyProActive(
 /**
  * The paid-completion cap for [tier].
  *
- * ⚠️ Fails CLOSED. A missing, misspelled or future tier string resolves to the
+ * WARNING: Fails CLOSED. A missing, misspelled or future tier string resolves to the
  * free cap, never to the most generous one — the same direction
  * `subscriptionTierProvider` fails on the client, where loading and error both
  * report free.
@@ -282,7 +282,7 @@ export function paidTaskCapFor(tier: unknown): number {
 }
 
 // ---------------------------------------------------------------------------
-// 🔴 THE DAY KEY — BOUNDED AND RATCHETED, NOT SERVER-DERIVED
+// CRITICAL: THE DAY KEY — BOUNDED AND RATCHETED, NOT SERVER-DERIVED
 // ---------------------------------------------------------------------------
 //
 // `recordTaskCompletion` used to take the caller's `clientNowIso`, slice ten
@@ -292,7 +292,7 @@ export function paidTaskCapFor(tier: unknown): number {
 // pay. Measured (W2-173): 15 sponges against a free cap of 5, one account,
 // three calls.
 //
-// 🔑 WHY THE OBVIOUS FIX IS WRONG, AND THIS IS NOT AN OPINION. A server-derived
+// KEY: WHY THE OBVIOUS FIX IS WRONG, AND THIS IS NOT AN OPINION. A server-derived
 // UTC key was the prescribed repair and it was DISPROVED before it shipped.
 // `dayKey` is not only a ledger key here; it is the QUERY key over
 // `users/{uid}/tasks.completedDate`, and the CLIENT stamps that field from a
@@ -303,13 +303,13 @@ export function paidTaskCapFor(tier: unknown): number {
 // head of `grantTaskRewards` predicted exactly this about a four-hour version of
 // the same mistake; UTC is that mistake with a sixteen-hour offset.
 //
-// ✅ SO THE CLIENT KEEPS NAMING ITS OWN LOCAL DAY, AND THE KEY IS BOUNDED
+// OK: SO THE CLIENT KEEPS NAMING ITS OWN LOCAL DAY, AND THE KEY IS BOUNDED
 // INSTEAD. Real UTC offsets span UTC-12 to UTC+14, so an honest local calendar
 // date is always within one day of the server's UTC date. Admitting exactly
 // that window changes nothing for anybody real and takes the fabricable supply
 // from infinite to three.
 //
-// ⚠️ THE RESIDUAL, STATED RATHER THAN HIDDEN. Three admitted keys plus the
+// WARNING: THE RESIDUAL, STATED RATHER THAN HIDDEN. Three admitted keys plus the
 // per-day ledger means a determined caller can pull forward at most TWO extra
 // days of cap, ONCE — after which each real day admits exactly one new key and
 // the long-run rate is the honest one. Deploy 3 of
@@ -320,7 +320,7 @@ export function paidTaskCapFor(tier: unknown): number {
 /**
  * How far from the server's own UTC date a client day key may sit.
  *
- * 📌 ONE, AND ONE IS ENOUGH FOR EVERY INHABITED OFFSET. The widest real offsets
+ * NOTE: ONE, AND ONE IS ENOUGH FOR EVERY INHABITED OFFSET. The widest real offsets
  * are UTC-12 (Baker Island) and UTC+14 (Line Islands), and a calendar date can
  * differ from UTC's by at most one day at either extreme. Two would admit a
  * fourth fabricable key and buy nothing.
@@ -340,12 +340,12 @@ export function serverDayKey(nowMs: number): string {
 /**
  * The reward day key for [clientNowIso], refused if it is not near [serverNowMs].
  *
- * 🔴 PURE, AND CALLED BEFORE ANYTHING IS WRITTEN. Every rejection here must cost
+ * CRITICAL: PURE, AND CALLED BEFORE ANYTHING IS WRITTEN. Every rejection here must cost
  * the caller nothing at all — no streak write, no ledger write, no partial
  * anything — which is only true while this stays a function of its two
  * arguments and runs first. See `recordTaskCompletion`.
  *
- * ⚠️ The shape check is not decoration. `Date.parse` accepts a great deal and
+ * WARNING: The shape check is not decoration. `Date.parse` accepts a great deal and
  * returns NaN for the rest, and `'2026-13-45'.slice(0, 10)` looks exactly like a
  * date; both paths below refuse rather than reaching Firestore with a key that
  * would silently match no task document and pay zero.
@@ -382,14 +382,14 @@ export function boundedDayKey(clientNowIso: unknown, serverNowMs: number): strin
 /**
  * How long a per-day ledger document is kept, for the `expireAt` TTL policy.
  *
- * 📌 THE FIELD IS WRITTEN HERE; THE POLICY IS AN OPS ACTION AND IS NOT APPLIED.
+ * NOTE: THE FIELD IS WRITTEN HERE; THE POLICY IS AN OPS ACTION AND IS NOT APPLIED.
  * Firestore TTL is enabled per field from the console or
  * `gcloud firestore fields ttls update expireAt --collection-group=days
  * --enable-ttl`. Writing the field costs one property and makes that command a
  * one-liner later; without it, enabling TTL would need a code change AND a
  * backfill.
  *
- * ⚠️ 400 DAYS, NOT 90, AND THE REASON IS DEPLOY 2. The migration's next step
+ * WARNING: 400 DAYS, NOT 90, AND THE REASON IS DEPLOY 2. The migration's next step
  * points the streak page at these documents, and a streak is a year-scale
  * object — reaping at 90 days would silently truncate the history the feature
  * is being moved onto. Over a year of days is ~365 documents per player, each a
@@ -407,7 +407,7 @@ interface DayLedger {
 /**
  * The three counters already settled for [dayKey].
  *
- * 🔑 THE MIGRATION LIVES HERE, AND OMITTING IT WOULD PAY THE ENTIRE ACTIVE
+ * KEY: THE MIGRATION LIVES HERE, AND OMITTING IT WOULD PAY THE ENTIRE ACTIVE
  * POPULATION TWICE. Before this change the counters lived on ONE document,
  * `users/{uid}/economy/taskRewards`, stamped with a `date` field. Every player
  * mid-day at deploy time has that document and no `days/{dayKey}` document at
@@ -416,7 +416,7 @@ interface DayLedger {
  * therefore read as the fallback baseline, and ONLY when its `date` is the day
  * being settled.
  *
- * 📌 The legacy document is never written again after this: the day document is
+ * NOTE: The legacy document is never written again after this: the day document is
  * the authority, and once it exists the fallback is unreachable for that day.
  * Its old fields are left in place rather than deleted — a delete would be a
  * second write on every completion to tidy a value nothing reads.
@@ -496,7 +496,7 @@ export async function grantTaskRewards(
     ]);
 
     // -----------------------------------------------------------------------
-    // 🔴 THE RATCHET. Read INSIDE the transaction, so two concurrent calls
+    // CRITICAL: THE RATCHET. Read INSIDE the transaction, so two concurrent calls
     // cannot both observe the same high-water mark and both step backwards.
     // -----------------------------------------------------------------------
     //
@@ -504,7 +504,7 @@ export async function grantTaskRewards(
     // FAIL LOUDLY instead, which matters because a silent zero is
     // indistinguishable from an honest replay and tells nobody anything.
     //
-    // ⚠️ IT READS `maxDayKey` AND DELIBERATELY NOT THE LEGACY `date`. `maxDayKey`
+    // WARNING: IT READS `maxDayKey` AND DELIBERATELY NOT THE LEGACY `date`. `maxDayKey`
     // is written only by the code below, which means it has already passed
     // `boundedDayKey` and can never sit more than one day ahead of the server.
     // The legacy `date` has no such guarantee — it was written by the very
@@ -514,7 +514,7 @@ export async function grantTaskRewards(
     // stay ahead of the server clock forever. Ignoring it costs nothing: the
     // day document still bounds the money.
     //
-    // 📌 Lexicographic comparison IS chronological for `YYYY-MM-DD`, which is
+    // NOTE: Lexicographic comparison IS chronological for `YYYY-MM-DD`, which is
     // why the format check in `boundedDayKey` is load-bearing rather than
     // cosmetic. Strictly less-than: the same key again is an ordinary replay
     // (a second task on the same day) and must be allowed.
@@ -535,7 +535,7 @@ export async function grantTaskRewards(
     // on again leaves this number unchanged, which is the whole point.
     const distinctCompleted = tasksSnap.size;
 
-    // 🔑 ONE RESOLUTION FOR ALL THREE COUNTERS, WHICH IS THE FIX. Each of them
+    // KEY: ONE RESOLUTION FOR ALL THREE COUNTERS, WHICH IS THE FIX. Each of them
     // used to carry its own `ledger?.date === dayKey ? … : 0`, so each was
     // independently re-mintable by a rotated key — and the XP one silently, since
     // nobody counts XP the way they count sponges. They now come from one
@@ -555,7 +555,7 @@ export async function grantTaskRewards(
     // infinite for xp." The sponge cap is the subscription's daily lever; XP is
     // not sold and should not stop.
     //
-    // ⚠️ `paidCount` was doing TWO jobs — how many completions have been paid
+    // WARNING: `paidCount` was doing TWO jobs — how many completions have been paid
     // sponges, AND the replay guard for the whole callable. Those were the same
     // number only because both currencies shared one capped numerator. Uncapping
     // XP against `paidCount` alone would re-pay XP for every completion past the
@@ -602,7 +602,7 @@ export async function grantTaskRewards(
     const sponges = newlyPaid * TASK_SPONGE_REWARD + bonusSponges;
 
     // ---------------------------------------------------------------------
-    // 🔴 THE 2x BONUS DOUBLES SPONGES AND NOT XP. THIS IS UNDECIDED, NOT
+    // CRITICAL: THE 2x BONUS DOUBLES SPONGES AND NOT XP. THIS IS UNDECIDED, NOT
     // DELIBERATE — AND IT IS AWAITING BRENDAN. DO NOT "FIX" IT EITHER WAY.
     // ---------------------------------------------------------------------
     //
@@ -617,7 +617,7 @@ export async function grantTaskRewards(
     //   · #128's message is ~50 lines and exhaustive — tier caps, two mirrors,
     //     two gates, even a leap-day bug in one of its own tests. It mentions XP
     //     ZERO times.
-    //   · 🔑 And #128 DELETED the only sentence in this file that documented XP
+    //   · KEY: And #128 DELETED the only sentence in this file that documented XP
     //     ("8 x 10 = 80 XP") while rewriting this very comment block to add
     //     tiers, replacing it with prose that discusses sponges alone.
     //
@@ -627,14 +627,14 @@ export async function grantTaskRewards(
     // into level, which gates content — but nobody made it, and a rationale
     // invented afterwards is not the same as a decision.
     //
-    // ⚠️ WHY IT MATTERS MORE NOW THAN WHEN IT WAS WRITTEN: quests award XP
+    // WARNING: WHY IT MATTERS MORE NOW THAN WHEN IT WAS WRITTEN: quests award XP
     // (W2-12), so XP has more than one source for the first time, and the level
     // curve was tuned against task-only XP.
     //
     // The behaviour below is PINNED BY TEST (taskRewardsBonus.test.ts) in both
     // directions, so neither multiplying it nor leaving it flat can happen
     // silently. Changing it is an economy decision and it is Brendan's.
-    // ⚠️ `newlyXp`, not `newlyPaid` — the one-word change this brief is about.
+    // WARNING: `newlyXp`, not `newlyPaid` — the one-word change this brief is about.
     // The BONUS_TASK_MULTIPLIER question above is untouched: this line still
     // does not apply it, and that decision remains Brendan's.
     const xp = newlyXp * XP_TASK;

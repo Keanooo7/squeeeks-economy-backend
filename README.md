@@ -113,7 +113,7 @@ The rules suite is 3,390 lines driving 241 assertions against the emulator
 - Two assertions in `chestPricing.test.ts` are **source-text** assertions
   (`expect(INDEX_CODE).toMatch(/typeof rawChestPrice !== 'number'/)`), not behavioural ones.
   They pin that a guard exists, not that it works.
-- `functions/src/index.ts` is **5,744 lines carrying 44 Firebase triggers.** It is the clearest
+- `functions/src/index.ts` is **5,744 lines carrying 46 Firebase triggers.** It is the clearest
   structural weakness here and the highest-value refactor available. It is left intact because
   this is an extract, not a fork.
 

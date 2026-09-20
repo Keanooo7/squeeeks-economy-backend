@@ -9,9 +9,9 @@
  *   node scripts/check-test-floor.cjs all --ratchet   # exit 4 on an unbanked rise
  *   node scripts/check-test-floor.cjs all --record    # measure, then write the floor
  *
- * ⚠️ `all` RUNS TWO EMULATOR SUITES and takes minutes.
+ * WARNING: `all` RUNS TWO EMULATOR SUITES and takes minutes.
  *
- * ✅ NEITHER NEEDS A PREPARED SHELL ANY MORE (W2-95, 2026-08-16). Both suites
+ * OK: NEITHER NEEDS A PREPARED SHELL ANY MORE (W2-95, 2026-08-16). Both suites
  * run through `scripts/with-jdk.cjs`, which finds a JDK 21+ — including an
  * UNLINKED Homebrew one, which `/usr/libexec/java_home` cannot see — and both
  * pass `--config` naming their own emulator ports: `test:e2e` uses
@@ -19,7 +19,7 @@
  * (8282). So both survive a dev `emulators:start` holding 8080/9099, and both
  * survive a default `java` older than 21.
  *
- * 📌 The previous version of this comment said `test:rules` "still does not"
+ * NOTE: The previous version of this comment said `test:rules` "still does not"
  * survive a held 8080. That was true and is now false; it is replaced rather
  * than amended, because a stale line here reads as current doctrine. Exit 3
  * (ENVIRONMENT, not a regression) is still what a missing JDK produces — it is
@@ -39,7 +39,7 @@
  * unmeasured suite must never be reported as a passing one.
  *
  * ---------------------------------------------------------------------------
- * 🔴 W2-166. CODE 4 EXISTS BECAUSE THIS FILE WAS AN ADVISORY THAT COULD NOT FAIL
+ * CRITICAL: W2-166. CODE 4 EXISTS BECAUSE THIS FILE WAS AN ADVISORY THAT COULD NOT FAIL
  * ---------------------------------------------------------------------------
  *
  * The rise branch below has always printed the delta, named it, and given the
@@ -48,13 +48,13 @@
  *   floor: unit OK — 1596 (floor 1572, +24). Raise the floor in this commit
  *                                            or the gain drifts back.
  *
- * 🔑 So the detector was never missing. #660, #662 and #663 each landed over
+ * KEY: So the detector was never missing. #660, #662 and #663 each landed over
  * that line with the right number in front of them, and nothing stopped,
  * because CI reads exit 0 as success. The floor sat 24 tests and one suite
  * behind main until W2-165 measured the base and found it. A warning nobody is
  * REQUIRED to act on is a warning that will not be acted on.
  *
- * ⚠️ AND THE DEFAULT STILL EXITS 0 ON A RISE, DELIBERATELY. `npm run floor`
+ * WARNING: AND THE DEFAULT STILL EXITS 0 ON A RISE, DELIBERATELY. `npm run floor`
  * runs legitimately mid-work — including inside /land, before the floor commit
  * exists — so a default that failed there would fail the correct workflow. A
  * gate that cries wolf gets RELAXED rather than debugged, which is how this
@@ -62,13 +62,13 @@
  * behaviour is therefore opt-in: `--ratchet` is for the one place that should
  * refuse an unbanked gain, and `--record` is what fixes it in one command.
  *
- * 📌 `--record` is modelled on 3d-source/factory_verify.py, the only ratchet in
+ * NOTE: `--record` is modelled on 3d-source/factory_verify.py, the only ratchet in
  * this repo with a write path and correct for weeks: it SHORT-CIRCUITS the gate
  * rather than judging and writing in one pass, and it REFUSES with a non-zero
  * exit rather than writing a smaller number. Monotonicity lives in the writer.
  *
  * ---------------------------------------------------------------------------
- * 🔴 W2-78. THIS FILE REPORTED A CRASHED SUITE AS GREEN, AND THAT IS MEASURED
+ * CRITICAL: W2-78. THIS FILE REPORTED A CRASHED SUITE AS GREEN, AND THAT IS MEASURED
  * ---------------------------------------------------------------------------
  *
  * Reproduced on 2026-08-15 by adding one test file that cannot compile:
@@ -79,7 +79,7 @@
  *   check-test-floor.cjs unit   floor: unit OK — 933, at the floor.
  *                               exit 0                      <- THE DEFECT
  *
- * 🔑 A SUITE THAT FAILS TO *RUN* CONTRIBUTES ZERO TESTS. It does not add a
+ * KEY: A SUITE THAT FAILS TO *RUN* CONTRIBUTES ZERO TESTS. It does not add a
  * failure to the `Tests:` line — it removes the whole file from the run. So the
  * count does not drop, `Tests:` says `933 passed` with no `failed` in it, and
  * every check this file used to make came back clean. The floor cannot catch it
@@ -117,7 +117,7 @@ const FLOOR_FILE = path.join(FUNCTIONS_DIR, 'test-floor.json');
 const SUITES = {
   unit: {script: 'test', label: 'npm test'},
   rules: {script: 'test:rules', label: 'npm run test:rules'},
-  // 🔴 A THIRD NUMBER, FOR A THIRD SURFACE. `unit` reads source against a fake
+  // CRITICAL: A THIRD NUMBER, FOR A THIRD SURFACE. `unit` reads source against a fake
   // Firestore and `rules` judges a ruleset over documents the test invented;
   // neither ever ran a callable against a real database. That gap is how nine
   // family callables passed every gate while nothing had proven the feature
@@ -193,14 +193,14 @@ function runSuite(key) {
 /**
  * Everything known about why a run is red, extracted from jest's own output.
  *
- * 🔑 PURE, AND EXPORTED, SO IT CAN BE TESTED AGAINST REAL CAPTURED OUTPUT. The
+ * KEY: PURE, AND EXPORTED, SO IT CAN BE TESTED AGAINST REAL CAPTURED OUTPUT. The
  * fixtures in floorFailureReport.test.ts are literal jest output from runs made
  * on purpose — an assertion failure, a suite that could not compile, and the
  * actual SIGSEGV text from the W2-76 flake. An extractor tested against invented
  * output tests the author's memory of a format, which is exactly how three
  * extractor bugs reached main in #364/#365.
  *
- * ⚠️ MEASURED, NOT ASSUMED: jest's default (non-verbose) reporter prints NO `✕`
+ * WARNING: MEASURED, NOT ASSUMED: jest's default (non-verbose) reporter prints NO `✕`
  * lines. The per-test names appear only as `● describe › test` bullets in the
  * detail blocks. `✕` is still parsed below because `--verbose` emits it and a
  * future config change is cheap to survive, but it is not the primary source and
@@ -247,7 +247,7 @@ function describeFailure(output, status) {
     failedTests,
     suiteFailedToRun,
     workerCrash,
-    // 🔴 THE WHOLE POINT. `Tests:` can read perfectly green while the run is
+    // CRITICAL: THE WHOLE POINT. `Tests:` can read perfectly green while the run is
     // red, because a suite that fails to RUN contributes zero tests. Any one of
     // these three is sufficient; the exit code alone would do, and the other two
     // are what let the report SAY something rather than only refuse.
@@ -263,7 +263,7 @@ function unique(items) {
 /**
  * Turn a failure into something a human can act on without re-running anything.
  *
- * 🔴 IT MUST NEVER RENDER AN EMPTY FINDING AS A FINDING. If the run is red and
+ * CRITICAL: IT MUST NEVER RENDER AN EMPTY FINDING AS A FINDING. If the run is red and
  * nothing could be named, this says so in those words and points at the saved
  * log. An extractor that quietly produces an empty list reads as "red, but
  * nothing wrong" — the vacuous-pass shape this repo has now been bitten by in
@@ -355,7 +355,7 @@ function saveLog(key, output) {
 /**
  * Delete this key's log once it passes.
  *
- * ⚠️ A LOG THAT OUTLIVES ITS FAILURE IS WORSE THAN NO LOG. Whoever finds
+ * WARNING: A LOG THAT OUTLIVES ITS FAILURE IS WORSE THAN NO LOG. Whoever finds
  * `.floor-failure-unit.log` on disk has no way to tell whether it describes the
  * current tree or a run from three days ago, and its mtime says when it was
  * WRITTEN, not what it was written about. Given this file exists to make an
@@ -385,7 +385,7 @@ function parseCount(output) {
 /**
  * The SUITE count off jest's other summary line.
  *
- * ⚠️ Recorded alongside the test count because the two disagree exactly when a
+ * WARNING: Recorded alongside the test count because the two disagree exactly when a
  * suite fails to run — the defect in W2-78 — and because `suites` is a field in
  * every floor entry that was, until now, only ever typed in by hand.
  */
@@ -397,7 +397,7 @@ function parseSuiteCount(output) {
 /**
  * Argument parsing, so a FLAG CANNOT BECOME A SUITE NAME.
  *
- * ⚠️ `main` read `argv[2]` as the suite. A bare `--ratchet` would therefore
+ * WARNING: `main` read `argv[2]` as the suite. A bare `--ratchet` would therefore
  * have been looked up in SUITES, missed, and exited 2 — refusing, which reads
  * as a broken gate rather than as a misused flag. Flags are stripped first and
  * the first remaining token is the suite, so order does not matter.
@@ -418,12 +418,12 @@ function parseArgs(argv) {
  * decision can be driven in a unit test rather than by running two emulator
  * suites for minutes.
  *
- * 🔑 THE MODE CHANGES THE CONSEQUENCE, NEVER THE DETECTION. A rise is a rise in
+ * KEY: THE MODE CHANGES THE CONSEQUENCE, NEVER THE DETECTION. A rise is a rise in
  * both modes and is reported identically in both; only `exitCode` differs. A
  * mode that also changed what was *seen* would give two operators two different
  * accounts of the same tree.
  *
- * 🔴 A DROP IS 1 IN BOTH MODES. Making the regression path conditional on a
+ * CRITICAL: A DROP IS 1 IN BOTH MODES. Making the regression path conditional on a
  * flag would trade one silent failure for a worse one.
  */
 function classifyFloor(measured, floorCount, opts) {
@@ -437,7 +437,7 @@ function classifyFloor(measured, floorCount, opts) {
 /**
  * The floor entry `--record` would write, or a refusal. Pure: no disk, no git.
  *
- * 🔴 IT SPREADS THE EXISTING ENTRY RATHER THAN BUILDING A NEW ONE, AND THAT IS
+ * CRITICAL: IT SPREADS THE EXISTING ENTRY RATHER THAN BUILDING A NEW ONE, AND THAT IS
  * THE WHOLE SAFETY PROPERTY. test-floor.json is ~190KB and almost all of it is
  * provenance — dozens of underscore-prefixed keys recording how every previous
  * number was measured, including the reasoning that produced them. A writer
@@ -445,7 +445,7 @@ function classifyFloor(measured, floorCount, opts) {
  * downstream would notice: testFloor.test.ts checks only count, commit,
  * measured_at and note.
  *
- * 🔑 `commit_is_pre_squash` IS COMPUTED, NOT ASKED FOR. It is the field four
+ * KEY: `commit_is_pre_squash` IS COMPUTED, NOT ASKED FOR. It is the field four
  * consecutive landings recorded by hand and got wrong, and it is derivable: a
  * commit reachable from origin/main is not pre-squash, and a branch tip is.
  * Deriving it is most of the reason this write path is worth having at all.
@@ -484,7 +484,7 @@ function planFloorUpdate(entry, measurement) {
 /**
  * Run one suite and return what it measured, or exit.
  *
- * 🔑 SHARED BY THE GATE AND THE WRITER ON PURPOSE. `--record` must refuse for
+ * KEY: SHARED BY THE GATE AND THE WRITER ON PURPOSE. `--record` must refuse for
  * exactly the reasons the gate refuses — an unmeasured suite and a red suite
  * are both disqualifying, and a writer with its own copy of those checks is a
  * writer that will eventually disagree with the gate about what a valid
@@ -503,7 +503,7 @@ function measureOne(key) {
     );
   }
 
-  // 🔴 BEFORE the floor comparison, and deliberately. A red run's count is not
+  // CRITICAL: BEFORE the floor comparison, and deliberately. A red run's count is not
   // a measurement of anything: a crashed suite's tests are simply absent from
   // the total, so comparing that total to the floor asks the wrong question and
   // answers it reassuringly.
@@ -565,16 +565,16 @@ function git(args) {
 /**
  * Measure every named suite and write the floor.
  *
- * 🔴 IT SHORT-CIRCUITS THE GATE rather than judging and writing in one pass —
+ * CRITICAL: IT SHORT-CIRCUITS THE GATE rather than judging and writing in one pass —
  * the shape factory_verify.py --record has had right for weeks. Judging and
  * recording in the same run would mean the only way to bank a gain is a
  * command that also has to pass, which is precisely the deadlock that makes
  * people hand-edit the file instead.
  *
- * ⚠️ IT REFUSES A DROP RATHER THAN WRITING IT. There is no path here that
+ * WARNING: IT REFUSES A DROP RATHER THAN WRITING IT. There is no path here that
  * lowers a floor, so `--record` cannot be used to make a red suite pass.
  *
- * 🔑 THE FILE IS READ, MUTATED KEY BY KEY, AND RE-SERIALISED — never rebuilt.
+ * KEY: THE FILE IS READ, MUTATED KEY BY KEY, AND RE-SERIALISED — never rebuilt.
  * `JSON.stringify(parsed, null, 2)` round-trips this file byte-identically
  * (verified before this was written), so the ~190KB of provenance survives a
  * write untouched and the diff shows only the fields that moved.
@@ -637,7 +637,7 @@ function main(argv) {
 }
 
 /**
- * ⚠️ GUARDED. Without this, `require`-ing the file to test `describeFailure`
+ * WARNING: GUARDED. Without this, `require`-ing the file to test `describeFailure`
  * would RUN BOTH SUITES as a side effect of the import — and the rules suite
  * needs an emulator, so the test would fail for a reason having nothing to do
  * with what it asserts.

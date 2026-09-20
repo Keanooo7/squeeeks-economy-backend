@@ -2,7 +2,7 @@
 //
 // W2-88 part 3. Parents assign, members complete.
 //
-// 🔴 THE MIRROR TEST IS THE POINT OF THIS FILE. Everything else here is ordinary
+// CRITICAL: THE MIRROR TEST IS THE POINT OF THIS FILE. Everything else here is ordinary
 // authority checking; the id mirror is the thing that has actually gone wrong in
 // this codebase, twice, in this exact family of modules.
 
@@ -35,7 +35,7 @@ const assign = (over: Record<string, unknown> = {}) =>
   } as Parameters<typeof planChoreAssignment>[0]);
 
 // ---------------------------------------------------------------------------
-// 🔴 THE MIRROR — gated against the Dart file on disk, in BOTH directions
+// CRITICAL: THE MIRROR — gated against the Dart file on disk, in BOTH directions
 // ---------------------------------------------------------------------------
 //
 // The server cannot import from `lib/`, so a copy is unavoidable. An UNCHECKED

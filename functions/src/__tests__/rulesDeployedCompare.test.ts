@@ -1,7 +1,7 @@
 /**
  * The credential-free half of `check-rules-deployed.cjs` (W2-98).
  *
- * 🔴 THE COMPARISON FAILS OPEN, WHICH IS WHY IT NEEDS A TEST MORE THAN THE
+ * CRITICAL: THE COMPARISON FAILS OPEN, WHICH IS WHY IT NEEDS A TEST MORE THAN THE
  * NETWORK HALF DOES. `check-rules-deployed` decides "is production running this
  * ruleset?" by comparing a normalised digest of both sides. If `normalise` ever
  * broke and returned '' — a greedy comment regex would do it in one character —
@@ -16,7 +16,7 @@
  * needing credentials cannot be a jest test while CI is out of billing, so the
  * half that does not is gated in `npm test`.
  */
-// 🔴 FORCE MODULE SCOPE — LOAD-BEARING, NOT STYLISTIC. Without one top-level
+// CRITICAL: FORCE MODULE SCOPE — LOAD-BEARING, NOT STYLISTIC. Without one top-level
 // `import`/`export` this file is a SCRIPT and its top-level `const compare`
 // lands in the GLOBAL scope, where it can collide with another script test and
 // take THIS ENTIRE SUITE out of the run with no failure reported. The long

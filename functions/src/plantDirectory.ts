@@ -9,13 +9,13 @@
 // timer that counts the days is W1's, and the callable in index.ts is the only
 // thing that serves it.
 //
-// 🔑 SERVER-SIDE BECAUSE THE NUMBER IS ADVERTISED, and because it must be
+// KEY: SERVER-SIDE BECAUSE THE NUMBER IS ADVERTISED, and because it must be
 // correctable without an app release. A watering interval is a claim the app
 // makes to a player about a living thing they own — getting it wrong kills the
 // plant, and "wait for the next TestFlight build" is not an acceptable latency
 // for fixing it.
 //
-// ⚠️ THESE INTERVALS ARE GUIDANCE, NOT HORTICULTURE, AND THE APP MUST SAY SO.
+// WARNING: THESE INTERVALS ARE GUIDANCE, NOT HORTICULTURE, AND THE APP MUST SAY SO.
 // Every number below is a temperate-indoor, average-pot, growing-season
 // default. Real demand swings with light, pot size, humidity, season and
 // whether the thing is root-bound — a snake plant in a dim winter room can go a
@@ -24,7 +24,7 @@
 // is a starting point rather than an instruction, and `wateringIntervalDays` is
 // a DEFAULT the player is expected to adjust, never a fact about their plant.
 //
-// 📌 The plant PROP is already real and sits in all four default houses
+// NOTE: The plant PROP is already real and sits in all four default houses
 // (`room_catalogue.dart:215, 335`). This is not art work and must not be sent
 // to W3.
 // ---------------------------------------------------------------------------
@@ -38,12 +38,12 @@ export interface PlantSpecies {
   /**
    * Everything else a player might say, lowercase and already normalised.
    *
-   * 🔑 THE POINT OF THE DIRECTORY. "say the plant" means the input is whatever
+ * KEY: THE POINT OF THE DIRECTORY. "say the plant" means the input is whatever
    * a person calls it, not a menu selection — so `devil's ivy`, `pothos` and
    * `epipremnum` must all reach the same row. The Latin name is included for
    * anyone reading a nursery label.
    *
-   * ⚠️ An alias may not be shared between two species; `validatePlantDirectory`
+ * WARNING: An alias may not be shared between two species; `validatePlantDirectory`
    * refuses that, because an ambiguous lookup would silently pick whichever row
    * came first and then advertise the wrong interval.
    */
@@ -292,7 +292,7 @@ export function findPlant(
 /**
  * Everything wrong with a directory, as sentences.
  *
- * 🔑 VALIDATED BEFORE IT IS SERVED, NOT WHEN IT IS AUTHORED, and for the same
+ * KEY: VALIDATED BEFORE IT IS SERVED, NOT WHEN IT IS AUTHORED, and for the same
  * reason `rotateWeeklyOffer` validates an offer before publishing it: the
  * override document below can be edited in the Firebase console by a human,
  * and a console edit passes through no test, no review and no deploy. Catching
@@ -352,7 +352,7 @@ export function validatePlantDirectory(directory: readonly unknown[]): string[] 
       }
       const owner = seenAliases.get(key);
       if (owner != null && owner !== p.id) {
-        // 🔴 The one that makes a lookup lie. Two species answering to the same
+        // CRITICAL: The one that makes a lookup lie. Two species answering to the same
         // word means whichever is listed first wins, silently.
         problems.push(`alias '${alias}' is claimed by both '${owner}' and '${p.id}'`);
       }

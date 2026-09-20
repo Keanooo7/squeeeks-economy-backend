@@ -7,7 +7,7 @@
  *   npm --prefix functions run census:push-tokens -- --project <id>
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHY THIS EXISTS, AND WHY IT IS A COUNTER RATHER THAN A SWEEP
+ * CRITICAL: WHY THIS EXISTS, AND WHY IT IS A COUNTER RATHER THAN A SWEEP
  * ---------------------------------------------------------------------------
  *
  * #663 moved the token off `users/{uid}` — readable by every accepted friend —
@@ -15,18 +15,18 @@
  * could not close: a user who never launches again keeps an exposed token in
  * the old place. The obvious follow-up is a server-side sweep that clears it.
  *
- * ⚠️ THAT SWEEP WOULD STOP PUSH FOR EVERY INSTALL THAT HAS NOT UPDATED. The
+ * WARNING: THAT SWEEP WOULD STOP PUSH FOR EVERY INSTALL THAT HAS NOT UPDATED. The
  * only writer of either document is the client, so until an install has
  * launched once under the new client, the legacy field is THE ONLY DELIVERY
  * PATH THAT USER HAS — `resolvePushToken` reads the private document first and
  * falls back to it. Deleting it silently ends their reminders.
  *
- * ✅ So the sweep, and the removal of the legacy read, are both gated on the
+ * OK: So the sweep, and the removal of the legacy read, are both gated on the
  * same unmeasured number, exactly as pushTokens.ts says: "Drop the legacy read
  * only once that population is empty, not on a date." This script measures it.
  *
  * ---------------------------------------------------------------------------
- * 🔴 READ-ONLY, STRUCTURALLY — NOT BY A FLAG
+ * CRITICAL: READ-ONLY, STRUCTURALLY — NOT BY A FLAG
  * ---------------------------------------------------------------------------
  *
  * There is no `--dry-run`, because there is no other mode. The census reads
@@ -102,7 +102,7 @@ async function main() {
   console.log(`target:  ${emulator ? `EMULATOR at ${emulator}` : 'REAL Firestore'}`);
   console.log('mode:    read-only (this script has no write path)');
 
-  // 🔑 LOADED HERE, NOT AT THE TOP, so a run with no --project refuses on the
+  // KEY: LOADED HERE, NOT AT THE TOP, so a run with no --project refuses on the
   // argument rather than on a missing build. The refusal is the behaviour
   // pushTokenCensus.test.ts drives, and it must not depend on `tsc` having run.
   const census = loadCensus();

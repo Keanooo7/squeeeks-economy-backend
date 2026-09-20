@@ -9,7 +9,7 @@ import { FieldValue } from 'firebase-admin/firestore';
  * `fcmToken` had no server-side writer at all, only the client
  * (`lib/core/services/fcm_service.dart`).
  *
- * ⚠️ This is NOT the account-switch defect fixed in #82. That token was live
+ * WARNING: This is NOT the account-switch defect fixed in #82. That token was live
  * and had been re-owned by a second account, and the fix was to clear it on
  * sign-out, client-side. These are tokens that are genuinely dead. Two
  * different defects with two different mechanisms — do not merge them.
@@ -18,7 +18,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 /**
  * The only error codes that may cause a token to be deleted.
  *
- * 🔑 Deliberately just these two. Every other `sendEach` failure — quota,
+ * KEY: Deliberately just these two. Every other `sendEach` failure — quota,
  * `messaging/internal-error`, an auth blip, a timeout — is transient, and
  * pruning on those would turn one bad night at FCM into mass unsubscription of
  * healthy devices that would never come back. The bias is to keep a dead token
@@ -39,7 +39,7 @@ export const PERMANENT_TOKEN_FAILURES: ReadonlySet<string> = new Set([
 // friend's raw device token. It now belongs at users/{uid}/private/push,
 // which is owner-only (see the match block in firestore.rules).
 //
-// 🔴 BOTH PATHS ARE READ, AND THAT IS NOT BELT-AND-BRACES — IT IS THE
+// CRITICAL: BOTH PATHS ARE READ, AND THAT IS NOT BELT-AND-BRACES — IT IS THE
 // MIGRATION. The only writer is the client (fcm_service.dart), and a rules
 // change cannot reach a build Apple already has. Until the client that writes
 // the new path has shipped AND a given install has launched once under it,
@@ -47,7 +47,7 @@ export const PERMANENT_TOKEN_FAILURES: ReadonlySet<string> = new Set([
 // alone would silently stop push for every install that had not updated —
 // which is worse than the exposure this is fixing.
 //
-// ⚠️ NO BACKFILL RUNS. The client rewrites its token on every launch, so the
+// WARNING: NO BACKFILL RUNS. The client rewrites its token on every launch, so the
 // migration is each install's next cold start; users who never update keep a
 // token in the old place and keep receiving push. Drop the legacy read only
 // once that population is empty, not on a date.
@@ -96,7 +96,7 @@ function readToken(data: Record<string, unknown> | undefined): string | null {
 /**
  * The token to push to, or null if this user has none.
  *
- * 🔑 THE PRIVATE DOCUMENT WINS WHEN BOTH EXIST, and the tie is not arbitrary:
+ * KEY: THE PRIVATE DOCUMENT WINS WHEN BOTH EXIST, and the tie is not arbitrary:
  * an install mid-migration writes the private path and then clears the legacy
  * field, so a document carrying both was caught between those two writes and
  * the private copy is the newer one. Preferring the legacy field would pin
@@ -142,7 +142,7 @@ interface FirestoreLike {
  * Send one batch and clear the `fcmToken` of every recipient FCM permanently
  * rejected. Returns the uids pruned, for logging and for the tests.
  *
- * 🔑 `recipients[i]` must correspond to `messages[i]`. `sendEach` guarantees
+ * KEY: `recipients[i]` must correspond to `messages[i]`. `sendEach` guarantees
  * `responses[i]` is aligned with the input array, and that index is the *only*
  * link back to a user — the message objects carry a token and no uid. Building
  * the two arrays from one list in one pass is what keeps them aligned; the
@@ -229,13 +229,13 @@ export function buildPushBatch<T>(
 // of the legacy read itself. This section is the measurement, and nothing else:
 // it counts, it never writes.
 //
-// 🔴 THREE COUNTS, NOT ONE, AND THE THIRD IS THE ONE THAT MATTERS. A single
+// CRITICAL: THREE COUNTS, NOT ONE, AND THE THIRD IS THE ONE THAT MATTERS. A single
 // "how many are un-migrated" cannot separate "nobody is un-migrated" from
 // "nobody has a token at all", and those have opposite consequences: the first
 // unblocks the sweep, the second means the scan found nothing and proves
 // nothing. `neither` is reported for exactly that reason.
 //
-// ⚠️ CLASSIFYING A BOTH-PRESENT USER AS legacy-only IS THE ERROR THAT FREEZES
+// WARNING: CLASSIFYING A BOTH-PRESENT USER AS legacy-only IS THE ERROR THAT FREEZES
 // THE MIGRATION FOREVER. A user mid-migration carries a token in both places
 // and is already migrated as far as `resolvePushToken` is concerned — it takes
 // the private one. Counting them as legacy-only makes the blocking population
@@ -246,7 +246,7 @@ export function buildPushBatch<T>(
 /**
  * Where one user's token lives, as a census bucket.
  *
- * 🔑 These are the four states of the two documents, not four kinds of user —
+ * KEY: These are the four states of the two documents, not four kinds of user —
  * `neither` includes every account that has simply never granted push.
  */
 export type PushTokenMigrationState =
@@ -258,7 +258,7 @@ export type PushTokenMigrationState =
 /**
  * Which bucket this user falls in.
  *
- * 🔑 BUILT ON `readToken`, THE SAME PREDICATE `resolvePushToken` USES, so the
+ * KEY: BUILT ON `readToken`, THE SAME PREDICATE `resolvePushToken` USES, so the
  * census and the resolver cannot drift into disagreeing about what a token is.
  * An empty string and a non-string are not tokens in either place; a census
  * that counted them would report a legacy population the senders never see.
@@ -276,7 +276,7 @@ export function classifyPushTokenMigration(
 
 /** The census: how many users sit in each of the four states. */
 export interface PushTokenCensus {
-  /** 🔴 The population that blocks the sweep AND the legacy-read removal. */
+ /** CRITICAL: The population that blocks the sweep AND the legacy-read removal. */
   legacyOnly: number;
   /** Migrated: the token is only in the owner-only document. */
   privateOnly: number;
@@ -349,7 +349,7 @@ interface CensusQuery {
 /**
  * The slice of Firestore the census reads through.
  *
- * 🔴 THERE IS NO WRITE METHOD ON THIS INTERFACE, AND THAT IS THE POINT. The
+ * CRITICAL: THERE IS NO WRITE METHOD ON THIS INTERFACE, AND THAT IS THE POINT. The
  * census runs against production data if it runs anywhere useful, and the whole
  * hazard of this brief is a destructive sweep shipped before the number that
  * justifies it. A reader that structurally CANNOT write is worth more than a
@@ -364,7 +364,7 @@ export interface CensusFirestoreLike {
  * The uid a `users/{uid}/private/push` document belongs to, or null if this
  * document is not one.
  *
- * ⚠️ A COLLECTION-GROUP SCAN MATCHES BY COLLECTION ID ALONE, at any depth and
+ * WARNING: A COLLECTION-GROUP SCAN MATCHES BY COLLECTION ID ALONE, at any depth and
  * anywhere in the tree. `collectionGroup('shop')` in index.ts already has to
  * skip the TOP-LEVEL `shop/current` document with a doc-id guard, and a
  * `private` subcollection under something other than a user would be counted
@@ -385,18 +385,18 @@ export function pushTokenOwnerUid(doc: CensusDocument): string | null {
 /**
  * Read every user's two token homes and tally the four states.
  *
- * 🔑 TWO QUERIES, NOT TWO READS PER USER. `readPushTokenEntries` in index.ts
+ * KEY: TWO QUERIES, NOT TWO READS PER USER. `readPushTokenEntries` in index.ts
  * reads a known handful of uids and can afford a pair of gets each; a census
  * covers everybody, so it takes one projected scan of `users` and one
  * collection-group scan of `private`. The cost is one document read per user
  * plus one per existing private document — not two per user.
  *
- * ⚠️ `select('fcmToken')` PROJECTS, IT DOES NOT FILTER. Every user document
+ * WARNING: `select('fcmToken')` PROJECTS, IT DOES NOT FILTER. Every user document
  * comes back, including those with no token, which is what makes `total` and
  * `neither` meaningful. A `where('fcmToken','!=',null)` would have been cheaper
  * and would have silently answered a different question.
  *
- * 📌 A user with a private token and no `users/{uid}` document still counts —
+ * NOTE: A user with a private token and no `users/{uid}` document still counts —
  * the private scan adds uids the users scan never saw. Dropping them would
  * under-report the migrated population.
  */

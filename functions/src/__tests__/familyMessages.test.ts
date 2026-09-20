@@ -3,7 +3,7 @@
 // W2-88 part 4. Brendan: "15 word cap ... no links or bad words ... family
 // friendly fully".
 //
-// 🔴 THE NEGATIVE CONTROLS ARE THE POINT OF THIS FILE. A filter that refuses
+// CRITICAL: THE NEGATIVE CONTROLS ARE THE POINT OF THIS FILE. A filter that refuses
 // everything satisfies every "is refused" test ever written, and on a family
 // board the cost of a false positive is a child being told their homework
 // message is offensive. So the anti-Scunthorpe cases and the ordinary-sentence
@@ -26,7 +26,7 @@ const refusalOf = (text: string) => {
 };
 
 // ---------------------------------------------------------------------------
-// 🔴 THE FALSE-POSITIVE CONTROLS
+// CRITICAL: THE FALSE-POSITIVE CONTROLS
 // ---------------------------------------------------------------------------
 
 describe('🔴 ANTI-SCUNTHORPE — innocent words containing blocked substrings PASS', () => {

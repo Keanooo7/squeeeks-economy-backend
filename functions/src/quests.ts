@@ -4,7 +4,7 @@
 //
 // Spec: Projects/Cleaning/spec-2026-08-12-quest-lines.md (W2-10 / Q1).
 //
-// 🔴 QUESTS ARE SERVER-AUTHORITATIVE, and that is settled by existing code
+// CRITICAL: QUESTS ARE SERVER-AUTHORITATIVE, and that is settled by existing code
 // rather than by preference. level_page.dart says of itself: "Read-only by
 // construction: every figure comes from playerLevelProvider, which derives from
 // the server-authoritative totalXp awarded by awardXp." Quests grant sponges,
@@ -13,10 +13,10 @@
 // reports task completions, the server decides what they add up to.
 //
 // ---------------------------------------------------------------------------
-// 🔑 HISTORY EXISTS NOW — THIS SECTION WAS REWRITTEN BY W2-11, READ IT AGAIN.
+// KEY: HISTORY EXISTS NOW — THIS SECTION WAS REWRITTEN BY W2-11, READ IT AGAIN.
 // ---------------------------------------------------------------------------
 //
-// ⚠️ THE PREVIOUS VERSION OF THIS HEADER SAID "THERE IS NO HISTORY" AND BUILT A
+// WARNING: THE PREVIOUS VERSION OF THIS HEADER SAID "THERE IS NO HISTORY" AND BUILT A
 // LONG ARGUMENT ON IT. That was true when this file landed and is now FALSE.
 // It is rewritten rather than amended because a stale doctrine comment is worse
 // than none: the next window would have inherited a constraint that no longer
@@ -44,7 +44,7 @@
 //      BEFORE the log shipped, and for any window a future retention policy
 //      prunes. No recompute path is built yet; the data to build one now exists.
 //
-// 📌 Progress is still ACCUMULATED FORWARD at completion time rather than
+// NOTE: Progress is still ACCUMULATED FORWARD at completion time rather than
 // derived by scanning history, and that is now a performance choice rather than
 // a necessity: every read filters on `dayKey`, so a completion costs O(tasks
 // today), never O(all completions). Keep it that way — see the growth note in
@@ -56,7 +56,7 @@
 import {streakDate, parseNaiveDate} from './streak';
 
 // ---------------------------------------------------------------------------
-// 🔴 THE REWARD TABLE — AWAITING BRENDAN. DO NOT TREAT THESE AS DECIDED.
+// CRITICAL: THE REWARD TABLE — AWAITING BRENDAN. DO NOT TREAT THESE AS DECIDED.
 // ---------------------------------------------------------------------------
 //
 // The spec's own words: "Nobody has priced how many quests a month a player can
@@ -70,14 +70,14 @@ import {streakDate, parseNaiveDate} from './streak';
 // from the spec's suggested tiers so the machinery has something to run on.
 //
 // ---------------------------------------------------------------------------
-// 🔴 XP — MEASURED AGAINST THE LEVEL CURVE BEFORE A VALUE WAS CHOSEN (W2-12)
+// CRITICAL: XP — MEASURED AGAINST THE LEVEL CURVE BEFORE A VALUE WAS CHOSEN (W2-12)
 // ---------------------------------------------------------------------------
 //
 // Brendan: "yes quests award xp." The risk was that the curve
 // (level_curve.dart: kXpBase 100, kXpStep 50) was tuned against TASK-ONLY XP,
 // so a second source changes time-to-level for everyone.
 //
-// 🔑 IT IS A BOUNDED ONE-OFF, NOT A RATE CHANGE, and that is the whole answer.
+// KEY: IT IS A BOUNDED ONE-OFF, NOT A RATE CHANGE, and that is the whole answer.
 // Every tier is claimed exactly once (`claimedTiers`), so lifetime quest XP is
 // a FIXED total — 11 tiers in today's catalogue — not a faster earn rate. The
 // curve's shape is untouched; a player is shifted forward by a constant, and
@@ -95,19 +95,19 @@ import {streakDate, parseNaiveDate} from './streak';
 // the sponge values — mirroring gives 700 XP and ~26% to L10, and an XP number
 // that large starts to matter for a reason sponges never do.
 //
-// ⚠️ THE ASYMMETRY THAT MAKES THIS WORTH CARE: a sponge is SPENT and leaves the
+// WARNING: THE ASYMMETRY THAT MAKES THIS WORTH CARE: a sponge is SPENT and leaves the
 // economy; XP is PERMANENT and compounds into level, which gates content.
 // Getting sponges wrong is a balance problem. Getting XP wrong is a progression
 // problem, and it cannot be walked back once players have banked it.
 //
-// 🔴 THE ONE THING THAT WOULD BREAK THIS: A RECURRING QUEST LINE. The bounded
+// CRITICAL: THE ONE THING THAT WOULD BREAK THIS: A RECURRING QUEST LINE. The bounded
 // argument above holds only because every tier is one-time. The spec's MONTHLY
 // LINE repeats, and a repeating line converts this from a fixed offset into a
 // permanent second earn rate — which IS the thing that would require retuning
 // the curve. Price the monthly line against the curve when it is designed. Do
 // not let it inherit these numbers.
 //
-// 📌 THIS IS THE ONLY PLACE VALUES LIVE. Setting the economy must be an edit to
+// NOTE: THIS IS THE ONLY PLACE VALUES LIVE. Setting the economy must be an edit to
 // this table and nothing else — no sponge OR XP value is duplicated into a
 // quest definition, and quests.test.ts asserts that for both.
 export const QUEST_REWARDS = {
@@ -131,7 +131,7 @@ export type RewardTier = keyof typeof QUEST_REWARDS;
  */
 export const QUEST_CHEST_XP = 25;
 
-/** ⚠️ PROVISIONAL — awaiting Brendan. See the note above. */
+/** WARNING: PROVISIONAL — awaiting Brendan. See the note above. */
 export const QUEST_REWARDS_ARE_PROVISIONAL = true;
 
 // ---------------------------------------------------------------------------
@@ -176,7 +176,7 @@ export interface QuestDef {
    * Which task completions count. A task matches when its room equals `room`
    * (when set) AND any of `titleAny` appears in its lowercased title (when set).
    *
-   * ⚠️ MATCHING ON TITLE TEXT IS A KNOWN WEAKNESS, recorded rather than hidden:
+ * WARNING: MATCHING ON TITLE TEXT IS A KNOWN WEAKNESS, recorded rather than hidden:
    * task docs carry no stable semantic key — only an id, a free-text title, a
    * room and optional tags. "Make your bed" is identified by the word "bed".
    * A retitled task silently stops counting, and no test can catch that because
@@ -336,7 +336,7 @@ export interface QuestPayout {
    * Resolved XP. Every tier grants XP, including chest tiers — otherwise the
    * hardest quests would be the only ones that do not advance the level.
    *
-   * 🔑 Resolved HERE, from the reward table, so no quest definition and no
+ * KEY: Resolved HERE, from the reward table, so no quest definition and no
    * caller ever carries an XP number of its own. That single property is why
    * the sponge economy stayed a one-file edit, and it now covers XP too.
    */
@@ -368,7 +368,7 @@ function matches(def: QuestDef, task: CompletedTask): boolean {
  * Days between two day keys (`YYYY-MM-DD`), using the STREAK feature's own
  * day rule.
  *
- * ⚠️ This deliberately routes through `streakDate`/`parseNaiveDate` from
+ * WARNING: This deliberately routes through `streakDate`/`parseNaiveDate` from
  * streak.ts rather than doing its own date maths. Two definitions of
  * "consecutive day" in one app is a bug with a delay fuse that does not surface
  * until a tester crosses midnight in the wrong timezone — the spec says so, and
@@ -411,7 +411,7 @@ export function evaluateQuests(
 
     switch (def.kind) {
       case 'tally': {
-        // 🔑 IDEMPOTENCY LIVES HERE. recordTaskCompletion fires on EVERY
+        // KEY: IDEMPOTENCY LIVES HERE. recordTaskCompletion fires on EVERY
         // completion and hands us the whole day's completed set, not a delta.
         // Adding `matched.length` per call would count the day's first dish
         // once, then again, then again — five dishes would read as fifteen.

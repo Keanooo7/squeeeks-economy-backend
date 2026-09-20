@@ -1,6 +1,6 @@
 // What a housemate is allowed to see — and, more importantly, what they are not.
 //
-// 🔴 EVERY ASSERTION ABOUT THE PAYLOAD IS "ONLY THESE FIELDS", NEVER "CONTAINS
+// CRITICAL: EVERY ASSERTION ABOUT THE PAYLOAD IS "ONLY THESE FIELDS", NEVER "CONTAINS
 // THESE FIELDS". The entire reason this projection exists is that the source
 // documents will gain fields later, and a `contains` assertion passes happily
 // while a new one is carried straight through to a visitor. A projection tested
@@ -105,7 +105,7 @@ describe('the gate — canViewHouse, re-expressed because Admin SDK bypasses rul
   // ruleset — is what stands between a visitor and getHousemateView's payload.
 
   test('a family member may look WITHOUT any friendship', () => {
-    // 🔑 The case that proves the family branch precedes the friendship early
+    // KEY: The case that proves the family branch precedes the friendship early
     // return. friendshipAccepted is false and the roster is empty: every
     // other path through this function returns false here.
     expect(

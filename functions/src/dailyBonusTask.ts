@@ -13,7 +13,7 @@
 //     `recordTaskCompletion` already pays against a server-side ledger for
 //     exactly this class of reason.
 //
-// ⚠️ THE ID LIST IS A MIRROR, and mirrors rot. It is the ids only — no titles,
+// WARNING: THE ID LIST IS A MIRROR, and mirrors rot. It is the ids only — no titles,
 // no rooms, no durations — because the server never renders a task and every
 // extra field is another thing to drift. `daily_bonus_task_test.dart` on the
 // Dart side reads THIS FILE and asserts the list matches `taskLibrary`
@@ -81,7 +81,7 @@ function hashDayKey(dayKey: string): number {
  * always maps to the same id. Returns null only if the mirror is empty, which
  * the Dart cross-mirror test makes impossible in practice.
  *
- * 📌 [dayKey] is the same plain calendar date `grantTaskRewards` uses — NOT the
+ * NOTE: [dayKey] is the same plain calendar date `grantTaskRewards` uses — NOT the
  * streak system's 4 AM cutoff. The bonus has to agree with the `completedDate`
  * the client stamps on a task doc, or a completion between midnight and 4 AM
  * would be checked against the wrong day's bonus.

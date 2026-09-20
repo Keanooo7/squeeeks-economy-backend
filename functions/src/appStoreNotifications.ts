@@ -5,7 +5,7 @@ import type { AppleNotification, AppleTransaction } from './appleJws';
  * the tier written by `appStoreNotificationsV2` are the same lookup, so they
  * cannot drift apart.
  *
- * ⚠️ Fails CLOSED, and that is a change of direction rather than a tidy-up.
+ * WARNING: Fails CLOSED, and that is a change of direction rather than a tidy-up.
  * It used to be an allow-list Set plus, 40 lines later, a BINARY ternary
  * (`productId === 'sub_pro_monthly' ? 'pro' : 'premium'`). The ternary was safe
  * only because the Set happened to reject everything else first — anything that
@@ -24,7 +24,7 @@ import type { AppleNotification, AppleTransaction } from './appleJws';
  * documents still carrying `premium` are handled separately, by decoding rather
  * than deletion; see LEGACY_TIER_ALIASES in taskRewards.ts.
  *
- * 📌 2026-08-14 — MOVED here from an inline `const` inside
+ * NOTE: 2026-08-14 — MOVED here from an inline `const` inside
  * `verifySubscriptionReceipt`. It was inline while exactly one entry point
  * granted a tier. A second one now does, and a per-entry-point copy of a
  * fail-closed allow-list is the drift the comment above already describes.
@@ -32,7 +32,7 @@ import type { AppleNotification, AppleTransaction } from './appleJws';
 export const SUBSCRIPTION_PRODUCT_TIERS: Record<string, string> = {
   sub_pro_monthly: 'pro',
   sub_pro_annual: 'pro',
-  // 🔴 ADDED IN W2-79, AND ITS ABSENCE MADE THE FAMILY REFUND PATH INERT.
+  // CRITICAL: ADDED IN W2-79, AND ITS ABSENCE MADE THE FAMILY REFUND PATH INERT.
   //
   // `effectOf` rejects any product not in this table BEFORE it classifies the
   // notification type — `${productId} is not a subscription product` — so with
@@ -41,19 +41,19 @@ export const SUBSCRIPTION_PRODUCT_TIERS: Record<string, string> = {
   // entitlement fan-out that W2-79 exists to trigger could never have fired
   // even once it was wired.
   //
-  // 🔑 Found by a test that drove the REAL `effectOf` rather than constructing
+  // KEY: Found by a test that drove the REAL `effectOf` rather than constructing
   // a `SubscriptionEffect` by hand. Every hand-built-effect test in that file
   // passed against the broken table; only the four going through the actual
   // classifier went red. A fixture that skips the unit under test cannot see
   // the unit under test being wrong.
   //
-  // 📌 IT MAPS TO 'pro', WHICH IS THE W2-76 DECISION SPELLED OUT IN DATA:
+  // NOTE: IT MAPS TO 'pro', WHICH IS THE W2-76 DECISION SPELLED OUT IN DATA:
   // family is a SOURCE of pro, not a third tier, so the owner's own
   // `subscriptionTier` reads `pro` exactly as a personal subscriber's does.
   // Members are entitled separately through `familyProExpiresAt`. Anything else
   // here would smuggle a third tier in through the billing table.
   //
-  // 📌 CORRECTED 2026-08-29 (W2-158). THIS PARAGRAPH USED TO READ "the PRODUCT
+  // NOTE: CORRECTED 2026-08-29 (W2-158). THIS PARAGRAPH USED TO READ "the PRODUCT
   // still exists nowhere — #380 added it to Configuration.storekit and #382
   // reverted that, and App Store Connect has never had it", AND BOTH HALVES
   // WERE FALSE BY THE TIME ANYONE READ THEM. #587 re-added it to
@@ -61,7 +61,7 @@ export const SUBSCRIPTION_PRODUCT_TIERS: Record<string, string> = {
   // App Store Connect has carried it all along as Apple ID 6801924400
   // (Projects/Cleaning/appstore-connect-facts.md:37,39).
   //
-  // 🔴 IT IS CORRECTED HERE RATHER THAN LEFT TO ROT BECAUSE THIS EXACT CLAIM
+  // CRITICAL: IT IS CORRECTED HERE RATHER THAN LEFT TO ROT BECAUSE THIS EXACT CLAIM
   // HAS ALREADY MISLED TWICE. `productRegistry.test.ts` carries its own
   // correction of the same sentence, and W2-158's brief inherited the stale
   // half from SHIP.md — which measured at `3d35236`, before W2-157 landed the
@@ -69,7 +69,7 @@ export const SUBSCRIPTION_PRODUCT_TIERS: Record<string, string> = {
   // can be signed yet" is not merely out of date: it tells the next reader that
   // this row cannot be exercised, at the moment the row went live.
   //
-  // ⚠️ A REAL TRANSACTION FOR THIS PRODUCT CAN NOW BE SIGNED, and
+  // WARNING: A REAL TRANSACTION FOR THIS PRODUCT CAN NOW BE SIGNED, and
   // `productGrantCoverage.test.ts` signs one and drives it through the shipped
   // verifier into the grant. What remains true is narrower and belongs to the
   // store-readiness audit, not here: at status "Prepare for Submission" the
@@ -110,7 +110,7 @@ const ENTITLING_TYPES = new Set([
 /**
  * Notification types that end an entitlement at a moment Apple chose.
  *
- * 🔑 `REFUND` and `REVOKE` are the ones that MATTER, and they are the whole
+ * KEY: `REFUND` and `REVOKE` are the ones that MATTER, and they are the whole
  * reason this set is not simply "let it lapse". Every other ending — a
  * cancellation, a failed rebill, a natural expiry — leaves `expiresDate`
  * untouched and in the past by the time it bites, and `resolveEffectiveTier`
@@ -130,7 +130,7 @@ const REVOKING_TYPES = new Set(['REFUND', 'REVOKE', 'EXPIRED', 'GRACE_PERIOD_EXP
 /**
  * Decides what a verified notification means for the owner's entitlement.
  *
- * ⚠️ Unknown types resolve to `ignore`, NOT to an error. Apple adds
+ * WARNING: Unknown types resolve to `ignore`, NOT to an error. Apple adds
  * notification types without asking — `RESCIND_CONSENT`, `METADATA_UPDATE` and
  * `MIGRATION` are all newer than this app — and a handler that 500s on one it
  * has never seen turns a routine Apple release into three days of retries and

@@ -2,7 +2,7 @@
  * `boundedDayKey` — the pure half of W2-174's repair.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHY THIS LIVES IN THE UNIT SUITE AS WELL AS THE EMULATOR ONE
+ * CRITICAL: WHY THIS LIVES IN THE UNIT SUITE AS WELL AS THE EMULATOR ONE
  * ---------------------------------------------------------------------------
  *
  * The behavioural proof that the mint is closed is in

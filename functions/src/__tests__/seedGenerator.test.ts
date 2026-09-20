@@ -14,7 +14,7 @@ const DART_MIRROR = 'lib/features/customization/domain/collection_seed.dart';
 /**
  * W2-135 · The authored seed, and the proof that both projections are exact.
  *
- * 🔴 THE VACUITY GUARD COMES FIRST AND IS NOT DECORATION. A generator that emits
+ * CRITICAL: THE VACUITY GUARD COMES FIRST AND IS NOT DECORATION. A generator that emits
  * nothing, diffed against an equally empty committed file, DIFFS CLEAN. Every
  * assertion below is worthless unless the parse found real rows first — the same
  * reasoning dailyRotation.test.ts:590 gives about its own parse.
@@ -95,13 +95,13 @@ describe('the id lock — the only risk that reaches a real player', () => {
 /**
  * §4 · The Dart projection is proven HERE and wired by W1-149.
  *
- * 🔑 This is what makes the two-window split work. `lib/` is W1's lane and its
+ * KEY: This is what makes the two-window split work. `lib/` is W1's lane and its
  * gate is `make test`, so this brief may READ that file — dailyRotation.test.ts
  * already does — but not write it. Proving the projection now means the
  * whitespace-only commit lands in W1's half with the result already established
  * instead of W1 discovering it mid-brief.
  *
- * ⚠️ THIS COMPARISON IS `diff -w`, NOT BYTE-EXACT, AND THE DIFFERENCE MATTERS.
+ * WARNING: THIS COMPARISON IS `diff -w`, NOT BYTE-EXACT, AND THE DIFFERENCE MATTERS.
  * The committed file aligns its columns PER BLOCK; a generator aligns globally.
  * So the values agree exactly and the whitespace does not. W1-149 flips this to
  * byte-exact in the same commit that wires the generated file — at which point
@@ -116,7 +116,7 @@ describe('the Dart projection is exact, modulo whitespace', () => {
    * Strip Dart line comments, collapse whitespace runs, then drop the space a
    * column-aligner leaves BEFORE `:` and `,`.
    *
-   * ⚠️ That last step is load-bearing and it is why this is `diff -w` rather
+ * WARNING: That last step is load-bearing and it is why this is `diff -w` rather
    * than a byte compare: the committed file pads per block and the emitter pads
    * globally, so padding lands in different places on the KEY side —
    * `'id' : 'v'` against `'id': 'v'`. Collapsing runs alone leaves that single
@@ -146,7 +146,7 @@ describe('the Dart projection is exact, modulo whitespace', () => {
     return source.slice(start + anchor.length, end);
   };
 
-  // 🔴 kSkinDescriptions is NOT in this list, and that is a measured finding
+  // CRITICAL: kSkinDescriptions is NOT in this list, and that is a measured finding
   // rather than an omission — see the describe block below.
   const CASES: Array<[string, string, string]> = [
     ['kCollectionSeed', 'const List<SeedItem> kCollectionSeed = [', '\n];'],
@@ -168,21 +168,21 @@ describe('the Dart projection is exact, modulo whitespace', () => {
 });
 
 /**
- * 🔴 kSkinDescriptions IS EXACT IN CONTENT AND DIFFERS IN ORDER BY EXACTLY ONE ROW.
+ * CRITICAL: kSkinDescriptions IS EXACT IN CONTENT AND DIFFERS IN ORDER BY EXACTLY ONE ROW.
  *
  * The other three tables match modulo whitespace. This one does not, and the
  * cause is not formatting: the committed map hoists `char_pyjama` to the top,
  * where seed order puts it at index 15. Everything else is in seed order —
  * proven below by removing that single key from both sides and comparing.
  *
- * 🔑 WHY THIS IS RECORDED RATHER THAN "FIXED" BY MATCHING THE COMMITTED ORDER.
+ * KEY: WHY THIS IS RECORDED RATHER THAN "FIXED" BY MATCHING THE COMMITTED ORDER.
  * A Dart `const Map` is order-independent for lookup, so emitting in seed order
  * is semantically identical and keeps ONE ordering rule across all four tables
  * instead of a special case that exists only because a row was once appended in
  * a hurry. Teaching the generator to reproduce the anomaly would preserve it
  * forever in a file nobody hand-edits again.
  *
- * ⚠️ THE CONSEQUENCE FOR W1-149, WHICH IS WHY IT IS SPELLED OUT HERE: that
+ * WARNING: THE CONSEQUENCE FOR W1-149, WHICH IS WHY IT IS SPELLED OUT HERE: that
  * brief's Dart diff is whitespace-only for three tables and whitespace-plus-one-
  * moved-row for this one. It is still not a data migration — no value changes,
  * and the assertion below is what proves that — but "whitespace-only" would be
@@ -240,21 +240,21 @@ describe('kSkinDescriptions — exact in content, one row out of order', () => {
 });
 
 /**
- * 🔴 THE PROSE IS PART OF THE PROJECTION, NOT DECORATION.
+ * CRITICAL: THE PROSE IS PART OF THE PROJECTION, NOT DECORATION.
  *
  * The schema went 9 → 11 fields because generating these tables from a data-only
  * source would have destroyed 71 comment lines / ~775 words of institutional
  * reasoning in itemPool.ts — the style_roof_tile_gold pricing bug, furn_cozy_sofa's
  * "measured dusty rose, not cream", the day-one-set provenance.
  *
- * 📌 THE MIGRATION ITSELF WAS PROVEN LOSSLESS, and the evidence is quoted rather
+ * NOTE: THE MIGRATION ITSELF WAS PROVEN LOSSLESS, and the evidence is quoted rather
  * than re-run because its subject no longer exists: at the swap commit the
  * committed SEED_ITEMS block held 64 comment lines and the generated one held 64,
  * with the row values byte-identical modulo column alignment. itemPool.ts now
  * re-exports, so there is no second copy left to compare against — which is the
  * point of the change.
  *
- * ✅ WHAT REMAINS CHECKABLE FOREVER is the direction that still has two sides:
+ * OK: WHAT REMAINS CHECKABLE FOREVER is the direction that still has two sides:
  * every note in the authored JSON must appear in the generated output. A
  * generator that silently stopped emitting prose would pass every other test in
  * this repo.

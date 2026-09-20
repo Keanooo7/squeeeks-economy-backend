@@ -3,7 +3,7 @@
 // W2-77. One person takes the bins out and it clears for everyone.
 //
 // ---------------------------------------------------------------------------
-// 🔴 "CLEARS FOR ALL" AND "CLEARS FOR ANYONE" ARE THE SAME TEST UNLESS ONE
+// CRITICAL: "CLEARS FOR ALL" AND "CLEARS FOR ANYONE" ARE THE SAME TEST UNLESS ONE
 // ASSERTS A REFUSAL
 // ---------------------------------------------------------------------------
 //
@@ -19,7 +19,7 @@
 // the read path, because they are different mechanisms: the plan refuses a
 // write, the rules refuse a read, and neither implies the other.
 //
-// ⚠️ EVERY CONTROL'S MUTATION WAS VERIFIED APPLIED BEFORE ITS RESULT WAS READ,
+// WARNING: EVERY CONTROL'S MUTATION WAS VERIFIED APPLIED BEFORE ITS RESULT WAS READ,
 // per #383 and #384 — where a fourth control silently changed nothing and read
 // exactly like a pass, and another left every fixture green because the term it
 // removed was redundant with one every fixture already satisfied.
@@ -249,10 +249,10 @@ describe('a second completion preserves the first, and does not rewrite', () => 
 // W2-81 — RECONCILIATION: the local cache versus the shared fact
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE FAILURE THIS FILE IS NOW ALSO GUARDING: a device that has not synced
+// CRITICAL: THE FAILURE THIS FILE IS NOW ALSO GUARDING: a device that has not synced
 // must not be able to un-clear what a housemate cleared.
 //
-// ⚠️ AND THE CONTROL THAT KEEPS IT HONEST is the ordinary case — one device,
+// WARNING: AND THE CONTROL THAT KEEPS IT HONEST is the ordinary case — one device,
 // one same-day ack, no server record. If the rule were simply "the server
 // replaces the local answer", THAT case would break: a member who tapped OK
 // while offline (which is every member today, since nothing stamps a familyId)

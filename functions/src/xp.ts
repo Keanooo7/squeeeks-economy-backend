@@ -26,14 +26,14 @@ export const XP_GIFT_CLAIM = 15;
  * WHERE XP LIVES. One definition, so there is exactly one answer to "which
  * document and which field is totalXp".
  *
- * 🔑 These exist because W2-12 needed to award XP from INSIDE a transaction
+ * KEY: These exist because W2-12 needed to award XP from INSIDE a transaction
  * (quest rewards must commit atomically with `claimedTiers`, or a tier can be
  * marked claimed while its XP is lost — and XP is permanent progression that
  * cannot be walked back). `awardXp` below is deliberately non-transactional, so
  * it cannot be called there. Rather than let a second caller hardcode the path
  * and silently drift, both callers now name the same constants.
  *
- * ⚠️ If XP ever moves document, change it HERE and both writers follow.
+ * WARNING: If XP ever moves document, change it HERE and both writers follow.
  */
 export const xpDocPath = (uid: string): string => `users/${uid}/profile/data`;
 export const XP_FIELD = 'totalXp';

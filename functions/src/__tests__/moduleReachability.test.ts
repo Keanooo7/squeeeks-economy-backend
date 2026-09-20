@@ -57,7 +57,7 @@ const KNOWN_UNREACHABLE: Record<string, string> = {
     'is not shipped into the deployed bundle, and make the runtime depend on ' +
     'its own deployment ledger. Unreachable is the correct state here, which is ' +
     'why this entry states a REASON rather than an apology.',
-  // 📌 `defaultHouses` WAS HERE AND IS NOT ANY MORE, removed in W2-80 — and
+  // NOTE: `defaultHouses` WAS HERE AND IS NOT ANY MORE, removed in W2-80 — and
   // removed by the gate rather than by anyone remembering, the same way
   // `family` was. Its entry ended "fixing it means writing the seeder brief,
   // not adding an import", and W2-80 is that brief: demoAccount.ts imports
@@ -65,12 +65,12 @@ const KNOWN_UNREACHABLE: Record<string, string> = {
   // index.ts imports demoAccount. So the import is a consequence of the seeder
   // existing, which is the order the entry asked for.
   //
-  // ⚠️ IT DID NOT DECIDE THE THING THE ENTRY SAID WAS UNDECIDED. "Which house a
+  // WARNING: IT DID NOT DECIDE THE THING THE ENTRY SAID WAS UNDECIDED. "Which house a
   // new player receives, whether they choose" is still nobody's decision — the
   // seeder picks a house for a DEMO account via `DEMO_FIXTURE.houseId`, which
   // is screenshot policy, not onboarding policy. If someone later reads this
   // removal as new-player policy having been settled, it has not been.
-  // 📌 `family` WAS HERE AND IS NOT ANY MORE, removed in W2-77 by the gate
+  // NOTE: `family` WAS HERE AND IS NOT ANY MORE, removed in W2-77 by the gate
   // rather than by anyone remembering. It was exempted in W2-76 as a pure half
   // shipped ahead of its callers; trashDay.ts now imports isValidFamily and
   // index.ts imports trashDay, so it is genuinely reachable. The INVERSE

@@ -3,7 +3,7 @@
  * Firestore.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHY A FAKE CANNOT ANSWER THIS
+ * CRITICAL: WHY A FAKE CANNOT ANSWER THIS
  * ---------------------------------------------------------------------------
  *
  * Two claims hold up this whole brief, and both are claims about the WORLD
@@ -20,13 +20,13 @@
  *   2. THE CENSUS READS THE REAL SHAPE. It finds private tokens through
  *      `collectionGroup('private')` and recovers the uid from the document's
  *      ref chain. A fake proves only that the fake was built to match the code.
- *      🔴 IF THAT SCAN SILENTLY RETURNED NOTHING, every migrated user would be
+ * CRITICAL: IF THAT SCAN SILENTLY RETURNED NOTHING, every migrated user would be
  *      counted legacy-only; if the ref walk were wrong the other way, the count
  *      would read ZERO LEGACY-ONLY USERS AND GREEN-LIGHT THE SWEEP THAT STOPS
  *      PUSH FOR EVERY UN-MIGRATED INSTALL. The census's failure mode is not a
  *      wrong report, it is a destructive action taken on a wrong report.
  *
- * ⚠️ THIS SUITE IS INVISIBLE TO `npm test`. `jest.config.js` excludes every
+ * WARNING: THIS SUITE IS INVISIBLE TO `npm test`. `jest.config.js` excludes every
  * `*Emulator.test.ts`; `npm run test:e2e` is the gate that runs it, and its
  * `Tests:` line is quoted separately in the return. A gate that cannot see its
  * subject is green for the same reason it is useless.
@@ -110,7 +110,7 @@ afterAll(async () => {
 
 describe('the legacy fallback fires against a real Firestore', () => {
   test('a user with ONLY the legacy field resolves to source legacy', async () => {
-    // 🔴 The world premise. No users/{uid}/private/push document is written for
+    // CRITICAL: The world premise. No users/{uid}/private/push document is written for
     // this uid at all — this is the shape of every install that has not yet
     // launched under the client from #663.
     await db.doc(legacyPushTokenDocPath(UNMIGRATED)).set({
@@ -161,7 +161,7 @@ describe('the census reads the real document shape', () => {
       .map((doc) => pushTokenOwnerUid(doc))
       .filter((uid): uid is string => uid !== null);
 
-    // 🔑 The scan finds it, and the uid recovered from the ref chain is the
+    // KEY: The scan finds it, and the uid recovered from the ref chain is the
     // owner — the two things a fake cannot establish.
     expect(owners).toContain(MIGRATED);
     expect(owners).toContain(MIDWAY);

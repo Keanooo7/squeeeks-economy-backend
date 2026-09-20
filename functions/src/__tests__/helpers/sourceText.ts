@@ -3,7 +3,7 @@
 // Reading source in a test, without the source's own comments answering you.
 //
 // ---------------------------------------------------------------------------
-// 🔴 WHY THIS EXISTS
+// CRITICAL: WHY THIS EXISTS
 // ---------------------------------------------------------------------------
 //
 // W2-27: a guard in galleryFeedback.test.ts asserted the feedback export shared
@@ -20,7 +20,7 @@
 // documentation satisfies the grep that was meant to police it.
 //
 // ---------------------------------------------------------------------------
-// ⚠️ AND THE FIX IS NOT "STRIP EVERYTHING" — THAT IS THE OPPOSITE MISTAKE
+// WARNING: AND THE FIX IS NOT "STRIP EVERYTHING" — THAT IS THE OPPOSITE MISTAKE
 // ---------------------------------------------------------------------------
 //
 // Some assertions are ABOUT the comments, deliberately. floorExitCodes asserts
@@ -38,7 +38,7 @@
 //   codeOf(src)  — comments removed. For "the code does X".
 //   src          — raw. For "the file DOCUMENTS X".
 //
-// 📌 A `.not.toContain()` guard cannot be falsely GREEN from a comment — it can
+// NOTE: A `.not.toContain()` guard cannot be falsely GREEN from a comment — it can
 // be falsely RED. economyIdempotency asserts index.ts contains no
 // /rateLimit|throttle|appCheck/i, while its own comments discuss rate limiting
 // at length; it passes only because they say "rate-limit" hyphenated. It
@@ -52,7 +52,7 @@ const LINE_COMMENT = /^\s*\/\/.*$/gm;
 /**
  * [src] with comments removed, for assertions about what the code DOES.
  *
- * ⚠️ Regex, not a parser. A `//` inside a string literal — a URL, say — would be
+ * WARNING: Regex, not a parser. A `//` inside a string literal — a URL, say — would be
  * mangled. No file this is used against contains one, and a test helper is the
  * wrong place for a TypeScript parser. If a future caller reads a file with URLs
  * in strings, that is the moment to reach for something real rather than to
@@ -66,7 +66,7 @@ export function codeOf(src: string): string {
  * The body of a top-level `export const NAME = …(` declaration, sliced at the
  * first column-0 `});`.
  *
- * 🔑 SLICING TO THE NEXT `export const` IS WRONG AND WAS DONE TWICE THIS
+ * KEY: SLICING TO THE NEXT `export const` IS WRONG AND WAS DONE TWICE THIS
  * SESSION: it runs PAST the handler into whatever helper sits between, so the
  * test asserts about a different function while passing for the wrong reason.
  * An onCall/onRequest handler ends at `\n});` in column 0.

@@ -286,7 +286,7 @@ describe('sendGiftInvite', () => {
 // dead when #315 removed `premium: Infinity`, the only unbounded entry, but the
 // encoding outlived the value it existed to carry.
 //
-// 🔑 The obvious misreading is that a negative meant an at-cap user. It never
+// KEY: The obvious misreading is that a negative meant an at-cap user. It never
 // did: `currentCount >= limit` THROWS resource-exhausted before the return is
 // reached, so being at the cap leaves by a different door. These cases pin both
 // ends of the real range so the sentinel cannot come back as an interpretation.

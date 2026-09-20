@@ -75,7 +75,7 @@ describe('bonusTaskIdFor', () => {
 
 describe('paidTaskCapFor', () => {
   it('raises the ceiling with the tier', () => {
-    // 📌 A SECOND literal assertion of the free cap, and it is easy to miss:
+    // NOTE: A SECOND literal assertion of the free cap, and it is easy to miss:
     // it reads through paidTaskCapFor rather than naming PAID_TASK_CAP_BY_TIER,
     // so a search for the constant does not find it. The pinning guard below is
     // the one that says WHY; this one only has to agree with it. It has moved
@@ -97,12 +97,12 @@ describe('paidTaskCapFor', () => {
   });
 
   it('pins the free tier cap — it may not move without a decision', () => {
-    // 🔑 THIS GUARD IS DELIBERATE AND IT IS THE POINT OF THIS TEST. It is the
+    // KEY: THIS GUARD IS DELIBERATE AND IT IS THE POINT OF THIS TEST. It is the
     // only place the free cap's literal is asserted, so free cannot move
     // quietly. If it fails, someone changed a free player's daily income —
     // which is allowed, but never as a side effect.
     //
-    // ⚠️ It has been retargeted ONCE, and the history matters more than the
+    // WARNING: It has been retargeted ONCE, and the history matters more than the
     // number. It read `toBe(8)` with "this change must not be a nerf … free
     // keeps exactly that", written when paid tiers were raised above a flat 8
     // and the ratchet only ever had to hold free STILL.
@@ -117,7 +117,7 @@ describe('paidTaskCapFor', () => {
     // can do a day to get sponges, infinite for xp. pro get 4 a day with
     // sponges." A second reduction, recorded as one.
     //
-    // ⚠️ IT IS NOT THE WHOLE PICTURE AND THE GUARD SHOULD NOT PRETEND IT IS.
+    // WARNING: IT IS NOT THE WHOLE PICTURE AND THE GUARD SHOULD NOT PRETEND IT IS.
     // The same respec made XP uncapped (#339) and gave free 20 sponges every
     // Sunday (`claimWeeklyGift`). Free's daily TASK income fell; free's total
     // income did not fall by the same shape. This literal defends the cap, not
@@ -136,7 +136,7 @@ describe('paidTaskCapFor', () => {
   });
 
   it('every tier a document can hold resolves to a paid cap', () => {
-    // ⚠️ Asserted through paidTaskCapFor, NOT by indexing the table. It used to
+    // WARNING: Asserted through paidTaskCapFor, NOT by indexing the table. It used to
     // read PAID_TASK_CAP_BY_TIER[tier] directly, which made it a claim about
     // the table's SHAPE rather than about behaviour — and that is exactly the
     // assertion that breaks when a tier is retired, even though the behaviour

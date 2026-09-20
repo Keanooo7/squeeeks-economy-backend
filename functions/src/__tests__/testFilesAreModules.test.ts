@@ -10,7 +10,7 @@ import * as ts from 'typescript';
 // the same identifier collide, and ts-jest reports the collision by dropping a
 // suite: `Tests: 18 passed, 18 total` — zero failures, nine short.
 //
-// 🔴 `tsc --noEmit` EXITS 0 EITHER WAY. The grouping that produces the
+// CRITICAL: `tsc --noEmit` EXITS 0 EITHER WAY. The grouping that produces the
 // collision exists only inside ts-jest, so the typechecker is not a gate
 // against this class and never was. Nor is ESLint: as of this commit
 // `functions/` has NO eslint config, NO `lint` script and no CI step that
@@ -56,7 +56,7 @@ function isModule(filePath: string, source: string): boolean {
 describe('every .ts file under __tests__ is a module', () => {
   const files = collectTsFiles(TESTS_DIR);
 
-  // ⚠️ CONTROL, NOT CEREMONY. The assertion below is a for-each over `files`;
+  // WARNING: CONTROL, NOT CEREMONY. The assertion below is a for-each over `files`;
   // if the walk ever returned nothing it would pass vacuously and read as
   // "no scripts found" when it means "no files found". 40 is well under the
   // 64 present when this was written and well over any plausible collapse.
@@ -65,7 +65,7 @@ describe('every .ts file under __tests__ is a module', () => {
     expect(files).toContain(path.join(TESTS_DIR, 'testFilesAreModules.test.ts'));
   });
 
-  // ⚠️ CONTROL over the DETECTOR. `isModule` returning true unconditionally
+  // WARNING: CONTROL over the DETECTOR. `isModule` returning true unconditionally
   // would make the real assertion pass on a repo full of scripts. This pins
   // both answers, including the `export {};` marker the fix actually adds.
   test('isModule tells a script from a module', () => {

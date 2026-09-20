@@ -5,7 +5,7 @@
 // Pro. This module is the whole decision; index.ts supplies the data and
 // performs the write, and does no deciding.
 //
-// 🔴 THE WINDOW DEFINITION IS NOT SETTLED AND IS NOT MINE TO SETTLE. "5 of 7
+// CRITICAL: THE WINDOW DEFINITION IS NOT SETTLED AND IS NOT MINE TO SETTLE. "5 of 7
 // days, after 3 weeks" has two honest readings:
 //
 //   consecutive-windows  three consecutive 7-day windows, each with >= 5
@@ -22,7 +22,7 @@
 // default to sit on while the question is open. `promoRuleIsStricter` in the
 // suite asserts that containment rather than trusting this paragraph.
 //
-// ⚠️ WHAT IS NOT AMBIGUOUS: a CALENDAR-week bucket is wrong under BOTH readings.
+// WARNING: WHAT IS NOT AMBIGUOUS: a CALENDAR-week bucket is wrong under BOTH readings.
 // Bucketing by ISO week lets someone qualify with days that never formed a
 // 7-day run — Thu-Sun then Mon-Wed reads as two "weeks" and is one unbroken
 // stretch — and it also refuses a genuine 5-of-7 that straddles a Sunday. Every
@@ -54,7 +54,7 @@ export type QualifyingRule = 'consecutive-windows' | 'total-days';
 /**
  * Which reading is live.
  *
- * 🔴 UNCONFIRMED — see the header. Changing this line changes who is paid, so
+ * CRITICAL: UNCONFIRMED — see the header. Changing this line changes who is paid, so
  * it is deliberately a single named constant rather than a parameter threaded
  * through the callable: there is exactly one place to look and one place to
  * edit when Brendan answers.
@@ -64,7 +64,7 @@ export const ACTIVE_RULE: QualifyingRule = 'consecutive-windows';
 /**
  * The UTC day a timestamp falls in, as a day number.
  *
- * ⚠️ UTC, NOT THE PLAYER'S LOCAL DAY, and that is a real tradeoff rather than an
+ * WARNING: UTC, NOT THE PLAYER'S LOCAL DAY, and that is a real tradeoff rather than an
  * oversight. The obvious alternative is `dayKey`, which the completion record
  * already carries and which IS the player's local day — but `dayKey` is
  * CLIENT-SUPPLIED (`index.ts` builds it as `clientNowIso.slice(0, 10)`), so a
@@ -171,7 +171,7 @@ export function evaluatePromo(
 /**
  * The earliest instant the eligibility query must read.
  *
- * 🔑 THE QUERY BOUND, and the reason it exists. `users/{uid}/completions` has
+ * KEY: THE QUERY BOUND, and the reason it exists. `users/{uid}/completions` has
  * NO TTL and is never pruned — a deliberate choice, since pruning destroys the
  * recompute the log exists for — so the collection grows without limit and the
  * existing full-collection read (`db.collection(...).get()`) would load a
@@ -189,7 +189,7 @@ export function observationStartMs(nowMs: number): number {
 /**
  * When the granted entitlement should end, given any entitlement already held.
  *
- * 🔴 EXTENDS, NEVER OVERWRITES. `verifySubscriptionReceipt` writes
+ * CRITICAL: EXTENDS, NEVER OVERWRITES. `verifySubscriptionReceipt` writes
  * `subscriptionExpiresAt` unconditionally, which is correct there — Apple's
  * expiry is the truth for an Apple purchase. It is NOT correct here: a promo
  * landing on someone who already has three weeks left must add a month to the

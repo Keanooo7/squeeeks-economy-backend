@@ -168,7 +168,7 @@ import {
 } from './appStoreNotifications';
 import { accountTokenRollout, purchaseTokenForUid } from './purchaseAccountToken';
 import { planAdminGrant, ADMIN_GRANT_REFUSALS } from './adminGrant';
-// ⚠️ The two reminder crons below are the ONLY deployed copies. `notifications.ts`
+// WARNING: The two reminder crons below are the ONLY deployed copies. `notifications.ts`
 // exports functions with these same names, but nothing imports it and `main` is
 // `lib/index.js`, so Firebase never discovers them — confirmed against production
 // on 2026-08-05 (`functions:list` shows exactly one of each). Patch these, not those.
@@ -182,14 +182,14 @@ import {
 
 import { BUILD_SHA, BUILD_TIME } from './buildInfo.generated';
 
-// 🔑 WHICH SHA IS LIVE — answered by a log line rather than inferred from an
+// KEY: WHICH SHA IS LIVE — answered by a log line rather than inferred from an
 // upload timestamp (W2-155). Every other deployment check in this repo reads
 // `source.storageSource.generation`, which is WHEN a zip was uploaded and never
 // what was in it; `check-deployed-revision.cjs` says so in its own header. This
 // runs at module load, i.e. once per cold start, so the first entry of every
 // new instance names the commit that instance is executing.
 //
-// ⚠️ IT IS NOT A SUBSTITUTE FOR THAT CHECK, because a function that never runs
+// WARNING: IT IS NOT A SUBSTITUTE FOR THAT CHECK, because a function that never runs
 // never writes it. `onNewUserBefriendGibby` has never executed in production
 // over its entire existence, so this line will never appear for it — that
 // function stays unmeasured and this mechanism does not change that.
@@ -217,7 +217,7 @@ const SEED_OPTS = { secrets: ['SEED_SECRET'] };
 /**
  * Options for the feedback EXPORT, which has its own secret.
  *
- * 🔑 ONE SECRET PER BLAST RADIUS, NOT ONE PER ENDPOINT. This is not a second
+ * KEY: ONE SECRET PER BLAST RADIUS, NOT ONE PER ENDPOINT. This is not a second
  * secret model competing with the first — it is the first one, scoped
  * correctly. SEED_SECRET guards the two endpoints that WRITE:
  *
@@ -228,7 +228,7 @@ const SEED_OPTS = { secrets: ['SEED_SECRET'] };
  * The feedback export only READS. Sharing one string across both radii means a
  * leak of the pasteable one is a leak of the destructive one.
  *
- * ⚠️ AND THE ASYMMETRY IS WHAT DECIDED IT, not tidiness: THE READ ENDPOINT IS
+ * WARNING: AND THE ASYMMETRY IS WHAT DECIDED IT, not tidiness: THE READ ENDPOINT IS
  * THE ONE THAT GETS HANDED AROUND. It is the useful one — somebody will want to
  * read what testers wrote, and the natural way to share that is to send someone
  * the curl. Every casual copy of that command carried the ability to rewrite
@@ -354,7 +354,7 @@ async function ensureGibbyFriendship(uid: string): Promise<boolean> {
   // Already befriended in both directions — write nothing and SAY so.
   if (userSnap.exists && gibbySnap.exists) return false;
 
-  // ⚠️ WRITE ONLY THE MISSING SIDE. This used to `set` both unconditionally,
+  // WARNING: WRITE ONLY THE MISSING SIDE. This used to `set` both unconditionally,
   // and that was destructive in a way nothing announced: `set` without merge
   // REPLACES the document, so re-running it reset `addedAt` to now and cleared
   // `housePendingFrom` to []. That array is live state, not decoration —
@@ -362,7 +362,7 @@ async function ensureGibbyFriendship(uid: string): Promise<boolean> {
   // it with arrayUnion/arrayRemove. Overwriting it revokes a pending housemate
   // request silently.
   //
-  // 🔑 AND THE RETURN VALUE WAS A CONSTANT. It was `true` for every real uid,
+  // KEY: AND THE RETURN VALUE WAS A CONSTANT. It was `true` for every real uid,
   // so `onNewUserBefriendGibby`'s `friendship=${wrote ? 'written' : 'skipped'}`
   // could never log 'skipped', and backfillGibbyFriendship's
   // `befriended N/M` always reported N === M. Both instruments answered the
@@ -417,7 +417,7 @@ async function drawGibbyChestItem(): Promise<WelcomeChestPick> {
  * reads both; resolvePushToken decides which one wins. See the migration note
  * at the top of pushTokens.ts for when the legacy read may be dropped.
  *
- * ⚠️ This costs two document reads per reminded user instead of one. That is
+ * WARNING: This costs two document reads per reminded user instead of one. That is
  * the price of not stopping push for every install that has not updated yet,
  * and it goes away with the legacy read.
  */
@@ -442,7 +442,7 @@ async function readPushTokenEntries(
 /**
  * The one line a scheduled sender always emits, whatever it did.
  *
- * 🔴 WITHOUT IT A SILENT RUN AND A WORKING RUN ARE INDISTINGUISHABLE, and that is
+ * CRITICAL: WITHOUT IT A SILENT RUN AND A WORKING RUN ARE INDISTINGUISHABLE, and that is
  * measured rather than argued: both senders used to `return` early when nothing
  * was selected, and the only console.log on the send path sits AFTER
  * `if (dead.length === 0) return []` in sendEachAndPruneDeadTokens
@@ -450,11 +450,11 @@ async function readPushTokenEntries(
  * selection twice against seeded state — once selecting nobody, once sending to
  * one — and both runs produced byte-identical output: `[]`.
  *
- * 🔑 IT COST A WHOLE BRIEF. W2-138 had to answer "did the daily reminder fire?"
+ * KEY: IT COST A WHOLE BRIEF. W2-138 had to answer "did the daily reminder fire?"
  * from Cloud Scheduler status plus Brendan's own Firestore document, because
  * nothing here could separate "ran and correctly excluded him" from "never ran".
  *
- * ⚠️ WHAT GEN2 ALREADY GIVES YOU, so this does not duplicate it: every
+ * WARNING: WHAT GEN2 ALREADY GIVES YOU, so this does not duplicate it: every
  * invocation produces a Cloud Run request log (`POST 200`, latency, timestamp),
  * which answers "did it run on date X" on its own. What it CANNOT answer is
  * whether anyone was selected — measured 2026-08-24, three consecutive daily
@@ -462,7 +462,7 @@ async function readPushTokenEntries(
  * information about the outcome. That is the gap this closes, and it is why the
  * line reports COUNTS rather than a bare "done".
  *
- * 📌 ONE LINE PER INVOCATION, NOT PER USER. These jobs scan every user; a line
+ * NOTE: ONE LINE PER INVOCATION, NOT PER USER. These jobs scan every user; a line
  * per user is volume that buries the line that answers the question.
  *
  * `sent` can be lower than `selected`: a selected user with no resolvable push
@@ -481,26 +481,26 @@ function logSenderOutcome(
 // Daily 8pm PT (03:00 UTC) — remind users who haven't completed a task today
 export const sendStreakReminder = onSchedule('0 3 * * *', async () => {
   const today = new Date().toISOString().split('T')[0];
-  // 🔴 `streak`, SINGULAR. It was `streaks` from the day this was written and
+  // CRITICAL: `streak`, SINGULAR. It was `streaks` from the day this was written and
   // that collection group has never existed: every writer in the codebase uses
   // the singular — index.ts:3589/3695/3754 (`users/${uid}/streak/main`) and
   // streak_repository_impl.dart:31 — and the console's enumeration of every
   // collection group in production lists `streak` and no `streaks`.
   //
-  // ⚠️ THE MISSING INDEX MASKED IT FOR 23 NIGHTS. The job died at
+  // WARNING: THE MISSING INDEX MASKED IT FOR 23 NIGHTS. The job died at
   // FAILED_PRECONDITION before the query could return anything, so the wrong
   // name never got the chance to return zero rows. Once #584's index landed the
   // query SUCCEEDED and returned nothing, every night, and Cloud Scheduler
   // flipped Failed -> Success. A silent job that reports success.
   //
-  // 📌 NO DOC-ID GUARD IS NEEDED HERE, unlike sendDailyGiftReminder below which
+  // NOTE: NO DOC-ID GUARD IS NEEDED HERE, unlike sendDailyGiftReminder below which
   // must skip `doc.id !== 'data'`. That guard exists because a TOP-LEVEL `shop`
   // collection also matches `collectionGroup('shop')`. Production has exactly
   // three top-level collections — publicProfiles, shop, users — so
   // `collectionGroup('streak')` matches only `users/{uid}/streak/{doc}` and
   // every match is a real user's streak document.
   //
-  // ⚠️ WRITE WILDCARD PATHS WITH BRACES, NEVER WITH GLOB STARS. A slash
+  // WARNING: WRITE WILDCARD PATHS WITH BRACES, NEVER WITH GLOB STARS. A slash
   // immediately followed by an asterisk, even inside a line comment like this
   // one, is read as OPENING a block comment by every source-parsing gate in
   // functions/src/__tests__. Writing that sequence here deleted this query and
@@ -643,7 +643,7 @@ export const rotateMarket = onSchedule('0 0 * * *', async (_event) => {
     { id: `chest_furniture_${dateStr}`,  category: 'furniture',  rarity: 'common',    dropTable: CHEST_CATEGORY_DROP_TABLE.furniture,  subject: subjectForDay('furniture', dateStr),  name: 'Furniture', price: CHEST_PRICE.furniture, artUrl: 'assets/images/shop/chest_furniture.png' },
   ].filter((chest) => offeredChestCategories(dateStr).includes(chest.category));
 
-  // ⚠️ The three chests above are BUILT unconditionally and then filtered, which
+  // WARNING: The three chests above are BUILT unconditionally and then filtered, which
   // looks wasteful and is not. chestPricing.test.ts asserts against the source
   // text that there are exactly six chest-writer lines and that every one takes
   // its price from CHEST_PRICE — the durable half of W2-06, which exists because
@@ -704,7 +704,7 @@ export const rotateWeeklyOffer = onSchedule('0 0 * * 1', async (_event) => {
   // dedup key, and an undefined id makes the purchase check
   // `undefined === undefined` true, blocking first-time buyers.
   //
-  // 🔴 W2-39 widened this from shape to CONTENTS. verifyIapAndGrant validates
+  // CRITICAL: W2-39 widened this from shape to CONTENTS. verifyIapAndGrant validates
   // nothing about contents[].itemId — it writes users/{uid}/inventory/{itemId}
   // for whatever string it finds — so an offer naming a nonexistent item does
   // not fail, it SUCCEEDS and grants a paid-for nothing.
@@ -728,7 +728,7 @@ export const rotateWeeklyOffer = onSchedule('0 0 * * 1', async (_event) => {
       offer,
     );
 
-    // 🔴 W2-40: THE REFUSAL HAS TO LAND SOMEWHERE A HUMAN LOOKS.
+    // CRITICAL: W2-40: THE REFUSAL HAS TO LAND SOMEWHERE A HUMAN LOOKS.
     //
     // W2-39 traded a silent bad outcome (a purchase granting a phantom) for a
     // loud one (the rotation refuses) — but loud only in Cloud Functions logs,
@@ -736,7 +736,7 @@ export const rotateWeeklyOffer = onSchedule('0 0 * * 1', async (_event) => {
     // place no one reads, is not meaningfully better than a Monday with a bad
     // one.
     //
-    // ⚠️ AND PREVENTION IS IMPOSSIBLE, which is why this is detection.
+    // WARNING: AND PREVENTION IS IMPOSSIBLE, which is why this is detection.
     // `shopConfig/weeklyOffers` is READ at :460 and WRITTEN BY NOTHING — no
     // callable, no endpoint, and no rules block, so it is console-only. There
     // is no write path to hook a check onto. The earliest moment a hand-edited
@@ -785,12 +785,12 @@ export const rotateWeeklyOffer = onSchedule('0 0 * * 1', async (_event) => {
     await db.doc('shop/current').set(
       {
         weeklyOffer,
-        // 🔑 CLEARED ON SUCCESS. A diagnostic that outlives the fault it
+        // KEY: CLEARED ON SUCCESS. A diagnostic that outlives the fault it
         // describes is its own lie — someone would read last month's refusal
         // beside this month's working offer and go looking for a bug that was
         // already fixed.
         //
-        // ⚠️ `null`, NOT FieldValue.delete(). The Functions emulator proxies the
+        // WARNING: `null`, NOT FieldValue.delete(). The Functions emulator proxies the
         // admin SDK and drops the statics off `admin.firestore`, so
         // FieldValue.delete is undefined under test while working when deployed
         // — the same trap this file's header records for Timestamp. It failed
@@ -800,7 +800,7 @@ export const rotateWeeklyOffer = onSchedule('0 0 * * 1', async (_event) => {
         weeklyOfferError: null,
         weeklyOfferRefreshAt: Timestamp.fromDate(endsAt),
       },
-      // ⚠️ weeklyOfferError MUST be listed here. mergeFields is an allowlist:
+      // WARNING: weeklyOfferError MUST be listed here. mergeFields is an allowlist:
       // a FieldValue.delete() for a field absent from this array is SILENTLY
       // IGNORED, so the clear above would have done nothing and a stale refusal
       // would have sat beside a working offer forever. Caught in review of this
@@ -834,7 +834,7 @@ interface ChestItemPick {
   /**
    * Whether the biased draw landed on something the player already held.
    *
-   * ⚠️ ADVISORY, NOT AUTHORITATIVE. It is computed from an ownership read taken
+ * WARNING: ADVISORY, NOT AUTHORITATIVE. It is computed from an ownership read taken
    * OUTSIDE the transaction, so a grant that lands in between can make it stale.
    * Every caller re-reads the chosen item's own inventory doc inside the
    * transaction and pays on THAT. This field exists to shape the odds and to
@@ -880,7 +880,7 @@ async function pickChestItem(
       `No items available for subject "${subject}" at rarity ${itemRarity}`,
     );
   }
-  // 🔴 THE BIAS, AND WHY IT IS NOT IN `DROP_TABLES`. What stood here was
+  // CRITICAL: THE BIAS, AND WHY IT IS NOT IN `DROP_TABLES`. What stood here was
   //
   //     const item = seeded[Math.floor(Math.random() * seeded.length)];
   //
@@ -909,7 +909,7 @@ const EMPTY_OWNERSHIP: ReadonlySet<string> = new Set<string>();
 /**
  * Which of `candidateIds` this player already holds.
  *
- * ⚠️ READ OUTSIDE THE TRANSACTION, ON PURPOSE. The draw happens before the
+ * WARNING: READ OUTSIDE THE TRANSACTION, ON PURPOSE. The draw happens before the
  * transaction opens — it always has, and `pickChestItem` is a pure bundled
  * lookup since W2-134 — so this read is what the bias is shaped against. It can
  * go stale between here and the commit, and that is ACCEPTABLE for exactly one
@@ -917,7 +917,7 @@ const EMPTY_OWNERSHIP: ReadonlySet<string> = new Set<string>();
  * own inventory document inside its transaction and pays the refund on that, so
  * a stale read here can never produce a wrong grant or a wrong charge.
  *
- * 📌 One round trip, not one per item. Cells hold at most 6 items (measured over
+ * NOTE: One round trip, not one per item. Cells hold at most 6 items (measured over
  * the bundled pool), so `getAll` is a single call and the cost of the bias is
  * one extra round trip per chest, not one per candidate.
  */
@@ -953,7 +953,7 @@ export const purchaseChest = onCall(async (request) => {
   // silently write into a nested collection, and an unbounded string would
   // let a caller author arbitrarily long paths.
   //
-  // 🔑 The rule lives in replayKey.ts and is SHARED with purchaseStreakShield
+  // KEY: The rule lives in replayKey.ts and is SHARED with purchaseStreakShield
   // (W2-19). It used to be four conditions inline here; a second callable
   // copying them would have been a second definition of "valid replay key",
   // which is the drift this codebase keeps filing.
@@ -1042,11 +1042,11 @@ export const purchaseChest = onCall(async (request) => {
     // it: on device all three chests read "Purchased" within minutes and the
     // themed rotation was never exercised.
     //
-    // 🔑 It was ALSO the only replay guard in this callable — one field doing
+    // KEY: It was ALSO the only replay guard in this callable — one field doing
     // two jobs, the shape `chest.rarity` had before #88. The replay half is
     // replaced below by the optional `purchaseId` ledger, not dropped.
     //
-    // ⚠️ The write is removed too, not just the check. The client reads this
+    // WARNING: The write is removed too, not just the check. The client reads this
     // very array (daily_market_grid.dart -> ChestCard.isPurchased) and
     // disables the card on it, so leaving the write in place would have kept
     // the button grey and delivered nothing.
@@ -1108,13 +1108,13 @@ export const purchaseChest = onCall(async (request) => {
     }
     const chestPrice: number = rawChestPrice;
 
-    // 🔴 THE REFUND IS A CREDIT, NOT A DISCOUNT — W2-161. Brendan asked for it
+    // CRITICAL: THE REFUND IS A CREDIT, NOT A DISCOUNT — W2-161. Brendan asked for it
     // "treated like the daily reward, how you just receive the sponge amount":
     // the chest is charged at full price and the sponges are paid back, which is
     // what `openPendingChest` already did at its own `spongeBalance` increment
     // while this path did something else.
     //
-    // ⚠️ THE SPONGE ARITHMETIC IS UNCHANGED BY THAT, AND SAYING SO IS THE POINT.
+    // WARNING: THE SPONGE ARITHMETIC IS UNCHANGED BY THAT, AND SAYING SO IS THE POINT.
     // The old discount incremented by -(price - refund); charging price and
     // crediting refund increments by (refund - price). Identical. What actually
     // changes is TWO things, and neither is the net:
@@ -1125,7 +1125,7 @@ export const purchaseChest = onCall(async (request) => {
     //   2. WHAT THE CLIENT IS TOLD. `duplicateRefund` is now a credit the reveal
     //      can show being paid, rather than a rebate already netted off.
     //
-    // 📌 75% OF WHAT THIS CHEST ACTUALLY COST, not of a table keyed by the rolled
+    // NOTE: 75% OF WHAT THIS CHEST ACTUALLY COST, not of a table keyed by the rolled
     // rarity. The old `DUPLICATE_REFUNDS[itemRarity]` paid a flat 100 for a
     // legendary whether it fell out of a 500-sponge characters chest or a
     // 100-sponge furniture one — 20% of one purchase and a 100% rebate on the
@@ -1280,7 +1280,7 @@ export const claimDailyGift = onCall(async (request) => {
       );
     }
 
-    // 🔑 NO DUPLICATE REFUND ON THIS PATH, AND THAT ASYMMETRY IS DELIBERATE.
+    // KEY: NO DUPLICATE REFUND ON THIS PATH, AND THAT ASYMMETRY IS DELIBERATE.
     // The purchase, quest and pending-chest paths all pay 75% on a duplicate;
     // this one pays nothing, and a future reader will otherwise take that for an
     // oversight and "fix" it.
@@ -1298,19 +1298,19 @@ export const claimDailyGift = onCall(async (request) => {
     // faucet nobody costed, while inverting the incentive so a player would
     // rather draw the duplicate than the item.
     //
-    // 📌 And the usual objection to paying nothing — "a duplicate that gives
+    // NOTE: And the usual objection to paying nothing — "a duplicate that gives
     // nothing reads as a broken chest", which is why the purchase path pays —
     // does not apply here: `supportsChest` gates this branch dark, and
     // gibbyFunctions.test.ts pins that the shipped client never receives a chest
     // at all. There is no dead gift day to create.
     //
-    // 🔴 A BARE `tx.set` REPLACES THE DOCUMENT. What stood here wrote the item
+    // CRITICAL: A BARE `tx.set` REPLACES THE DOCUMENT. What stood here wrote the item
     // unconditionally, so gifting a player something they already owned reset
     // `ownedAt` to today and silently UNEQUIPPED an item they were wearing —
     // and destroyed any field this write does not name. The vault recorded this
     // as an `equipped: false` overwrite; it is a whole-document replace.
     //
-    // ⚠️ THE FIX IS NOT `merge: true`. Merging would preserve `equipped` and
+    // WARNING: THE FIX IS NOT `merge: true`. Merging would preserve `equipped` and
     // still move `ownedAt` forward, and it changes the semantics of every field
     // in the document including ones nobody considered. An already-owned item
     // needs NO write at all: the correct grant is the one that does not happen.
@@ -1354,14 +1354,14 @@ export const WEEKLY_FREE_GIFT_SPONGES = 20;
 /**
  * The `YYYY-MM-DD` of the most recent Sunday, in UTC, for [now].
  *
- * 🔴 A DATE, NOT A DURATION, AND THE DIFFERENCE IS THE WHOLE DESIGN.
+ * CRITICAL: A DATE, NOT A DURATION, AND THE DIFFERENCE IS THE WHOLE DESIGN.
  * `claimDailyGift` keys on `msSince < 24h`, a rolling window, which is right for
  * a gift with no anchor. It is wrong here. A rolling seven days re-anchors the
  * week to whenever the player last opened the app: miss Sunday, claim Monday,
  * and every future gift is Monday's forever. Storing the Sunday means a missed
  * week is SKIPPED rather than shifted.
  *
- * ⚠️ The inverse hazard is on file — a per-week CAP keyed on a calendar bucket
+ * WARNING: The inverse hazard is on file — a per-week CAP keyed on a calendar bucket
  * permits double the rate across the boundary, and rolling was the fix there. A
  * cap and a grant fail in opposite directions; the rule does not carry across.
  *
@@ -1388,7 +1388,7 @@ export function mostRecentSundayUtc(now: Date): string {
 // per week whether or not they play. Same shape as claimDailyGift — the client
 // asks, the server decides.
 //
-// 🔴 FREE ONLY. Pro's 80 is a billing-event grant and is NOT this function. A
+// CRITICAL: FREE ONLY. Pro's 80 is a billing-event grant and is NOT this function. A
 // pro account silently receiving the free tier's weekly 20 is the failure mode,
 // so the refusal is asserted out loud in the tests rather than left implied.
 //
@@ -1399,7 +1399,7 @@ export function mostRecentSundayUtc(now: Date): string {
 // `paidTaskCapFor`, where failing closed means resolving to free — for a CAP the
 // free value is the least generous, for a GRANT it is the only one that pays.
 //
-// ⚠️ A LAPSED SUBSCRIBER IS PAID, and that is the point of resolving against the
+// WARNING: A LAPSED SUBSCRIBER IS PAID, and that is the point of resolving against the
 // clock rather than reading the stored tier. Someone whose subscription ended is
 // a free user, and the free tier's gift is theirs. This is the one place W2-67
 // moves in the generous direction; every other consumer of the effective tier
@@ -1640,7 +1640,7 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
   // verifyIapAndGrant used, so whichever callable ran first wrote the lock and
   // this one returned alreadyProcessed WITHOUT EVER WRITING subscriptionTier.
   //
-  // ⚠️ 2026-08-05, corrected: the original note here said the collision came
+  // WARNING: 2026-08-05, corrected: the original note here said the collision came
   // from StoreKit 1, where `serverVerificationData` is the whole cumulative app
   // receipt. **That is not this app's code path** — the app runs StoreKit 2 and
   // the string is a JWS for one transaction (see appleJws.ts). Keying on the
@@ -1670,7 +1670,7 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
   const expiresAt = new Date(expiresMs);
 
   // ---------------------------------------------------------------------
-  // 🔴 A RESTORE MAY ONLY EVER MOVE THE ENTITLEMENT FORWARD (W2-105).
+  // CRITICAL: A RESTORE MAY ONLY EVER MOVE THE ENTITLEMENT FORWARD (W2-105).
   // ---------------------------------------------------------------------
   //
   // `appStoreNotificationsV2` writes these same three fields and guards the
@@ -1685,13 +1685,13 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
   // older one. `resolveEffectiveTier` reads exactly that field, so a paying
   // subscriber silently lost five months.
   //
-  // ⚠️ THE TWO HANDLERS USE DIFFERENT LEDGERS, which is what makes it
+  // WARNING: THE TWO HANDLERS USE DIFFERENT LEDGERS, which is what makes it
   // reachable: the webhook records `processedNotifications/{notificationUUID}`
   // and this path checks `processedReceipts/{productId}_{transactionId}`. A
   // renewal applied by the webhook leaves NOTHING this path can see, so the
   // idempotency check above cannot stand in for an ordering check.
   //
-  // 🔑 WHY THE COMPARISON IS AN EXPIRY HERE AND A `signedDate` THERE, WHICH
+  // KEY: WHY THE COMPARISON IS AN EXPIRY HERE AND A `signedDate` THERE, WHICH
   // LOOKS INCONSISTENT AND IS NOT. The webhook must be able to move the expiry
   // BACKWARDS — a refund is exactly that — so it cannot compare expiries and
   // uses Apple's monotonic signing stamp instead. A RESTORE HAS NO
@@ -1700,7 +1700,7 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
   // newer" but "does this grant MORE than what is already stored" — a
   // question a restore can actually answer.
   //
-  // ⚠️ TIER CANNOT REGRESS BY THIS PATH, so the expiry is the whole comparison:
+  // WARNING: TIER CANNOT REGRESS BY THIS PATH, so the expiry is the whole comparison:
   // every product in SUBSCRIPTION_PRODUCT_TIERS maps to 'pro'
   // (sub_pro_monthly, sub_pro_annual, sub_family_monthly). If a second tier is
   // ever added, this comparison becomes incomplete and must gain a tier rank.
@@ -1713,7 +1713,7 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
     // The stored entitlement already covers everything this transaction would
     // grant. Skipping the write is the whole fix.
     //
-    // 📌 THE LEDGER AND THE OWNER INDEX ARE STILL WRITTEN BELOW, deliberately:
+    // NOTE: THE LEDGER AND THE OWNER INDEX ARE STILL WRITTEN BELOW, deliberately:
     // the transaction HAS been processed, and the owner index is how renewals
     // find this account. Returning early here would leave a restore that
     // re-runs forever and, worse, could leave `subscriptionOwners` unwritten
@@ -1733,7 +1733,7 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
   }
 
   // -------------------------------------------------------------------------
-  // 🔴 W2-163 — THE FAMILY THE BUYER ALREADY HAS
+  // CRITICAL: W2-163 — THE FAMILY THE BUYER ALREADY HAS
   // -------------------------------------------------------------------------
   //
   // A player buys `sub_family_monthly` and someone ALREADY in their family gets
@@ -1746,11 +1746,11 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
   // member got `familyProExpiresAt` from neither route and stayed free while
   // the owner paid for them.
   //
-  // ✅ Brendan, 2026-08-30: fan out to existing members on purchase. Every
+  // OK: Brendan, 2026-08-30: fan out to existing members on purchase. Every
   // current member gets Pro, plus everyone who joins later. It matches what the
   // buyer paid for.
   //
-  // 🔑 THE PRODUCT GATE COMES FROM `planFamilyFanOutForEffect`, NOT FROM AN `if`
+  // KEY: THE PRODUCT GATE COMES FROM `planFamilyFanOutForEffect`, NOT FROM AN `if`
   // I WROTE HERE, AND THAT IS THE LOAD-BEARING CHOICE. `planFamilyFanOut` plans
   // a REVOKE for every subject whenever `ownerHasFamilySubscription` is false —
   // it is one function that both grants and revokes, and the flag is what picks.
@@ -1762,12 +1762,12 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
   // writing a revoke — the same rule `joinFamily` and the webhook already obey,
   // reused rather than restated. Pinned by the control in verifyIapAndGrant.test.ts.
   //
-  // 📌 THE EXPIRY IS THE ONE NOW STORED, not `expiresMs`. When
+  // NOTE: THE EXPIRY IS THE ONE NOW STORED, not `expiresMs`. When
   // `alreadyEntitledLonger` skipped the write above, the owner keeps a LONGER
   // stored expiry, and members must get what the owner actually holds rather
   // than the shorter figure this particular transaction happened to carry.
   //
-  // ⚠️ NOT IN A TRANSACTION, and that is safe here for a reason the webhook's
+  // WARNING: NOT IN A TRANSACTION, and that is safe here for a reason the webhook's
   // own comment already gives: these writes are ABSOLUTE (`familyProExpiresAt`
   // = a timestamp, or null), never `increment`, so applying the same plan twice
   // writes the same value twice. The webhook needs a transaction because it
@@ -1798,7 +1798,7 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
     }
   }
 
-  // 🔑 The owner index, and the reason a RENEWAL can ever find this account.
+  // KEY: The owner index, and the reason a RENEWAL can ever find this account.
   //
   // A server notification arrives with no `request.auth` and cannot be made to
   // have one. The two identifiers on the transaction are both dead ends for
@@ -1813,11 +1813,11 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
   // an account that was never entitled is worse than a missing one, because the
   // notification handler would find it and act on it.
   //
-  // ⚠️ Null only if Apple ever signs a subscription transaction without an
+  // WARNING: Null only if Apple ever signs a subscription transaction without an
   // original id, which does not happen; the field is optional in the library's
   // types, not in the data. Skipped rather than defaulted.
   //
-  // 🔴 AND IT IS NEVER RE-POINTED AT A DIFFERENT ACCOUNT (W2-105). The previous
+  // CRITICAL: AND IT IS NEVER RE-POINTED AT A DIFFERENT ACCOUNT (W2-105). The previous
   // version of this comment said "a wrong key here would hand one account's
   // renewals to another" and then guarded only the NULL case — while
   // `set({uid}, {merge: true})` would overwrite an existing entry naming
@@ -1827,14 +1827,14 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
   // is deterministic, not a race, and it is the exact outcome the old comment
   // named as the thing to avoid.
   //
-  // 🔑 A STALE INDEX IS BETTER THAN A WRONG ONE. Refusing leaves the first
+  // KEY: A STALE INDEX IS BETTER THAN A WRONG ONE. Refusing leaves the first
   // account receiving its renewals, which is at worst the status quo; allowing
   // the overwrite silently transfers a paid subscription's future to another
   // account. So the write is refused and the collision is logged loudly rather
   // than resolved by guessing which account deserves it — that is a support
   // decision with facts this server does not have.
   //
-  // ⚠️ THE SAME ACCOUNT RE-RESTORING IS NOT A COLLISION and still refreshes the
+  // WARNING: THE SAME ACCOUNT RE-RESTORING IS NOT A COLLISION and still refreshes the
   // entry. Without that, a legitimate reinstall — the ordinary reason anyone
   // restores at all — would stop updating `linkedAt` and `productId`.
   const ownerKey = ownerKeyFor(transaction);
@@ -1881,7 +1881,7 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
 // ---------------------------------------------------------------------------
 // appStoreNotificationsV2 — onRequest, called by Apple, never by the app
 //
-// 🔴 THE RENEWAL PATH. Until this existed a subscription was granted exactly
+// CRITICAL: THE RENEWAL PATH. Until this existed a subscription was granted exactly
 // once, at the moment of purchase, and never again — not because the grant was
 // wrong but because nothing on the client was listening when Apple redelivered.
 // Both purchase listeners are created INSIDE a buy action and cancelled when it
@@ -1890,7 +1890,7 @@ export const verifySubscriptionReceipt = onCall(async (request) => {
 // reached from inside an active buy flow. A rebill happens with the app closed.
 // Verified against origin/main @ 4886b83 rather than taken from the brief.
 //
-// ⚠️ THE LAST MILE IS NOT WIRED, and cannot be from here. The URL has to be
+// WARNING: THE LAST MILE IS NOT WIRED, and cannot be from here. The URL has to be
 // pasted into App Store Connect → App Information → App Store Server
 // Notifications (Production and Sandbox are separate fields), and that console
 // section is not reachable until the Paid Applications Agreement is signed.
@@ -1927,7 +1927,7 @@ export const appStoreNotificationsV2 = onRequest(async (req, res) => {
   try {
     notification = await appleJws.verifyNotification(signedPayload);
   } catch (error) {
-    // 🔑 The response code decides whether Apple RETRIES, and the two failure
+    // KEY: The response code decides whether Apple RETRIES, and the two failure
     // classes want opposite answers. A bad signature will fail identically
     // forever, so retrying it is pure noise — but answering 200 to a payload we
     // could not verify would make a genuine misconfiguration (wrong bundle id,
@@ -1967,7 +1967,7 @@ export const appStoreNotificationsV2 = onRequest(async (req, res) => {
   const ownerSnap = await subscriptionOwnerRef(ownerKey).get();
   const uid = ownerSnap.data()?.uid as string | undefined;
   if (!uid) {
-    // ⚠️ 503, NOT 200, and the idempotency lock is deliberately NOT written.
+    // WARNING: 503, NOT 200, and the idempotency lock is deliberately NOT written.
     //
     // Apple sends SUBSCRIBED at the same moment the client calls
     // `verifySubscriptionReceipt`, so this is a genuine race that a retry wins:
@@ -1989,7 +1989,7 @@ export const appStoreNotificationsV2 = onRequest(async (req, res) => {
     const [lockSnap, userSnap, ownedFamilies] = await Promise.all([
       tx.get(lockRef),
       tx.get(db.doc(`users/${uid}`)),
-      // 🔑 THE FAMILY THIS SUBSCRIBER OWNS, read in the SAME transaction as the
+      // KEY: THE FAMILY THIS SUBSCRIBER OWNS, read in the SAME transaction as the
       // lock so the fan-out cannot be skipped by a retry that sees the lock
       // already set — see the block above the writes for why that, and not a
       // second ledger key, is the right shape here.
@@ -2004,7 +2004,7 @@ export const appStoreNotificationsV2 = onRequest(async (req, res) => {
 
     if (lockSnap.exists) return 'duplicate';
 
-    // 🔴 Apple does NOT guarantee delivery order, and retries can arrive days
+    // CRITICAL: Apple does NOT guarantee delivery order, and retries can arrive days
     // late. Without this an EXPIRED redelivered after the DID_RENEW that
     // followed it would wipe a live entitlement. `signedDate` is Apple's own
     // ordering stamp and is monotonic per subscription; anything at or before
@@ -2042,7 +2042,7 @@ export const appStoreNotificationsV2 = onRequest(async (req, res) => {
     );
 
     // -----------------------------------------------------------------------
-    // 🔴 THE FAMILY FAN-OUT (W2-79), AND WHY IT HAS NO LEDGER KEY OF ITS OWN
+    // CRITICAL: THE FAMILY FAN-OUT (W2-79), AND WHY IT HAS NO LEDGER KEY OF ITS OWN
     // -----------------------------------------------------------------------
     //
     // W2-76 left a residual: `familyProExpiresAt` is the owner's expiry COPIED,
@@ -2051,7 +2051,7 @@ export const appStoreNotificationsV2 = onRequest(async (req, res) => {
     // yesterday does not know. Without this, a refunded family owner's members
     // keep Pro until the period nobody paid for runs out.
     //
-    // ⚠️ THE BRIEF REQUIRED A SEPARATE LEDGER KEY AND I HAVE NOT ADDED ONE.
+    // WARNING: THE BRIEF REQUIRED A SEPARATE LEDGER KEY AND I HAVE NOT ADDED ONE.
     // Its premise is that "the notification lock is taken BEFORE the effect is
     // applied, so riding on it would double-revoke on an Apple retry". That is
     // true of the sponge grant it comes from and is NOT true here, on two
@@ -2067,14 +2067,14 @@ export const appStoreNotificationsV2 = onRequest(async (req, res) => {
     //      sponge grant was additive, which is the entire reason it needed its
     //      own key.
     //
-    // 🔑 AND THE REAL HAZARD RUNS THE OTHER WAY. The danger for a revoke is not
+    // KEY: AND THE REAL HAZARD RUNS THE OTHER WAY. The danger for a revoke is not
     // applying it twice, it is never applying it once — a lock set with the
     // fan-out undone, after which every retry returns `duplicate` and the stale
     // grant is permanent. A SEPARATE ledger key would have created exactly that
     // window by moving the fan-out outside this transaction. Keeping it inside
     // is what makes the revoke unmissable.
     //
-    // Recorded rather than quietly done, because it deviates from a 🔴 gate.
+    // Recorded rather than quietly done, because it deviates from a CRITICAL: gate.
     const ownedFamily = ownedFamilies.docs[0];
     if (ownedFamily) {
       const grants = planFamilyFanOutForEffect({
@@ -2083,7 +2083,7 @@ export const appStoreNotificationsV2 = onRequest(async (req, res) => {
         nowMs: signedDateMs,
       });
       for (const grant of grants) {
-        // ⚠️ THE TERNARY IS HOISTED OUT OF THE OBJECT LITERAL ON PURPOSE, and
+        // WARNING: THE TERNARY IS HOISTED OUT OF THE OBJECT LITERAL ON PURPOSE, and
         // it is not a style preference. Written inline as
         // `familyProExpiresAt: x == null ? null : Timestamp.fromMillis(x)`,
         // userFieldOwnership's static extractor parsed the ternary's branches
@@ -2132,7 +2132,7 @@ export const appStoreNotificationsV2 = onRequest(async (req, res) => {
 // retentionPromo.ts; this reads the log, performs the write, and decides
 // nothing.
 //
-// 🔑 ONE CALLABLE, NOT TWO. It answers "how am I doing?" and "give me the
+// KEY: ONE CALLABLE, NOT TWO. It answers "how am I doing?" and "give me the
 // month" in a single round trip because the two questions share their whole
 // cost — the eligibility query — and a separate read-only endpoint would double
 // the reads for a screen that must show progress anyway. It is safe to call at
@@ -2159,7 +2159,7 @@ export const claimRetentionPromo = onCall(async (request) => {
     .where('loggedAt', '>=', Timestamp.fromMillis(observationStartMs(nowMs)))
     .get();
 
-  // 🔴 `loggedAt`, NEVER `dayKey`. The record carries both, and `dayKey` is the
+  // CRITICAL: `loggedAt`, NEVER `dayKey`. The record carries both, and `dayKey` is the
   // player's LOCAL day — which is what a progress display wants and what an
   // entitlement must never trust, because it is CLIENT-SUPPLIED
   // (`clientNowIso.slice(0, 10)`, index.ts:2864 and :2368). A device clock
@@ -2178,7 +2178,7 @@ export const claimRetentionPromo = onCall(async (request) => {
     const userSnap = await tx.get(userRef);
     const user = userSnap.data();
 
-    // 🔴 ONCE PER ACCOUNT, ENFORCED BY A READ-THEN-WRITE INSIDE THE
+    // CRITICAL: ONCE PER ACCOUNT, ENFORCED BY A READ-THEN-WRITE INSIDE THE
     // TRANSACTION. Firestore rules cannot count across documents and cannot
     // express "only if this has never happened", so the uniqueness is the
     // server's job or it is nobody's. Same shape as claimWelcomeChest.
@@ -2201,7 +2201,7 @@ export const claimRetentionPromo = onCall(async (request) => {
     // merge: true — users/{uid} is a mixed document and a bare set() would
     // replace a display name and a streak with three subscription keys.
     //
-    // ⚠️ `subscriptionProductId` is deliberately NOT written. There is no Apple
+    // WARNING: `subscriptionProductId` is deliberately NOT written. There is no Apple
     // product behind this grant, and stamping one would make a promo look like
     // a purchase to anything that reads it — including a human reading the
     // document to work out what somebody paid.
@@ -2240,13 +2240,13 @@ export const claimRetentionPromo = onCall(async (request) => {
 // directory. The timer that counts down is W1's; the interval it counts is
 // this.
 //
-// 🔑 THE OVERRIDE EXISTS SO A WRONG NUMBER CAN BE FIXED WITHOUT AN APP RELEASE,
+// KEY: THE OVERRIDE EXISTS SO A WRONG NUMBER CAN BE FIXED WITHOUT AN APP RELEASE,
 // which is the whole reason the directory is server-side rather than bundled
 // into the client. A watering interval is a claim the app makes about a living
 // thing somebody owns; "wait for the next TestFlight build" is not an
 // acceptable latency for correcting it.
 //
-// ⚠️ AND THE BUNDLED LIST IS THE FALLBACK, NOT THE OTHER WAY AROUND — the same
+// WARNING: AND THE BUNDLED LIST IS THE FALLBACK, NOT THE OTHER WAY AROUND — the same
 // shape as rotateWeeklyOffer, adopted for the same hard-won reason. A
 // hand-seeded config document that nothing writes is a trap this repo has
 // already fallen into twice: `shopConfig/weeklyOffers` was never seeded in
@@ -2266,7 +2266,7 @@ export const getPlantDirectory = onCall(async (request) => {
   let source: 'plantConfig/directory' | 'bundled' = 'bundled';
 
   if (override.length > 0) {
-    // 🔴 VALIDATED BEFORE IT IS SERVED. The override is editable in the Firebase
+    // CRITICAL: VALIDATED BEFORE IT IS SERVED. The override is editable in the Firebase
     // console, so it passes through no test, no review and no deploy — the only
     // moment it can be judged is the moment it is read. Two species answering to
     // one alias, or an interval outside its own range, would otherwise reach a
@@ -2299,7 +2299,7 @@ export const getPlantDirectory = onCall(async (request) => {
 /**
  * The idempotency ledger key for one NOTIFICATION.
  *
- * 🔴 Separate from `receiptLedgerRef` on purpose, and keyed on Apple's
+ * CRITICAL: Separate from `receiptLedgerRef` on purpose, and keyed on Apple's
  * `notificationUUID` rather than on a transaction id. The transaction id is
  * unique per renewal, which makes it the right key for a PURCHASE — but Apple
  * sends several notifications about the SAME transaction (`DID_FAIL_TO_RENEW`
@@ -2325,7 +2325,7 @@ function subscriptionOwnerRef(originalTransactionId: string) {
 /**
  * Verifies the client's signed transaction and returns it, or throws.
  *
- * 🔴 **2026-08-05 — this replaced a call to Apple's legacy `verifyReceipt`
+ * CRITICAL: **2026-08-05 — this replaced a call to Apple's legacy `verifyReceipt`
  * endpoint, which could never have succeeded.** The app runs StoreKit 2
  * (`in_app_purchase_storekit` 0.4.10 defaults `_useStoreKit2 = true`, and
  * `enableStoreKit1()` cannot force it back on any iOS 15+ device), so
@@ -2369,7 +2369,7 @@ async function validateAppleTransaction(
  * renewal. Here we recompute it from `request.auth.uid` — the only field on the
  * request that cannot be forged — and compare.
  *
- * 🔑 The client-side half is a fix for honest-user mis-attribution; **this** is
+ * KEY: The client-side half is a fix for honest-user mis-attribution; **this** is
  * the security boundary. A device-local `{productId -> uid}` map is overwritten
  * by the next account to buy the same product before the first account's
  * transaction is redelivered, so it ends up vouching for the wrong one.
@@ -2405,7 +2405,7 @@ function assertAccountBoundary(transaction: AppleTransaction, uid: string): void
  * Namespaced by product as well as transaction so the two callables can never
  * write each other's lock even if Apple ever reused an id across product types.
  *
- * Before 2026-08-05 this was sha256(receipt) in BOTH callables. ⚠️ The note that
+ * Before 2026-08-05 this was sha256(receipt) in BOTH callables. WARNING: The note that
  * used to sit here explained the collision in terms of StoreKit 1, where
  * `serverVerificationData` is one cumulative app receipt covering the whole
  * device — **that is not this app's code path**; see validateAppleTransaction.
@@ -2417,7 +2417,7 @@ function assertAccountBoundary(transaction: AppleTransaction, uid: string): void
  * How the buyer signed in, from the VERIFIED ID token — never from the client.
  *
  * ---------------------------------------------------------------------------
- * 🔴 THIS DETECTS AND RECORDS. IT MUST NEVER REFUSE.
+ * CRITICAL: THIS DETECTS AND RECORDS. IT MUST NEVER REFUSE.
  * ---------------------------------------------------------------------------
  *
  * An anonymous uid lives on one device: lose the phone and the subscription is
@@ -2425,17 +2425,17 @@ function assertAccountBoundary(transaction: AppleTransaction, uid: string): void
  * uid nobody can sign into again. That is a real problem and it is worth
  * knowing about.
  *
- * ⚠️ AND IT MUST NOT BE SOLVED HERE, BECAUSE APPLE HAS ALREADY CHARGED THE CARD
+ * WARNING: AND IT MUST NOT BE SOLVED HERE, BECAUSE APPLE HAS ALREADY CHARGED THE CARD
  * BY THE TIME THIS CODE RUNS. A server that refused an anonymous purchase would
  * produce a player who HAS PAID AND RECEIVED NOTHING — unrecoverable without a
  * manual refund, and a certain App Review rejection. The account requirement
  * belongs BEFORE the charge, in the client, or it does not exist.
  *
- * 📌 THE SAME SHAPE AS `accountTokenRollout.epochMs`, which is still null for
+ * NOTE: THE SAME SHAPE AS `accountTokenRollout.epochMs`, which is still null for
  * exactly this reason: a guard correct in intent and catastrophic because it
  * fires after the money moved.
  *
- * 🔑 TRUSTWORTHY, AND THAT WAS THE OPEN QUESTION. `request.auth.token` is the
+ * KEY: TRUSTWORTHY, AND THAT WAS THE OPEN QUESTION. `request.auth.token` is the
  * DECODED, VERIFIED ID token — `firebase.sign_in_provider` is a claim Firebase
  * Auth signs, not a field the client hands us. It reads `'anonymous'` for
  * anonymous sign-in, and a client cannot forge it into saying otherwise. No
@@ -2506,7 +2506,7 @@ export const claimWelcomeChest = onCall(async (request) => {
   // Early idempotency check — fast path before any heavy reads
   const userSnap = await db.doc(`users/${uid}`).get();
   if (userSnap.data()?.orientationCompleted === true) {
-    // ⚠️ NOT THE STRING THE PLAYER SEES, which matters for anyone asked to "fix
+    // WARNING: NOT THE STRING THE PLAYER SEES, which matters for anyone asked to "fix
     // the wording". The shipped client matches on the CODE and substitutes its
     // own text — shop_repository_impl.dart:120 throws
     // AlreadyClaimedException('Welcome chest already claimed.') — so a player
@@ -2575,7 +2575,7 @@ export const claimWelcomeChest = onCall(async (request) => {
       }
     }
     if (userSnapInTx.data()?.orientationCompleted === true) {
-      // ⚠️ NOT THE STRING THE PLAYER SEES, which matters for anyone asked to "fix
+      // WARNING: NOT THE STRING THE PLAYER SEES, which matters for anyone asked to "fix
       // the wording". The shipped client matches on the CODE and substitutes its
       // own text — shop_repository_impl.dart:120 throws
       // AlreadyClaimedException('Welcome chest already claimed.') — so a player
@@ -2588,7 +2588,7 @@ export const claimWelcomeChest = onCall(async (request) => {
       );
     }
 
-    // 🔴 The same bare-`tx.set` replace as the gift and quest paths. Reachable
+    // CRITICAL: The same bare-`tx.set` replace as the gift and quest paths. Reachable
     // only once per account, behind the `orientationCompleted` throw above, so
     // it is a far narrower bug than the other two — but it is the same defect,
     // and "narrow" is a statement about today's callers rather than about the
@@ -2657,7 +2657,7 @@ export const seedShopData = onRequest(SEED_OPTS, async (req, res) => {
 
   const now = new Date();
   const seedDateStr = now.toISOString().split('T')[0].replace(/-/g, '');
-  // 📌 DELIBERATELY NOT filtered by offeredChestCategories, unlike rotateMarket.
+  // NOTE: DELIBERATELY NOT filtered by offeredChestCategories, unlike rotateMarket.
   // This is the bootstrap writer: it populates a fresh or emulated environment,
   // its ids are stable rather than date-stamped, and whatever it writes is
   // replaced wholesale at the next midnight rotation. Filtering here would make
@@ -2670,7 +2670,7 @@ export const seedShopData = onRequest(SEED_OPTS, async (req, res) => {
     { id: 'chest_furniture',  category: 'furniture',  rarity: 'common',    dropTable: CHEST_CATEGORY_DROP_TABLE.furniture,  subject: subjectForDay('furniture', seedDateStr),  name: 'Furniture', price: CHEST_PRICE.furniture, artUrl: 'assets/images/shop/chest_furniture.png' },
   ];
 
-  // 🔴 THE SECOND WRITER OF shop/current, AND IT USED TO CARRY ITS OWN COPY.
+  // CRITICAL: THE SECOND WRITER OF shop/current, AND IT USED TO CARRY ITS OWN COPY.
   // seedShopData bypasses rotateWeeklyOffer entirely, so a byte-identical
   // duplicate of offer_seed_001 lived here and nothing gated the two against
   // each other — changing one was a live half-state, and validating only the
@@ -2756,7 +2756,7 @@ export const syncPublicProfile = onDocumentWritten('users/{uid}', async (event) 
 // every date derived from one instant — is `demoAccount.ts`; this is the write
 // half and deliberately holds no fixture values of its own.
 //
-// 🔴 EMULATOR ONLY, ENFORCED TWICE, AND THE SECRET ALONE IS NOT ENOUGH.
+// CRITICAL: EMULATOR ONLY, ENFORCED TWICE, AND THE SECRET ALONE IS NOT ENOUGH.
 // seedShopData's secret gate makes prod safe because prod has no SEED_SECRET.
 // That reasoning does NOT transfer here: this endpoint creates an AUTH USER
 // with a known, published password, so a deployed runtime that ever did get the
@@ -2775,7 +2775,7 @@ export const seedDemoAccount = onRequest(SEED_OPTS, async (req, res) => {
     return;
   }
 
-  // 🔴 GATE 1 — the emulator. `FIREBASE_AUTH_EMULATOR_HOST` is set by the
+  // CRITICAL: GATE 1 — the emulator. `FIREBASE_AUTH_EMULATOR_HOST` is set by the
   // emulator suite and never by the deployed runtime, so this is not a
   // configuration that can be forgotten into the wrong state.
   if (!process.env.FIREBASE_AUTH_EMULATOR_HOST) {
@@ -2792,7 +2792,7 @@ export const seedDemoAccount = onRequest(SEED_OPTS, async (req, res) => {
     return;
   }
 
-  // ⚠️ THE DEVICE'S WEEK, NOT THE SERVER'S, WHEN THE CALLER KNOWS IT.
+  // WARNING: THE DEVICE'S WEEK, NOT THE SERVER'S, WHEN THE CALLER KNOWS IT.
   // `currentWeekStart()` runs in the DEVICE's local timezone; this runtime is
   // UTC. Near a Monday boundary they disagree and the schedule silently does
   // not load, because weekStartDate is an equality key. The response echoes
@@ -2800,7 +2800,7 @@ export const seedDemoAccount = onRequest(SEED_OPTS, async (req, res) => {
   const weekStartOverride =
     typeof req.body?.weekStartDate === 'string' ? req.body.weekStartDate : undefined;
 
-  // 🔴 `todayLocal` ANCHORS EVERY DATE, NOT JUST THE WEEK — and the end-to-end
+  // CRITICAL: `todayLocal` ANCHORS EVERY DATE, NOT JUST THE WEEK — and the end-to-end
   // run is what proved it necessary. Without it, day keys come from this
   // runtime's UTC: seeded at 22:00 Pacific, the newest dailyScores cell came
   // back as the device's TOMORROW and lastCompletionDate sat a day in its
@@ -2984,7 +2984,7 @@ export const onNewUserBefriendGibby = functionsV1Auth
       await ensureGibbyAccount();
       const wrote = await ensureGibbyFriendship(user.uid);
 
-      // 🔑 THE SUCCESS PATH MUST NAME THE uid, AND UNTIL W2-35 IT DID NOT.
+      // KEY: THE SUCCESS PATH MUST NAME THE uid, AND UNTIL W2-35 IT DID NOT.
       //
       // The swallow below means a failed grant and a successful one both finish
       // with platform status 'ok'. The only line carrying a uid was the
@@ -2993,7 +2993,7 @@ export const onNewUserBefriendGibby = functionsV1Auth
       // guest reported Gibby missing, and could NOT prove either firing was his
       // account. Two firings, both 'ok', neither traceable to a person.
       //
-      // ⚠️ Written for `functions:log` ALONE, because that is the one production
+      // WARNING: Written for `functions:log` ALONE, because that is the one production
       // tool this window proved reachable — no gcloud, no gen2 logs, no
       // Firestore reads (D48). So: one line, plain text, uid in it. Combined
       // with the error line below, which still carries the raw uid,
@@ -3001,7 +3001,7 @@ export const onNewUserBefriendGibby = functionsV1Auth
       // EITHER outcome for a named account — the question anyone debugging
       // this actually has.
       //
-      // 📌 The error's wording is deliberately UNCHANGED. `grep -c "failed for"`
+      // NOTE: The error's wording is deliberately UNCHANGED. `grep -c "failed for"`
       // returning 0 across all history is the evidence W2-31 rests on, and
       // rewording it would silently invalidate a repeat of that check against
       // logs already written.
@@ -3115,14 +3115,14 @@ export const sendGiftInvite = onCall(async (request) => {
   // resolveEffectiveTier and LEGACY_TIER_ALIASES in taskRewards.ts.
   const tier: string = resolveEffectiveTier(userSnap.data(), Date.now());
 
-  // ⚠️ `premium: Infinity` is GONE, and it took a client orphan with it. It was
+  // WARNING: `premium: Infinity` is GONE, and it took a client orphan with it. It was
   // the only branch that made an allowance unbounded, and its client twin —
   // GiftAllowance.isUnlimited, the '∞' label, and friends_page.dart's disjunct
   // — became unreachable the moment #314 retired the tier. They were left in
   // place on purpose, to be removed together with this line rather than one
   // half at a time; splitting client from server is what produced the orphan.
   //
-  // ⚠️ AND IT MISSED ONE, THIRTY LINES DOWN. This note announced that orphan
+  // WARNING: AND IT MISSED ONE, THIRTY LINES DOWN. This note announced that orphan
   // closed while the ENCODING that carried the removed value — an `Infinity`
   // branch and a `-1` sentinel in the return — survived below it, which is the
   // same mechanism it describes: remove the value, leave the shape it needed.
@@ -3171,7 +3171,7 @@ export const sendGiftInvite = onCall(async (request) => {
     //   real state, but it leaves as resource-exhausted; it never arrives here
     //   as a negative number.
     //
-    // ⚠️ The `-1` this replaces was a SENTINEL for unlimited, not a count, and
+    // WARNING: The `-1` this replaces was a SENTINEL for unlimited, not a count, and
     // it was returned on the same channel as a real count — so a client had to
     // know that one value of a number meant "not a number". That is worth
     // stating because the obvious reading of a stray `-1` is the other one: an
@@ -3247,7 +3247,7 @@ export const purchaseStreakShield = onCall(async (request) => {
 
   // OPTIONAL replay key (W2-19), same rule as purchaseChest via replayKey.ts.
   //
-  // 🔴 THE TRANSACTION BELOW WAS NEVER THE PROBLEM. It makes the shield cap and
+  // CRITICAL: THE TRANSACTION BELOW WAS NEVER THE PROBLEM. It makes the shield cap and
   // the balance check race-safe, and it does nothing at all about the SAME call
   // arriving twice after a dropped response — the client retries and a second
   // debit is perfectly consistent from the server's side. Before this key, a
@@ -3266,7 +3266,7 @@ export const purchaseStreakShield = onCall(async (request) => {
     : null;
 
   return db.runTransaction(async (tx) => {
-    // 📌 The ledger read joins the EXISTING Promise.all rather than adding a
+    // NOTE: The ledger read joins the EXISTING Promise.all rather than adding a
     // round-trip. A reuse of purchaseChest's pattern, not a restructure — which
     // was the brief's disproof condition, and it does not fire.
     const [userSnap, profileSnap, ledgerSnap] = await Promise.all([
@@ -3329,7 +3329,7 @@ export const purchaseStreakShield = onCall(async (request) => {
 // Replays the caller's own completion log through the live evaluator and
 // reports what quest state it implies. W2-13.
 //
-// 🔴 IT GRANTS NOTHING AND WRITES NOTHING. That is the entire contract, and it
+// CRITICAL: IT GRANTS NOTHING AND WRITES NOTHING. That is the entire contract, and it
 // is enforced by construction: this handler has no write in it, and
 // questRecompute.ts has no Firestore import at all. A recompute that silently
 // pays out is a migration that guesses — and with sweeps unverifiable from the
@@ -3337,13 +3337,13 @@ export const purchaseStreakShield = onCall(async (request) => {
 // construction. Granting is a separate, deliberate act that needs a human
 // decision, and Brendan has not made it.
 //
-// 📌 Owner-scoped, and exposes nothing new: firestore.rules already lets a user
+// NOTE: Owner-scoped, and exposes nothing new: firestore.rules already lets a user
 // READ their own users/{uid}/completions and quests/state. This does the replay
 // server-side against the same evaluator the grant path uses, which is the
 // point — a client-side reimplementation would be a second evaluator, and a
 // recompute that disagrees with the live path is worse than none.
 //
-// ⚠️ It deliberately takes the window as an argument with NO default. How far
+// WARNING: It deliberately takes the window as an argument with NO default. How far
 // back a quest may be recomputed is the retention decision, and that is a
 // product call.
 export const recomputeQuestReport = onCall(async (request) => {
@@ -3382,7 +3382,7 @@ export const recomputeQuestReport = onCall(async (request) => {
     recordsReplayed: report.recordsReplayed,
     earliestRecord: report.earliestRecord,
     latestRecord: report.latestRecord,
-    // 📌 The blind-before date. A zero here means "no data", never "no
+    // NOTE: The blind-before date. A zero here means "no data", never "no
     // progress", and without this field those are the same output.
     blindBefore: report.blindBefore,
     windowPrecedesLog: report.windowPrecedesLog,
@@ -3397,24 +3397,24 @@ export const recomputeQuestReport = onCall(async (request) => {
 //
 // Grants the organisation mini-game's daily reward. W2-17.
 //
-// 🔑 IT VALIDATES THE CLAIM, NOT THE DRAG. No arrangement is accepted, none is
+// KEY: IT VALIDATES THE CLAIM, NOT THE DRAG. No arrangement is accepted, none is
 // checked, and none could be — see the header of minigame.ts for why replaying
 // the puzzle server-side would be a second implementation of the slot-fit rule,
 // and what that costs in this codebase specifically.
 //
-// 🔴 THE DAILY CLOCK IS THE SERVER'S, AND IT USED TO BE THE CALLER'S. W2-172.
+// CRITICAL: THE DAILY CLOCK IS THE SERVER'S, AND IT USED TO BE THE CALLER'S. W2-172.
 // This read `const dayKey = clientNowIso.slice(0, 10)` — the key the whole
 // once-per-day guarantee rests on, supplied by whoever is calling. Since
 // `canClaimMinigame` keeps ONE row and grants on any dayKey that is not the last
 // one, alternating two well-formed dates minted 50 sponges per call without
 // bound, and the format regex only ever checked the SHAPE of the date.
 //
-// 🔑 It is not a judgement call about acceptable risk — it is this callable
+// KEY: It is not a judgement call about acceptable risk — it is this callable
 // failing a rule its neighbour keeps. index.ts:2161-2167 already says `dayKey`
 // "is what an entitlement must never trust, because it is CLIENT-SUPPLIED", and
 // grantProPromo obeys it by reading a server `loggedAt`.
 //
-// ⚠️ `request.data` IS NOT READ AT ALL NOW, AND THAT IS THE STRONGER STATEMENT.
+// WARNING: `request.data` IS NOT READ AT ALL NOW, AND THAT IS THE STRONGER STATEMENT.
 // A callable simply ignores fields it does not destructure, so a client sending
 // the old `{clientNowIso}` payload still succeeds and one sending `{}` does too
 // — nothing in lib/ has ever called this (measured: zero callers in the whole
@@ -3466,7 +3466,7 @@ export const claimMinigamePrize = onCall(async (request) => {
 //
 // W2-23. A tester's lassoed comments on one gallery screen.
 //
-// ⚠️ THIS IS THE ONLY CALLABLE WHOSE PURPOSE IS ACCEPTING ARBITRARY TEXT FROM A
+// WARNING: THIS IS THE ONLY CALLABLE WHOSE PURPOSE IS ACCEPTING ARBITRARY TEXT FROM A
 // STRANGER. It grants nothing, so there is no replay key and no transaction —
 // two identical submissions are a tester tapping twice, which is noise rather
 // than theft, and de-duplicating them would silently discard a real second
@@ -3483,13 +3483,13 @@ export const submitGalleryFeedback = onCall(async (request) => {
   }
   const submission = request.data as FeedbackSubmission;
 
-  // 🔑 THE PER-DAY CAP REUSES THE inviteCounts PATTERN EXACTLY (index.ts:1744):
+  // KEY: THE PER-DAY CAP REUSES THE inviteCounts PATTERN EXACTLY (index.ts:1744):
   // a per-day counter document read and incremented inside ONE transaction, and
   // a `resource-exhausted` refusal naming the limit. Inventing a second
   // rate-limiting shape here would be the same mistake as inventing a second
   // admin model — and this one already exists three lines of thought away.
   //
-  // ⚠️ A transaction on a path that "should be cheap" is affordable HERE and
+  // WARNING: A transaction on a path that "should be cheap" is affordable HERE and
   // would not be everywhere: this fires when a human taps send after typing a
   // sentence, not on a hot loop. The gift-invite path already pays the same
   // cost for the same reason.
@@ -3506,7 +3506,7 @@ export const submitGalleryFeedback = onCall(async (request) => {
     const used: number = data?.date === today ? (data?.count ?? 0) : 0;
 
     if (used >= MAX_SUBMISSIONS_PER_DAY) {
-      // 🔴 THE TESTER IS TOLD, NOT SILENTLY DROPPED. A feedback tool that
+      // CRITICAL: THE TESTER IS TOLD, NOT SILENTLY DROPPED. A feedback tool that
       // swallows the sentence someone typed is worse than one that refuses it,
       // and the refusal has to be legible enough that they keep the words and
       // try tomorrow rather than assume the app is broken.
@@ -3535,7 +3535,7 @@ export const submitGalleryFeedback = onCall(async (request) => {
     ok: true,
     id: ref.id,
     lassoCount: submission.lassos.length,
-    // ⚠️ The REAL remainder, computed inside the transaction. Returning the
+    // WARNING: The REAL remainder, computed inside the transaction. Returning the
     // constant here would be a payload that always says "plenty left" right up
     // to the refusal — a field that lies is worse than no field, and the client
     // is meant to warn BEFORE the wall rather than at it.
@@ -3549,20 +3549,20 @@ export const submitGalleryFeedback = onCall(async (request) => {
 //
 // Returns every tester's feedback as text a person reads top to bottom.
 //
-// 🔴 IT WAS A CALLABLE AND THAT WAS A DATA DISCLOSURE (W2-23's own unanswered
+// CRITICAL: IT WAS A CALLABLE AND THAT WAS A DATA DISCLOSURE (W2-23's own unanswered
 // #1). Any signed-in user could read every other tester's comments. Fine for a
 // cohort Brendan picked by hand; wrong the first time a stranger installs the
 // app, and "we will add an admin check later" is the sentence that precedes
 // every one of these.
 //
-// 🔑 NO NEW ADMIN MODEL WAS INVENTED, BECAUSE ONE ALREADY EXISTS. This now uses
+// KEY: NO NEW ADMIN MODEL WAS INVENTED, BECAUSE ONE ALREADY EXISTS. This now uses
 // the SAME gate as backfillPublicProfiles and seedShopData: POST-only, a shared
 // SEED_SECRET in an `x-seed-secret` header, failing closed when the secret is
 // unset. A custom claim would have been a second admin mechanism guarding one
 // more thing than the first — and it would need somebody to set a claim nobody
 // has set, on a project this window cannot reach.
 //
-// 📌 AND HTTP IS THE RIGHT SHAPE ANYWAY, WHICH IS WHY THIS IS NOT A WORKAROUND.
+// NOTE: AND HTTP IS THE RIGHT SHAPE ANYWAY, WHICH IS WHY THIS IS NOT A WORKAROUND.
 // The consumer is a human with a terminal reading what testers wrote, not the
 // shipped app — nothing in lib/ should ever call it. A callable implies the app
 // invokes it; an HTTP endpoint returning text/plain is `curl | less`.
@@ -3572,7 +3572,7 @@ export const exportGalleryFeedback = onRequest(FEEDBACK_OPTS, async (req, res) =
     return;
   }
 
-  // ⚠️ THE TWO 403s ARE DELIBERATELY DIFFERENT, and this is the one place this
+  // WARNING: THE TWO 403s ARE DELIBERATELY DIFFERENT, and this is the one place this
   // endpoint improves on the two it copies. SEED_OPTS' own docstring records
   // what happened last time: both endpoints were declared as bare `onRequest`,
   // the secret never reached the runtime, `process.env.SEED_SECRET` stayed
@@ -3581,7 +3581,7 @@ export const exportGalleryFeedback = onRequest(FEEDBACK_OPTS, async (req, res) =
   // wrong one are different problems with different fixes, so they say so.
   //
   // Neither message leaks the secret; they name the FAILURE, not the value.
-  // 🔑 FEEDBACK_EXPORT_SECRET, not SEED_SECRET — see FEEDBACK_OPTS. Each
+  // KEY: FEEDBACK_EXPORT_SECRET, not SEED_SECRET — see FEEDBACK_OPTS. Each
   // refusal names WHICH secret it means, because two secrets make "the secret
   // is wrong" an ambiguous sentence and the person reading it is holding one of
   // them wondering which.
@@ -3646,14 +3646,14 @@ const QUEST_SOURCE = 'quest';
  * [dayKey], persists it to `users/{uid}/quests/state`, and grants any rewards
  * that just came due.
  *
- * 🔑 Progress is accumulated forward into quest state, but it is now derived
+ * KEY: Progress is accumulated forward into quest state, but it is now derived
  * from the DURABLE COMPLETION LOG unioned with the task documents' current
  * flags — see completionLog.ts. A completion is a fact with a timestamp, so
  * un-completing cannot walk progress backwards (D94-4), and the log is the
  * history a recompute would need (D92). This function is the only writer of
  * quest state and of the completion log.
  *
- * ⚠️ Reads the user's whole tasks collection, because a SWEEP quest needs to
+ * WARNING: Reads the user's whole tasks collection, because a SWEEP quest needs to
  * know how many tasks EXIST in a room, not merely how many were completed. That
  * is one extra full read per completion; a user's task collection is tens of
  * documents, not thousands. If it ever stops being small, cache the per-room
@@ -3690,7 +3690,7 @@ async function applyQuestProgress(
   const logged: CompletionRecord[] = logSnap.docs.map((d) => d.data() as CompletionRecord);
   const loggedIds = new Set(logSnap.docs.map((d) => d.id));
 
-  // 🔴 THE UNION IS THE FIX for D94-4. The log cannot be retracted, so
+  // CRITICAL: THE UNION IS THE FIX for D94-4. The log cannot be retracted, so
   // un-completing a task does not remove it from today's set and re-completing
   // it adds nothing. Progress can only move forward.
   const completedToday = mergeCompletions(logged, currentlyComplete);
@@ -3710,23 +3710,23 @@ async function applyQuestProgress(
         // is the input its migration would need.
         title: task.title,
         dayKey,
-        // 🔑 The room's census AS OF THIS COMPLETION (W2-14). A sweep is a
+        // KEY: The room's census AS OF THIS COMPLETION (W2-14). A sweep is a
         // ratio, and this is its denominator — the only part of a sweep that
         // cannot be reconstructed afterwards, because a room's task list
         // changes and nothing records what it used to be.
         //
-        // 📌 COSTS NOTHING EXTRA. roomTaskCounts is already built above from the
+        // NOTE: COSTS NOTHING EXTRA. roomTaskCounts is already built above from the
         // full tasks scan this function makes for sweep evaluation, so writing
         // it adds no read and no query — one integer per record.
         roomTaskCount: roomTaskCounts[task.room] ?? 0,
-        // 🔑 Which task paid double, frozen at write time (W2-16).
+        // KEY: Which task paid double, frozen at write time (W2-16).
         // bonusTaskIdFor indexes into a mutable list, so recomputing this later
         // gives the answer for TODAY's library, not the library as it was. The
         // id comes from `granted` — what the PAYER actually used — rather than
         // being recomputed here, so the log records the decision that was made
         // rather than one made again beside it.
         //
-        // ⚠️ `bonusPaid` is DELIBERATELY NOT RECORDED. It is mutable within the
+        // WARNING: `bonusPaid` is DELIBERATELY NOT RECORDED. It is mutable within the
         // day (the bonus can pay on a later call than the one that first logged
         // the task) and this record is write-once by id, so a snapshot of it
         // would freeze a `false` that later became true — authoritative-looking
@@ -3756,7 +3756,7 @@ async function applyQuestProgress(
   for (const payout of dryRun.payouts) {
     if (payout.reward.kind !== 'chest' || !payout.reward.chestCategory) continue;
     const category = payout.reward.chestCategory;
-    // 🔑 The SAME roll the shop uses. A second way to receive a chest is a
+    // KEY: The SAME roll the shop uses. A second way to receive a chest is a
     // second way to be wrong about the odds, and chest_drop_rates.dart is
     // already a hand-maintained mirror with no cross-language test.
     const itemRarity = rollRarity(CHEST_CATEGORY_DROP_TABLE[category]);
@@ -3812,7 +3812,7 @@ async function applyQuestProgress(
       {merge: true},
     );
 
-    // 🔑 A QUEST CHEST HAS NO PURCHASE PRICE, so its duplicate pays 75% of the
+    // KEY: A QUEST CHEST HAS NO PURCHASE PRICE, so its duplicate pays 75% of the
     // LIST price of the category the quest awarded — the same fraction the
     // purchase path pays against the price actually charged. Before W2-161 a
     // duplicate here paid nothing at all: the grant was written over the top of
@@ -3831,7 +3831,7 @@ async function applyQuestProgress(
 
     // Sponges and XP land on the SAME document, so they are one write.
     //
-    // 🔑 XP IS WRITTEN HERE RATHER THAN VIA awardXp(), AND THAT IS NOT A SECOND
+    // KEY: XP IS WRITTEN HERE RATHER THAN VIA awardXp(), AND THAT IS NOT A SECOND
     // XP PATH. awardXp is deliberately non-transactional; calling it from inside
     // this transaction would put the XP outside the lock that `claimedTiers`
     // lives under, so a tier could be marked claimed while its XP was lost. For
@@ -3855,7 +3855,7 @@ async function applyQuestProgress(
     for (const payout of granted) {
       if (payout.reward.kind !== 'chest') continue;
       const pick = chestPicks[`${payout.questId}:${payout.threshold}`];
-      // 🔴 Same replace-bug as the daily gift, same fix: an already-owned item
+      // CRITICAL: Same replace-bug as the daily gift, same fix: an already-owned item
       // gets NO write, rather than a `merge` that would still reset `ownedAt`.
       if (questItemOwned.has(pick.itemId)) continue;
       tx.set(db.doc(`users/${uid}/inventory/${pick.itemId}`), {
@@ -3876,7 +3876,7 @@ export const recordTaskCompletion = onCall(async (request) => {
   const { clientNowIso } = request.data as { clientNowIso: string };
   if (!clientNowIso) throw new HttpsError('invalid-argument', 'clientNowIso required');
 
-  // 🔴 THE DAY KEY IS BOUNDED BEFORE ANYTHING ELSE HAPPENS (W2-174).
+  // CRITICAL: THE DAY KEY IS BOUNDED BEFORE ANYTHING ELSE HAPPENS (W2-174).
   //
   // This line used to be `clientNowIso.slice(0, 10)` two hundred lines further
   // down, which meant THE CALLER CHOSE WHICH DAY IT WAS BEING PAID FOR, and every
@@ -3908,7 +3908,7 @@ export const recordTaskCompletion = onCall(async (request) => {
   // The transaction reports whether the streak-day advanced so the XP award
   // below reuses the same gap == 0 guard (no double-award on same-day replay).
   //
-  // 📌 IT RUNS SECOND NOW, AFTER grantTaskRewards, AND THE ORDER IS LOAD-BEARING
+  // NOTE: IT RUNS SECOND NOW, AFTER grantTaskRewards, AND THE ORDER IS LOAD-BEARING
   // (W2-174). The reward grant is the step that can REFUSE — a day key earlier
   // than the account's high-water mark throws `failed-precondition` — and with
   // the streak in front of it that throw landed after the streak had already
@@ -4108,7 +4108,7 @@ export const awardStreakReward = onCall(async (request) => {
 // the roster) and no rule can require that the second write accompanied the
 // first.
 //
-// ⚠️ Admin SDK writes BYPASS firestore.rules, so housemateCap() does not gate
+// WARNING: Admin SDK writes BYPASS firestore.rules, so housemateCap() does not gate
 // this path at all. The cap below is the gate; the rules remain the gate on the
 // client-written ask/accept path, which is untouched.
 
@@ -4125,19 +4125,19 @@ export const awardStreakReward = onCall(async (request) => {
  * Input:  { hostUid }
  * Output: { hostUid, equippedSkinIds }
  *
- * 🔑 EXISTS BECAUSE THERE WAS NOWHERE TO PROJECT. The friend-visit payload is
+ * KEY: EXISTS BECAUSE THERE WAS NOWHERE TO PROJECT. The friend-visit payload is
  * assembled on the CLIENT (`friends_repository_impl.getFriendVisit`), reading
  * documents directly under rules — so the only ways to put equipped skins in
  * front of a visitor were to widen `users/{uid}/inventory` in the rules, or to
  * build a place where fields can be dropped. `inventory` is owner-only and
  * stays that way; this is that place. See housemateView.ts.
  *
- * ⚠️ ADMIN SDK READS BYPASS RULES, so the gate here IS the security boundary,
+ * WARNING: ADMIN SDK READS BYPASS RULES, so the gate here IS the security boundary,
  * not a convenience. `mayViewHousemateData` re-expresses `canViewHouse` from
  * firestore.rules over the same roster field, through the same exported
  * `rosterOf` helper — friendship alone is not enough.
  *
- * 📌 The response is built by `projectHousemateView`, key by key, so a field
+ * NOTE: The response is built by `projectHousemateView`, key by key, so a field
  * added to `users/{uid}/inventory` later cannot arrive here by being copied.
  */
 export const getHousemateView = onCall(async (request) => {
@@ -4239,7 +4239,7 @@ export const mintHousemateToken = onCall(async (request) => {
  * Input:  { code }
  * Output: { hostUid, housemateCount }
  *
- * 🔴 THE TRANSACTION IS THE SINGLE-USE MECHANISM. A read-then-write outside one
+ * CRITICAL: THE TRANSACTION IS THE SINGLE-USE MECHANISM. A read-then-write outside one
  * is a race two phones in one room will actually hit — both see redeemedAtMs
  * absent, both write the edge, and the code has been used twice. Firestore
  * transactions are optimistic-locked on every document READ inside them, so the
@@ -4320,7 +4320,7 @@ export const redeemHousemateToken = onCall(async (request) => {
  * Apply a departure plan: rewrite the roster, revoke every departing grant, and
  * clear their familyId — all in one transaction.
  *
- * 🔑 SHARED BY ALL THREE CALLABLES ON PURPOSE. leaveFamily, removeMember and
+ * KEY: SHARED BY ALL THREE CALLABLES ON PURPOSE. leaveFamily, removeMember and
  * disbandFamily differ ONLY in who is allowed to ask; the effect is identical,
  * and a second copy of "revoke and unstamp" is the copy that would forget one
  * of the two writes.
@@ -4343,7 +4343,7 @@ function applyFamilyDeparture(
   }
 
   for (const uid of plan.revokedUids) {
-    // 🔴 BOTH FIELDS, IN THE SAME WRITE. `familyProExpiresAt: null` ends the
+    // CRITICAL: BOTH FIELDS, IN THE SAME WRITE. `familyProExpiresAt: null` ends the
     // entitlement — without it a leaver keeps Pro until the copied expiry runs
     // out — and `familyId: null` unstamps them so no family read still finds
     // them. Clearing one without the other leaves either a grant nobody funds
@@ -4359,11 +4359,11 @@ function applyFamilyDeparture(
 /**
  * Leave the family you are in.
  *
- * ⚠️ IDEMPOTENT: leaving a family you are not in SUCCEEDS and writes nothing.
+ * WARNING: IDEMPOTENT: leaving a family you are not in SUCCEEDS and writes nothing.
  * The caller asked for an end state and it already holds; an error here would
  * say their first attempt failed.
  *
- * 🔴 AN OWNER IS REFUSED WITH `owner-must-disband`, which names the alternative.
+ * CRITICAL: AN OWNER IS REFUSED WITH `owner-must-disband`, which names the alternative.
  * See the block above `planFamilyDeparture` for why dissolving is the right
  * answer and transfer is the attractive wrong one.
  */
@@ -4405,7 +4405,7 @@ export const leaveFamily = onCall(async (request) => {
 /**
  * Remove somebody else from the family you own.
  *
- * 📌 A SEPARATE CALLABLE FROM `leaveFamily`, NOT A PARAMETER ON IT, and the
+ * NOTE: A SEPARATE CALLABLE FROM `leaveFamily`, NOT A PARAMETER ON IT, and the
  * reason is authorisation rather than tidiness: leaving is authorised by BEING
  * the person, removing is authorised by OWNING the family. One callable taking
  * an optional uid would mean a single code path where the difference between
@@ -4451,7 +4451,7 @@ export const removeMember = onCall(async (request) => {
 /**
  * End the family, for everyone.
  *
- * 🔴 THE OWNER'S EXIT, AND IT REVOKES EVERY MEMBER INCLUDING THEMSELVES. Their
+ * CRITICAL: THE OWNER'S EXIT, AND IT REVOKES EVERY MEMBER INCLUDING THEMSELVES. Their
  * `subscriptionTier` is untouched — they keep what they pay for; what ends is
  * the family grant derived from it. Leaving their own `familyProExpiresAt` set
  * would make `resolveEffectiveTier` answer `pro` from a family that no longer
@@ -4490,7 +4490,7 @@ export const disbandFamily = onCall(async (request) => {
 // ---------------------------------------------------------------------------
 // deleteAccount — the cascade the delete dialog has always claimed to do
 //
-// 🔴 WHAT THIS REPLACES. `settings_page.dart` showed "This action is permanent
+// CRITICAL: WHAT THIS REPLACES. `settings_page.dart` showed "This action is permanent
 // and cannot be undone. All your data will be deleted." and then ran
 // `FirebaseAuth.instance.currentUser?.delete()`. That deletes the Auth record.
 // Everything else — the house, the inventory, the friend edges on OTHER
@@ -4498,7 +4498,7 @@ export const disbandFamily = onCall(async (request) => {
 // a uid that could never sign in again. App Store Review Guideline 5.1.1(v)
 // requires the account AND the associated data.
 //
-// 🔑 THE ORDER IS THE DESIGN, AND IT IS CHOSEN BY WHICH FAILURE IS RECOVERABLE.
+// KEY: THE ORDER IS THE DESIGN, AND IT IS CHOSEN BY WHICH FAILURE IS RECOVERABLE.
 // The Auth record goes LAST. A failure anywhere before that leaves an account
 // that can still sign in and re-run this call, so the user can retry and a
 // human can inspect it. A failure AFTER the auth record went, with data still
@@ -4506,7 +4506,7 @@ export const disbandFamily = onCall(async (request) => {
 // is the exact bug being fixed here. Every step is a delete or an
 // already-holds no-op, so a retry on partial state converges.
 //
-// ⚠️ THE ONE WINDOW THIS CANNOT CLOSE: an ID token already issued stays valid
+// WARNING: THE ONE WINDOW THIS CANNOT CLOSE: an ID token already issued stays valid
 // for up to an hour after `deleteUser`, so a client that kept running could
 // re-create documents it is still permitted to write. Nothing server-side can
 // revoke an outstanding ID token — `revokeRefreshTokens` only stops the NEXT
@@ -4520,14 +4520,14 @@ const ACCOUNT_DELETION_BATCH_SIZE = 400;
 /**
  * Every document beneath a document, deepest first.
  *
- * 🔴 `listCollections()` AT RUNTIME, NOT A HARD-CODED LIST OF SUBCOLLECTIONS.
+ * CRITICAL: `listCollections()` AT RUNTIME, NOT A HARD-CODED LIST OF SUBCOLLECTIONS.
  * Deleting `users/{uid}` does NOT delete its subcollections — they become
  * orphans that are invisible under a parent that no longer exists, so a missed
  * one is a miss nobody will ever see. A constant list would go stale the first
  * time somebody adds a subcollection and nothing would fail.
  * `KNOWN_USER_SUBCOLLECTIONS` exists only to PIN this in the suite.
  *
- * 📌 Recursive rather than one level down because `listDocuments()` also
+ * NOTE: Recursive rather than one level down because `listDocuments()` also
  * returns refs to documents that do not exist but DO have children, which is
  * exactly how an orphan hides.
  */
@@ -4570,7 +4570,7 @@ async function idsWhere(
 /**
  * Apply a deletion plan. Everything except the Auth record.
  *
- * 🔑 SPLIT OUT FROM THE CALLABLE SO IT CAN BE TESTED, and the split is where
+ * KEY: SPLIT OUT FROM THE CALLABLE SO IT CAN BE TESTED, and the split is where
  * the seed-assert-present-delete-assert-absent test hangs. A test that only
  * drove the planner would prove the right paths were NAMED and nothing about
  * whether they were removed.
@@ -4583,13 +4583,13 @@ async function applyAccountDeletion(plan: AccountDeletionPlan): Promise<void> {
   await deleteDocPaths(plan.mirrorEdgePaths);
   await deleteDocPaths(plan.sentGiftInvitePaths);
   await deleteDocPaths(plan.choreDocPaths);
-  // 🔴 THE USER'S OWN MESSAGES, INSIDE OTHER PEOPLE'S CONVERSATION (W2-127).
+  // CRITICAL: THE USER'S OWN MESSAGES, INSIDE OTHER PEOPLE'S CONVERSATION (W2-127).
   // Previously retained on conversational-integrity grounds; Brendan reversed
   // that after the Guideline 1.3 rejection — see AccountDeletionPlan.
   await deleteDocPaths(plan.messageDocPaths);
 
   for (const other of plan.housemateArrayUids) {
-    // ⚠️ arrayRemove ON ONE FIELD. This is somebody else's user document; the
+    // WARNING: arrayRemove ON ONE FIELD. This is somebody else's user document; the
     // only thing touched is their `housemates` array, and only this uid is
     // removed from it. A `set` of the whole roster would race with their own
     // housemate changes.
@@ -4624,10 +4624,10 @@ async function applyAccountDeletion(plan: AccountDeletionPlan): Promise<void> {
 /**
  * Delete the calling account and its data.
  *
- * ⚠️ IDEMPOTENT: calling it twice succeeds. The second call plans an almost
+ * WARNING: IDEMPOTENT: calling it twice succeeds. The second call plans an almost
  * empty cascade and `deleteUser` on an already-deleted uid is tolerated.
  *
- * 📌 THE SERVER DELETES THE AUTH RECORD, NOT THE CLIENT, and that is a fix as
+ * NOTE: THE SERVER DELETES THE AUTH RECORD, NOT THE CLIENT, and that is a fix as
  * well as an ordering choice: `currentUser.delete()` throws
  * `requires-recent-login` for anyone who has not signed in recently, which the
  * old client handled by telling the user to sign out and back in first. The
@@ -4664,7 +4664,7 @@ export const deleteAccount = onCall(async (request) => {
     }
   }
 
-  // 🔑 THE FRIENDS LIST BOUNDS THIS QUERY, WHICH IS WHY IT NEEDS NO INDEX.
+  // KEY: THE FRIENDS LIST BOUNDS THIS QUERY, WHICH IS WHY IT NEEDS NO INDEX.
   // A gift invite this user SENT lives in the RECIPIENT's subcollection, and
   // there is no reverse pointer. The general form is a collection-group query
   // on `fromUid`, which would need a new composite index. Invites only ever go
@@ -4685,7 +4685,7 @@ export const deleteAccount = onCall(async (request) => {
   for (const id of await idsWhere('subscriptionOwners', 'uid', uid)) {
     foreignHits.push({
       path: `subscriptionOwners/${id}`,
-      // 🔴 DELETED ON PURPOSE, and it is the one foreign delete with a
+      // CRITICAL: DELETED ON PURPOSE, and it is the one foreign delete with a
       // consequence. This document routes a FUTURE Apple renewal to a uid.
       // Leaving it means the next renewal notification resolves to an account
       // that cannot exist and writes Pro into nothing; removing it lets the
@@ -4718,7 +4718,7 @@ export const deleteAccount = onCall(async (request) => {
 
   await applyAccountDeletion(plan);
 
-  // 🔴 LAST, AND ONLY AFTER THE CASCADE COMMITTED. See the header block.
+  // CRITICAL: LAST, AND ONLY AFTER THE CASCADE COMMITTED. See the header block.
   // `user-not-found` is success: it means a previous attempt got this far.
   try {
     await admin.auth().deleteUser(uid);
@@ -4750,13 +4750,13 @@ export const deleteAccount = onCall(async (request) => {
 /**
  * Post a message to the family board.
  *
- * 🔴 EVERY RULE IS ENFORCED HERE, NOT ON THE CLIENT. A client-side cap is a
+ * CRITICAL: EVERY RULE IS ENFORCED HERE, NOT ON THE CLIENT. A client-side cap is a
  * suggestion — this callable is reachable directly by anyone with the app's
  * config, and a family board is the one surface where that matters. The client
  * should also cap for the typing experience; that copy is a courtesy and this
  * one is the rule.
  *
- * 🔑 ANY MEMBER POSTS, ANY MEMBER READS, NOBODY EDITS ANOTHER'S — so the
+ * KEY: ANY MEMBER POSTS, ANY MEMBER READS, NOBODY EDITS ANOTHER'S — so the
  * authority is simply membership, unlike chores where assigning and completing
  * are different powers. There is no edit path at all: an edited message is a
  * changed record of what somebody said, which is a different feature and a
@@ -4792,7 +4792,7 @@ export const postFamilyMessage = onCall(async (request) => {
       throw new HttpsError('permission-denied', 'You are not in this family.');
     }
 
-    // 🔑 THE SENDER'S NAME AND AVATAR ARE STAMPED ONTO THE MESSAGE, not left
+    // KEY: THE SENDER'S NAME AND AVATAR ARE STAMPED ONTO THE MESSAGE, not left
     // for the reader to resolve. This is the W2-87 problem one level up: a
     // client cannot read another member's publicProfiles document, so a message
     // carrying only a uid renders as an unnamed bubble. Both come from the
@@ -4812,7 +4812,7 @@ export const postFamilyMessage = onCall(async (request) => {
 /**
  * Assign a chore to a family member.
  *
- * 🔴 ONLY THE OWNER, and the write goes through here rather than through rules.
+ * CRITICAL: ONLY THE OWNER, and the write goes through here rather than through rules.
  * `families/{familyId}/chores/{choreId}` is deny-write to every client for the
  * same reason `trashDay` is: the roster lives on the PARENT document, and a
  * rule that verified the writer against it would need a `get()` that is only as
@@ -4861,17 +4861,17 @@ export const assignFamilyChore = onCall(async (request) => {
 /**
  * Set the family's shared bin day.
  *
- * 🔴 THIS EXISTS BECAUSE `firestore.rules:822` IS `allow write: if false` ON
+ * CRITICAL: THIS EXISTS BECAUSE `firestore.rules:822` IS `allow write: if false` ON
  * `families/{familyId}` — the client cannot write this document at all, which
  * is why every family mutation is a callable. That denial is not an obstacle
  * being worked around; it is what makes `ownerUid` mean anything.
  *
- * ✅ AND THE READ PATH NEEDS NO RULES CHANGE. `firestore.rules:819` already
+ * OK: AND THE READ PATH NEEDS NO RULES CHANGE. `firestore.rules:819` already
  * grants `get` on the family document to any member, so a member reads
  * `binWeekday` by reading the family they are already reading for the roster.
  * **This brief ships no rules change and therefore needs no deploy.**
  *
- * 📌 SET-ONLY, NEVER CLEARED. There is no "unset the family bin day" path
+ * NOTE: SET-ONLY, NEVER CLEARED. There is no "unset the family bin day" path
  * here: a family that had a shared day and lost it would silently fall back to
  * per-device weekdays, which is the exact bug this closes, arriving later and
  * looking like a new one.
@@ -4902,7 +4902,7 @@ export const setFamilyBinDay = onCall(async (request) => {
       throw new HttpsError(code, message);
     }
 
-    // 🔑 A MERGE, NOT A SET. The roster, the denormalised names and the avatars
+    // KEY: A MERGE, NOT A SET. The roster, the denormalised names and the avatars
     // all live on this document; a bare set() here would delete the family to
     // change one integer.
     tx.set(familyRef, {binWeekday: plan.binWeekday}, {merge: true});
@@ -4913,7 +4913,7 @@ export const setFamilyBinDay = onCall(async (request) => {
 /**
  * Mark your own chore done.
  *
- * 🔑 THE AUTHORITY IS BEING THE ASSIGNEE, not owning the family — completion is
+ * KEY: THE AUTHORITY IS BEING THE ASSIGNEE, not owning the family — completion is
  * the member's own act. A parent marking a child's chore done is a different
  * feature with a different meaning on the board.
  */
@@ -4947,7 +4947,7 @@ export const completeFamilyChore = onCall(async (request) => {
       throw new HttpsError(code, message);
     }
 
-    // 🔑 READ AND WRITE IN ONE TRANSACTION, so two taps cannot both see
+    // KEY: READ AND WRITE IN ONE TRANSACTION, so two taps cannot both see
     // `completedAtMs: null` and both write — the second re-runs, sees the first
     // stamp, and is refused. The FIRST completion time survives.
     tx.update(choreRef, {completedAtMs: plan.completedAtMs});
@@ -4958,13 +4958,13 @@ export const completeFamilyChore = onCall(async (request) => {
 /**
  * Mint a short-lived invite code for the family you own.
  *
- * 🔴 THE INVITE IS THE CAPABILITY, NOT THE FAMILY ID. `joinFamily(familyId)`
+ * CRITICAL: THE INVITE IS THE CAPABILITY, NOT THE FAMILY ID. `joinFamily(familyId)`
  * would let anyone who learns an id add themselves and collect Pro — the
  * fan-out copies `familyProExpiresAt` to every member — and a document id is
  * not a secret. Same problem housemateToken.ts solved, same shape, and the same
  * QR gesture the family spec describes.
  *
- * ⚠️ Reusing the token SHAPE is not aliasing the RELATION: nothing here touches
+ * WARNING: Reusing the token SHAPE is not aliasing the RELATION: nothing here touches
  * `users/{uid}.housemates`, and a family member does not become a housemate.
  */
 export const mintFamilyInvite = onCall(async (request) => {
@@ -5008,7 +5008,7 @@ export const mintFamilyInvite = onCall(async (request) => {
 /**
  * Redeem an invite and join the family it names.
  *
- * 🔴 THE JOINER'S OWN SUBSCRIPTION IS NOT TOUCHED, AND THE RESPONSE SAYS SO. A
+ * CRITICAL: THE JOINER'S OWN SUBSCRIPTION IS NOT TOUCHED, AND THE RESPONSE SAYS SO. A
  * callable cannot cancel a StoreKit subscription — only the account holder can,
  * through Apple — so someone who joins while paying for their own Pro is now
  * paying twice. Pretending otherwise would be worse than saying it: SILENT
@@ -5016,12 +5016,12 @@ export const mintFamilyInvite = onCall(async (request) => {
  * `alreadyPayingSeparately` exists so the client can tell them, in words, at
  * the moment it starts.
  *
- * ⚠️ THAT FLAG READS `resolveOwnPaidTier`, NOT `resolveEffectiveTier` — the
+ * WARNING: THAT FLAG READS `resolveOwnPaidTier`, NOT `resolveEffectiveTier` — the
  * same trap createFamily's gate has, approached from the other side. The
  * effective tier is `pro` for anyone already carrying a family grant, so the
  * warning would fire for people paying nothing at all.
  *
- * 📌 ENTITLEMENT IS NOT REQUIRED TO JOIN, deliberately. Needing Pro to accept a
+ * NOTE: ENTITLEMENT IS NOT REQUIRED TO JOIN, deliberately. Needing Pro to accept a
  * family's Pro would make the feature useless to exactly the people it is for.
  */
 export const joinFamily = onCall(async (request) => {
@@ -5061,7 +5061,7 @@ export const joinFamily = onCall(async (request) => {
     const currentFamilyId = joinerData?.familyId;
     const family = familySnap.data() as FamilyDoc;
 
-    // 🔴 THE OWNER IS READ SO THE JOINER CAN BE GRANTED NOW, NOT AT THE NEXT
+    // CRITICAL: THE OWNER IS READ SO THE JOINER CAN BE GRANTED NOW, NOT AT THE NEXT
     // RENEWAL. W2-83 wired the roster and the familyId and NOT the entitlement:
     // `familyProExpiresAt` had exactly two writers — the notification fan-out
     // and the departure revoke — so a member who joined received NOTHING until
@@ -5093,7 +5093,7 @@ export const joinFamily = onCall(async (request) => {
       throw new HttpsError(errCode, message);
     }
 
-    // 🔑 THE GRANT GOES THROUGH planFamilyFanOut, NOT A BESPOKE COPY.
+    // KEY: THE GRANT GOES THROUGH planFamilyFanOut, NOT A BESPOKE COPY.
     // `familyProExpiresAt` already has one decider and this does not become its
     // second — the same refusal made about shop/current's fourth writer, applied
     // to my own code. The fan-out is handed the roster AFTER the join so the
@@ -5101,10 +5101,10 @@ export const joinFamily = onCall(async (request) => {
     // existing members' values are already correct, and rewriting them would
     // risk moving a correct value from an expiry this call had to re-read.
     //
-    // ⚠️ `ownerHasFamilySubscription` USES THE FAN-OUT'S OWN RULE — the owner
+    // WARNING: `ownerHasFamilySubscription` USES THE FAN-OUT'S OWN RULE — the owner
     // holds the FAMILY product — rather than a second, looser one.
     //
-    // 📌 THE DISAGREEMENT THIS COMMENT USED TO RECORD IS RESOLVED (W2-177). The
+    // NOTE: THE DISAGREEMENT THIS COMMENT USED TO RECORD IS RESOLVED (W2-177). The
     // create gate was MORE PERMISSIVE than this line — it accepted a personal
     // Pro — and refusing to invent a looser rule here is what kept that visible
     // until it was ruled on. It now applies the SAME rule, so an owner reaching
@@ -5140,7 +5140,7 @@ export const joinFamily = onCall(async (request) => {
     // whose familyId does not point at the family holding them is a member no
     // family read can find.
     tx.set(joinerRef, {familyId: invite.familyId}, {merge: true});
-    // 🔑 SINGLE USE. Deleted inside the transaction, so a code cannot be
+    // KEY: SINGLE USE. Deleted inside the transaction, so a code cannot be
     // redeemed twice even by two calls racing — the second re-runs and finds it
     // gone. An invite is a capability, and a capability that survives its use
     // is a capability someone else can still spend.
@@ -5157,14 +5157,14 @@ export const joinFamily = onCall(async (request) => {
 /**
  * The Auth record's display name, or undefined.
  *
- * ⚠️ NEVER THROWS. A users/{uid} document can outlive its Auth user, and an
+ * WARNING: NEVER THROWS. A users/{uid} document can outlive its Auth user, and an
  * Auth user need not have a displayName at all — `syncPublicProfile` already
  * degrades the same way and for the same reason. A family create or join must
  * not fail because a name could not be read; the name is decoration on the
  * membership, not the membership.
  */
 function avatarIdOf(data: Record<string, unknown> | undefined): string | undefined {
-  // ⚠️ THE FIELD IS NAMED `avatarUrl` AND HOLDS AN **ID**. avatar_catalog.dart:
+  // WARNING: THE FIELD IS NAMED `avatarUrl` AND HOLDS AN **ID**. avatar_catalog.dart:
   // "Stable id stored in users/{uid}.avatarUrl". Legacy documents may hold a
   // real Storage URL, and `avatarAssetFor` matches on id OR url, so both
   // resolve on the client — which is exactly why this passes the value through
@@ -5176,14 +5176,14 @@ function avatarIdOf(data: Record<string, unknown> | undefined): string | undefin
 /**
  * The product this account PAYS FOR, or undefined.
  *
- * 🔴 W2-177. TYPED `string | undefined` RATHER THAN PASSED THROUGH RAW, because
+ * CRITICAL: W2-177. TYPED `string | undefined` RATHER THAN PASSED THROUGH RAW, because
  * `snap.data()?.subscriptionProductId` is `any` and `any !== FAMILY_PRODUCT_ID`
  * compiles for a number, an object, or a lie. Anything that is not a non-empty
  * string becomes `undefined` here, which the create gate refuses — the closed
  * direction, chosen where a malformed document would otherwise be compared
  * against a constant and silently lose.
  *
- * 🔑 THE VALUE COMES FROM `users/{uid}`, NEVER FROM THE REQUEST. A
+ * KEY: THE VALUE COMES FROM `users/{uid}`, NEVER FROM THE REQUEST. A
  * client-supplied product id would be a trust signal from the untrusted side,
  * and every gate in this file exists precisely because the client cannot be
  * asked what it is entitled to.
@@ -5205,13 +5205,13 @@ async function authDisplayNameOf(uid: string): Promise<string | undefined> {
 /**
  * Create a family, and stamp `familyId` on the owner.
  *
- * 🔴 THIS IS THE FIELD WHOSE ABSENCE MADE THE WHOLE FEATURE INERT. Every family
+ * CRITICAL: THIS IS THE FIELD WHOSE ABSENCE MADE THE WHOLE FEATURE INERT. Every family
  * module since #383 has carried the same footnote — "nothing stamps a familyId
  * on users/{uid}, so no client can name its family". completeTrashDay is
  * unreachable for that reason, and the refund fan-out closed a hole no family
  * could yet fall into. This is the writer.
  *
- * 🔴 SINGLE OWNERSHIP IS ENFORCED IN THE TRANSACTION, and that is the residual
+ * CRITICAL: SINGLE OWNERSHIP IS ENFORCED IN THE TRANSACTION, and that is the residual
  * W0 raised when it accepted #389: `ownedFamilies` reads with `.limit(1)`
  * against an invariant that nothing enforced. The query and the write share one
  * transaction, so two concurrent creates cannot both see "no family" — the
@@ -5219,18 +5219,18 @@ async function authDisplayNameOf(uid: string): Promise<string | undefined> {
  * transaction would be a race that only shows up under exactly the conditions
  * nobody tests.
  *
- * ⚠️ THE ENTITLEMENT GATE READS `resolveOwnPaidTier`, NOT `resolveEffectiveTier`.
+ * WARNING: THE ENTITLEMENT GATE READS `resolveOwnPaidTier`, NOT `resolveEffectiveTier`.
  * A member of somebody else's family resolves to `pro` while paying nothing, so
  * the obvious call would admit the empty-shell case the gate exists to reject.
  * See the block above `planFamilyCreation`.
  *
- * 🔴 AND SINCE W2-177 THE TIER IS NOT ENOUGH ON ITS OWN. Both paid products map
+ * CRITICAL: AND SINCE W2-177 THE TIER IS NOT ENOUGH ON ITS OWN. Both paid products map
  * to the tier `pro`, so the gate also reads `subscriptionProductId` and admits
  * only FAMILY_PRODUCT_ID. A personal Pro subscriber is refused with
  * `needs-family-subscription` — the create gate and the entitlement fan-out now
  * apply the same rule, where they used to disagree.
  *
- * 📌 IT DOES NOT DECIDE WHETHER CHILDREN ARE ACCOUNTS OR PROFILES, and it did
+ * NOTE: IT DOES NOT DECIDE WHETHER CHILDREN ARE ACCOUNTS OR PROFILES, and it did
  * not have to. `memberUids` is uid-keyed under either model, so this lands
  * without foreclosing that question in either direction — which is the only
  * reason it could be built while the answer was still moving. Nothing here
@@ -5285,12 +5285,12 @@ export const createFamily = onCall(async (request) => {
 
     tx.set(familyRef, plan.family);
 
-    // 🔑 STAMPED IN THE SAME TRANSACTION AS THE FAMILY IS CREATED. A family
+    // KEY: STAMPED IN THE SAME TRANSACTION AS THE FAMILY IS CREATED. A family
     // whose owner is not pointed at it is a family nobody can reach — the exact
     // state this callable exists to end — and two writes would make that state
     // reachable by a crash between them.
     //
-    // ⚠️ `merge: true`: users/{uid} carries the subscription and the profile,
+    // WARNING: `merge: true`: users/{uid} carries the subscription and the profile,
     // and this owns exactly one field of it.
     tx.set(userRef, {familyId: familyRef.id}, {merge: true});
 
@@ -5301,21 +5301,21 @@ export const createFamily = onCall(async (request) => {
 /**
  * "I took the bins out" — one member's completion, shared with the family.
  *
- * 🔴 THE SERVER WRITES IT, AND THE NON-MEMBER CHECK IS WHY. The shared fact
+ * CRITICAL: THE SERVER WRITES IT, AND THE NON-MEMBER CHECK IS WHY. The shared fact
  * lives under a family document the caller does not own, so rules cannot carry
  * this: the only rule that would permit the write is one letting a non-owner
  * write into somebody else's family, which is the same shape housemateToken.ts
  * rejected and for the same reason. `families/{familyId}/trashDay/{key}` is
  * deny-write to every client; this callable is the gate.
  *
- * ⚠️ `familyId` COMES FROM THE CLIENT, AND THAT IS SAFE HERE BECAUSE MEMBERSHIP
+ * WARNING: `familyId` COMES FROM THE CLIENT, AND THAT IS SAFE HERE BECAUSE MEMBERSHIP
  * IS VERIFIED AGAINST THE NAMED DOCUMENT. Naming a family you are not in earns
  * `permission-denied` from `planTrashDayCompletion`, and naming one that does
  * not exist earns `not-found`. Taking the id rather than querying for it also
  * keeps this off `where('memberUids','array-contains',uid)` — one fewer read
  * shape, and no index to maintain.
  *
- * 📌 IT IS NOT REACHABLE FROM THE APP YET, and that is inherited rather than
+ * NOTE: IT IS NOT REACHABLE FROM THE APP YET, and that is inherited rather than
  * introduced: nothing stamps a `familyId` on `users/{uid}`, so no client can
  * name its family — the gap recorded in W2-76's rules block and still open,
  * because the creating callable is blocked on Brendan. What lands here is the
@@ -5345,7 +5345,7 @@ export const completeTrashDay = onCall(async (request) => {
     }
     const family = familySnap.data() as FamilyDoc;
 
-    // 🔑 READ THE EXISTING COMPLETION INSIDE THE TRANSACTION. Two members
+    // KEY: READ THE EXISTING COMPLETION INSIDE THE TRANSACTION. Two members
     // tapping at once must not both write: the second read sees the first
     // write's version and the transaction re-runs, so the FIRST completer is
     // preserved rather than whichever call happened to commit last.
@@ -5388,18 +5388,18 @@ export const completeTrashDay = onCall(async (request) => {
 // Brendan names an account he has verified and issues sponges, skins and
 // chests. Before this there was no path at all.
 //
-// 🔑 NO NEW ADMIN MODEL WAS INVENTED. This is the SAME gate as seedShopData and
+// KEY: NO NEW ADMIN MODEL WAS INVENTED. This is the SAME gate as seedShopData and
 // backfillPublicProfiles: POST-only, a shared SEED_SECRET in an `x-seed-secret`
 // header, failing closed when the secret is unset. A custom claim would have
 // been a second admin mechanism guarding one more thing than the first.
 //
-// 🔑 AND SEED_SECRET RATHER THAN A NEW ONE IS A BLAST-RADIUS DECISION, NOT
+// KEY: AND SEED_SECRET RATHER THAN A NEW ONE IS A BLAST-RADIUS DECISION, NOT
 // LAZINESS. FEEDBACK_EXPORT_SECRET exists because that endpoint only READS, and
 // "the read endpoint is the one that gets handed around". This one WRITES
 // player-visible state — the same radius seedShopData already occupies. A third
 // secret would split that radius without shrinking it.
 //
-// 📌 HTTP, NOT A CALLABLE, AND THAT IS THE POINT. The consumer is a human with
+// NOTE: HTTP, NOT A CALLABLE, AND THAT IS THE POINT. The consumer is a human with
 // a terminal. Nothing in lib/ should ever call this. A callable implies the app
 // invokes it, and an admin callable the app can reach is a mint anyone can
 // find — exportGalleryFeedback was a callable and that was a data disclosure.
@@ -5409,7 +5409,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
     return;
   }
 
-  // ⚠️ THE TWO 403s ARE DELIBERATELY DIFFERENT, copied from exportGalleryFeedback
+  // WARNING: THE TWO 403s ARE DELIBERATELY DIFFERENT, copied from exportGalleryFeedback
   // rather than from seedShopData — seedShopData still collapses both into a
   // bare 'Forbidden', which is the shape that cost real time. An UNSET secret
   // and a WRONG one are different problems with different fixes: the first is a
@@ -5458,7 +5458,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
 
   const plan = decision.plan;
 
-  // 🔴 DRY RUN IS THE DEFAULT AND `apply` MUST BE THE BOOLEAN `true`.
+  // CRITICAL: DRY RUN IS THE DEFAULT AND `apply` MUST BE THE BOOLEAN `true`.
   // The precedent in this project is that Brendan executes production writes;
   // this endpoint's job is to show him exactly what it would do first. Requiring
   // the literal `true` rather than any truthy value means a stray `"apply":
@@ -5480,7 +5480,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
   const grantRef = db.doc(`adminGrants/${plan.grantId}`);
   const profileRef = db.doc(`users/${plan.uid}/profile/data`);
 
-  // 🔴 ONE DATE FOR THE WHOLE GRANT, COMPUTED BEFORE THE TRANSACTION OPENS.
+  // CRITICAL: ONE DATE FOR THE WHOLE GRANT, COMPUTED BEFORE THE TRANSACTION OPENS.
   // `db.runTransaction` RE-RUNS on contention, so every `Timestamp.now()`
   // inside it produces a different value on each attempt. Resolving the frozen
   // subject in there would let a grant that retries across UTC midnight stamp
@@ -5488,7 +5488,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
   // disagreeing with itself about when it was granted, discoverable only by a
   // player whose chest rolled the wrong theme.
   //
-  // 📌 `grantedAt` and `issuedAt` below still vary across retries for exactly
+  // NOTE: `grantedAt` and `issuedAt` below still vary across retries for exactly
   // this reason. That is pre-existing and harmless today, and hoisting them
   // would change the meaning of fields other code reads — surfaced here rather
   // than folded into a fix brief (W2-125).
@@ -5502,7 +5502,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
       // ---- reads first, all of them (Firestore transaction requirement) ----
       const grantSnap = await tx.get(grantRef);
       if (grantSnap.exists) {
-        // 🔑 THE IDEMPOTENCY LOCK, THE SAME SHAPE AS processedReceipts: the
+        // KEY: THE IDEMPOTENCY LOCK, THE SAME SHAPE AS processedReceipts: the
         // ledger document is created INSIDE the transaction, so a retry or a
         // concurrent call returns the ORIGINAL grant rather than applying a
         // second one. A retried curl must not be a second 1000 sponges.
@@ -5522,7 +5522,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
 
       // ---- writes ----
       if (plan.sponges > 0) {
-        // ⚠️ increment(), not a computed set. Two admins granting at once, or a
+        // WARNING: increment(), not a computed set. Two admins granting at once, or a
         // player spending mid-grant, must not lose either write — and the
         // profile document may not exist yet on a fresh account, which is why
         // this is a merge rather than an update.
@@ -5536,7 +5536,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
       const alreadyOwned: string[] = [];
       plan.itemIds.forEach((itemId, i) => {
         if (inventorySnaps[i].exists) {
-          // 📌 NOT RE-WRITTEN. Re-granting an owned item would reset `equipped`,
+          // NOTE: NOT RE-WRITTEN. Re-granting an owned item would reset `equipped`,
           // silently un-equipping something the player is wearing. The grant is
           // still recorded as successful — they own it, which is what was asked.
           alreadyOwned.push(itemId);
@@ -5549,10 +5549,10 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
         });
       });
 
-      // 🔴 CHESTS ARE MINTED UNOPENED — Brendan's decision, over rolling them
+      // CRITICAL: CHESTS ARE MINTED UNOPENED — Brendan's decision, over rolling them
       // server-side. The player opens each one through `openPendingChest` and
       // sees the reveal, which is the half that makes a chest a chest.
-      // ⚠️ THE CONSEQUENCE, STATED WHERE IT IS TRUE: the shipped client has no
+      // WARNING: THE CONSEQUENCE, STATED WHERE IT IS TRUE: the shipped client has no
       // UI for these yet. A chest granted today is invisible until that lands.
       const pendingChestIds: string[] = [];
       plan.chestCategories.forEach((category, i) => {
@@ -5565,7 +5565,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
           // should get the odds that were granted rather than the odds that
           // happen to be live when they tap.
           dropTable: CHEST_CATEGORY_DROP_TABLE[category] ?? 'lean',
-          // 🔴 THE SECOND FROZEN AXIS, AND IT WAS MISSING UNTIL W2-125.
+          // CRITICAL: THE SECOND FROZEN AXIS, AND IT WAS MISSING UNTIL W2-125.
           // `dropTable` froze the RARITY axis on the line above; nothing ever
           // froze the SUBJECT axis, and `openPendingChest` was passing the
           // CATEGORY into a filter that reads a SUBJECT. Categories are
@@ -5576,7 +5576,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
           // (`:532-534`, `:2396`) — this is the grant path writing the field the
           // shop path already writes, not a new concept.
           //
-          // ⚠️ RESOLVED FROM THE GRANT DATE, NEVER THE OPEN DATE. `subjectForDay`
+          // WARNING: RESOLVED FROM THE GRANT DATE, NEVER THE OPEN DATE. `subjectForDay`
           // is day-keyed, so calling it at open time would derive the theme from
           // the day the player taps — the same defect `dropTable` exists to
           // prevent, on the other axis. What you were granted is what you get.
@@ -5621,7 +5621,7 @@ export const adminGrant = onRequest(SEED_OPTS, async (req, res) => {
 // A callable, unlike adminGrant, because THIS one the app really does invoke —
 // it is the player's own act, on their own document.
 //
-// 🔑 THE ROLL HAPPENS HERE, NOT AT GRANT TIME, and that is the whole reason
+// KEY: THE ROLL HAPPENS HERE, NOT AT GRANT TIME, and that is the whole reason
 // pendingChests exist as documents rather than as resolved contents. A chest
 // whose result is already decided is a list of items wearing a chest costume.
 export const openPendingChest = onCall(async (request) => {
@@ -5653,7 +5653,7 @@ export const openPendingChest = onCall(async (request) => {
 
   const itemRarity = rollRarity((chest.dropTable as string) ?? 'lean');
 
-  // 🔴 THE SUBJECT, NOT THE CATEGORY. This line read `chest.category` until
+  // CRITICAL: THE SUBJECT, NOT THE CATEGORY. This line read `chest.category` until
   // W2-125, and `pickChestItem`'s first parameter filters `items` on `subject`.
   // Categories are characters|styles|furniture (itemPool.ts:66); subjects are
   // sofa|character|roof|wall|lamp|armchair and siblings (SEED_ITEMS). The two
@@ -5663,12 +5663,12 @@ export const openPendingChest = onCall(async (request) => {
   // always passed a subject: `chestSubject` at the purchase path, and
   // `subjectForDay(category, …)` at the quest payout.
   //
-  // ⚠️ AND THE FAILURE WAS INVERTED, WHICH IS WHY NO FIXTURE CAUGHT IT: an
+  // WARNING: AND THE FAILURE WAS INVERTED, WHICH IS WHY NO FIXTURE CAUGHT IT: an
   // EMPTY subject SKIPS the filter and rolls on rarity alone, so a chest
   // document MISSING its category opened fine while a well-formed one threw.
   // Any test seeded without a category would have gone green over the bug.
   //
-  // 📌 Read from the document, never re-derived. `subjectForDay` is day-keyed,
+  // NOTE: Read from the document, never re-derived. `subjectForDay` is day-keyed,
   // so resolving it here would give the theme of the day the player TAPS —
   // the same defect `dropTable` was frozen to prevent, on the other axis.
   const chestSubject = chest.subject;
@@ -5679,7 +5679,7 @@ export const openPendingChest = onCall(async (request) => {
     // a furniture chest could pay out a character — succeeding while silently
     // ignoring what it was. A refusal is visible; a wrong prize is not.
     //
-    // 🔑 THE CHEST IS NOT CONSUMED BY THIS THROW. It happens before the
+    // KEY: THE CHEST IS NOT CONSUMED BY THIS THROW. It happens before the
     // transaction, so `openedAt` stays null and the chest opens correctly the
     // moment a subject can be resolved for it.
     throw new HttpsError(
@@ -5689,7 +5689,7 @@ export const openPendingChest = onCall(async (request) => {
   }
   const pick = await pickChestItem(chestSubject, itemRarity, uid);
 
-  // 🔑 A GRANTED CHEST HAS NO PURCHASE PRICE, SO ITS REFUND COMES FROM THE LIST
+  // KEY: A GRANTED CHEST HAS NO PURCHASE PRICE, SO ITS REFUND COMES FROM THE LIST
   // PRICE OF THE CATEGORY IT WAS MINTED AS. `category` is written at mint time
   // by adminGrant; `dropTable` is the frozen fallback for a chest minted before
   // the field existed, and it inverts 1:1 through CHEST_CATEGORY_DROP_TABLE.
@@ -5703,7 +5703,7 @@ export const openPendingChest = onCall(async (request) => {
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(chestRef);
     if (!snap.exists) throw new HttpsError('not-found', 'No such chest.');
-    // 🔴 THE RE-READ IS THE REPLAY GUARD. Two taps in flight at once both pass
+    // CRITICAL: THE RE-READ IS THE REPLAY GUARD. Two taps in flight at once both pass
     // the pre-flight check above; only one can pass this one.
     if (snap.data()!.openedAt != null) {
       throw new HttpsError('already-exists', 'That chest is already open.');

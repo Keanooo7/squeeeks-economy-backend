@@ -1,7 +1,7 @@
 /**
  * The credential-free half of `check-deployed-revision.cjs` (W2-106).
  *
- * 🔴 THE FAILURE THAT MATTERS HERE IS FAILING OPEN. The script answers "is
+ * CRITICAL: THE FAILURE THAT MATTERS HERE IS FAILING OPEN. The script answers "is
  * production older than the last commit that changed functions/src?" by
  * comparing two numbers. If the deploy summary ever produced a garbage-but-
  * finite value — or produced nothing and the comparison ran against
@@ -10,27 +10,27 @@
  * end, reproduced inside the instrument, and it is invisible from running it
  * because the broken version looks green.
  *
- * ⚠️ THE gcfv1 TRAP IS THE CONCRETE VERSION OF IT. `onNewUserBefriendGibby` is
+ * WARNING: THE gcfv1 TRAP IS THE CONCRETE VERSION OF IT. `onNewUserBefriendGibby` is
  * a gen1 function and exposes no `source.storageSource`, so a naive reduce over
  * the whole list yields a generation of 0 → 1970-01-01, and every comparison
  * against it reports catastrophic staleness forever. Skipping it silently is
  * the opposite error: a v1 function could then never be reported stale and
  * nobody would know it was unwatched. It is excluded AND named.
  */
-// 🔴 FORCE MODULE SCOPE, AND IT IS LOAD-BEARING RATHER THAN STYLISTIC.
+// CRITICAL: FORCE MODULE SCOPE, AND IT IS LOAD-BEARING RATHER THAN STYLISTIC.
 // Without a single top-level `import` or `export`, TypeScript treats this file
 // as a SCRIPT, so the `const checker` below lands in the GLOBAL scope — and
 // `floorFailureReport.test.ts` declares a top-level `const checker` too. When
 // jest's worker scheduling happens to put both into one ts-jest program the
 // compile fails TS2451 and THIS SUITE DOES NOT RUN.
 //
-// ⚠️ THE FAILURE IS SILENT IN THE DIRECTION THAT MATTERS: a suite that never
+// WARNING: THE FAILURE IS SILENT IN THE DIRECTION THAT MATTERS: a suite that never
 // ran contributes no failures, so the report reads `Tests: 1243 passed, 1243
 // total` — zero red, nine short — and a floor check comparing PASSING counts
 // sees green. Which of the nine sibling files collide depends on worker
 // scheduling, which is why it moved around and looked like flake.
 //
-// 📌 `check-test-floor.cjs` already detects the symptom ("a suite FAILED TO RUN
+// NOTE: `check-test-floor.cjs` already detects the symptom ("a suite FAILED TO RUN
 // and reported no failing test"). This line removes the CAUSE. Do not treat it
 // as a substitute for that detector, and do not delete it as an unused export.
 export {};
@@ -79,7 +79,7 @@ describe('summariseDeploys — the half that decides UP TO DATE', () => {
     });
     expect(r.counted).toBe(1);
     expect(r.oldest!.ms).toBeCloseTo(REAL_MS, 0);
-    // 🔑 AND IT IS NAMED. Excluding silently would mean a gen1 function could
+    // KEY: AND IT IS NAMED. Excluding silently would mean a gen1 function could
     // never be reported stale and nobody would know it was unwatched.
     expect(r.untimed).toEqual(['onNewUserBefriendGibby']);
   });

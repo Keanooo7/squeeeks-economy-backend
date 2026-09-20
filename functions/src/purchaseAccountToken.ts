@@ -5,7 +5,7 @@ import { createHash } from 'crypto';
  * character re-derives every token and orphans the attribution on every
  * transaction Apple has already stamped.
  *
- * 🔑 Must stay byte-identical to `kPurchaseTokenNamespace` in
+ * KEY: Must stay byte-identical to `kPurchaseTokenNamespace` in
  * `lib/core/purchases/purchase_account_token.dart`. The same frozen vectors are
  * asserted in both suites (`__tests__/purchaseAccountToken.test.ts` and
  * `test/core/purchases/purchase_account_token_test.dart`) precisely so the two
@@ -18,14 +18,14 @@ export const NAMESPACE = '6f9d3b2a-1c47-5e8a-9f30-2b7c5d41e8a6';
  * The cutoff after which a transaction carrying **no** `appAccountToken` is
  * refused. `epochMs: null` means the rule is written and tested but disabled.
  *
- * 🔑 It ships disabled deliberately. The token-stamping client build is not in
+ * KEY: It ships disabled deliberately. The token-stamping client build is not in
  * TestFlight yet, so *every* transaction Apple has signed to date is unstamped —
  * any epoch in the past would reject every legitimate purchase in existence.
  * Set it to the release date of the first stamped build once that build is
  * actually live, which turns a permanent compatibility hole into one that closes
  * on a date someone chose on purpose.
  *
- * 🔴🔴 READ THIS BEFORE SETTING IT: DOING SO REFUSES EVERY FAMILY-SHARED
+ * CRITICAL: CRITICAL: READ THIS BEFORE SETTING IT: DOING SO REFUSES EVERY FAMILY-SHARED
  * PURCHASE. (W2-90.)
  *
  * Apple Family Sharing is ON for the Pro subscriptions in App Store Connect, and
@@ -36,11 +36,11 @@ export const NAMESPACE = '6f9d3b2a-1c47-5e8a-9f30-2b7c5d41e8a6';
  * into `permission-denied` for every member of every family, silently, for a
  * reason that has nothing to do with families.
  *
- * ⚠️ AND IT LOOKS SAFE FROM THE BUYER'S SIDE, which is what makes it a trap: the
+ * WARNING: AND IT LOOKS SAFE FROM THE BUYER'S SIDE, which is what makes it a trap: the
  * PURCHASER's own transaction is stamped and keeps working. Only the shared ones
  * break, and only for people who are not the person testing it.
  *
- * 🔑 THE PREREQUISITE IS A FIELD NOTHING READS YET. Apple distinguishes the two
+ * KEY: THE PREREQUISITE IS A FIELD NOTHING READS YET. Apple distinguishes the two
  * with `inAppOwnershipType` (`PURCHASED` / `FAMILY_SHARED`); the only occurrence
  * in this repo is a test fixture. Exempting shared transactions from this rule
  * means reading that field first — a real change, not a flag flip.
@@ -64,7 +64,7 @@ export const accountTokenRollout: { epochMs: number | null } = { epochMs: null }
  * from `request.auth.uid` — the only field it can trust — and refuses to grant
  * when the transaction carries a different one.
  *
- * ⚠️ **This is not a secret.** It is a hash of a uid in a public namespace, so
+ * WARNING: **This is not a secret.** It is a hash of a uid in a public namespace, so
  * anyone who knows a uid can compute it. It *claims* attribution; it does not
  * authorise anything. Authentication is still `request.auth`; this only narrows
  * which account an already-authenticated caller may have a transaction granted to.

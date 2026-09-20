@@ -244,7 +244,7 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// ⚠️ THE SERVER CLOCK IS PINNED TO THE SIMULATED DAY (W2-174)
+// WARNING: THE SERVER CLOCK IS PINNED TO THE SIMULATED DAY (W2-174)
 // ---------------------------------------------------------------------------
 //
 // `recordTaskCompletion` now BOUNDS the client's day key against the server's
@@ -252,13 +252,13 @@ beforeEach(() => {
 // point of the fix, and which makes every `2026-06-29` call below an
 // `invalid-argument` when the real clock is some other month.
 //
-// 🔑 PINNING THE CLOCK IS THE HONEST REPAIR, NOT FLOATING THE DATES. These
+// KEY: PINNING THE CLOCK IS THE HONEST REPAIR, NOT FLOATING THE DATES. These
 // cases assert day-boundary behaviour — the cap resetting on the next day,
 // yesterday's completions not paying again — and a floating date would make
 // them assert it against a moving target. The simulated day is the fixture;
 // the server clock simply has to agree with it.
 //
-// 📌 Declared AFTER the hook above so it runs after `jest.clearAllMocks()`,
+// NOTE: Declared AFTER the hook above so it runs after `jest.clearAllMocks()`,
 // which would otherwise wipe the spy on the first test of every file.
 const SIMULATED_SERVER_NOW = Date.parse('2026-06-29T12:00:00.000Z');
 beforeEach(() => {
@@ -351,13 +351,13 @@ describe('recordTaskCompletion reward wiring', () => {
   // The defect this module was written to fix: XP used to sit behind
   // `if (dayAdvanced)`, so this second call awarded nothing whatsoever.
   test('the SECOND task of a day pays XP but NOT sponges — the two ledgers diverge', async () => {
-    // 🔑 THIS IS THE RESPEC, IN ONE ASSERTION. Brendan, 2026-08-14: "free get 1
+    // KEY: THIS IS THE RESPEC, IN ONE ASSERTION. Brendan, 2026-08-14: "free get 1
     // task they can do a day to get sponges, INFINITE FOR XP." #339 uncapped
     // XP; W1-99 took the free sponge cap to 1. Before those two, this test read
     // `sponges() === 2 * TASK_SPONGE_REWARD` and was a statement that the
     // second task was not gated by the streak-day.
     //
-    // ⚠️ The original property still holds and is still worth pinning — the
+    // WARNING: The original property still holds and is still worth pinning — the
     // second task is NOT silently dropped. What changed is which ledger pays
     // it, and asserting both halves is the only way to tell "capped" from
     // "ignored".
@@ -423,7 +423,7 @@ describe('recordTaskCompletion reward wiring', () => {
     await call('2026-06-29T10:00:00.000000');
 
     // A fresh day's tasks. The stale ledger must not carry paidCount forward.
-    // ⚠️ Derived from the cap, not from a literal: at free = 1 a hardcoded "3"
+    // WARNING: Derived from the cap, not from a literal: at free = 1 a hardcoded "3"
     // would silently be testing the cap rather than the RESET, and would pass
     // for the wrong reason. A second day pays exactly one more capped day.
     resetTasks();
@@ -594,7 +594,7 @@ describe('claimGift XP wiring', () => {
 // deliberate and stays; the XP half was not a decision, it was a shared
 // variable.
 //
-// 🔑 The ledger's `paidCount` was doing two jobs at once — how many completions
+// KEY: The ledger's `paidCount` was doing two jobs at once — how many completions
 // have been paid SPONGES, and the replay guard for the whole callable. Uncapping
 // XP against one counter would re-pay XP for every completion past the cap on
 // every call. The second counter below is what separates them.
@@ -631,7 +631,7 @@ describe('XP is uncapped while sponges stay capped', () => {
   });
 
   test('a replay pays no XP a second time', async () => {
-    // 🔑 THE HYPOTHESIS TEST. Uncapping XP against `paidCount` alone would
+    // KEY: THE HYPOTHESIS TEST. Uncapping XP against `paidCount` alone would
     // re-pay every completion past the cap on each call, because paidCount
     // saturates at the cap and can never record them.
     completeTasks(MAX_PAID_TASKS_PER_DAY + OVER, '2026-06-29');
@@ -700,7 +700,7 @@ describe('the paid task cap lapses with the subscription', () => {
   /** The `{ _type: 'ts', ms }` sentinel this file's admin mock produces. */
   const ts = (ms: number) => ({ _type: 'ts', ms });
 
-  // ⚠️ TWO CLOCKS, AND THEY ARE NOT THE SAME ONE. `clientNowIso` below sets the
+  // WARNING: TWO CLOCKS, AND THEY ARE NOT THE SAME ONE. `clientNowIso` below sets the
   // reward LEDGER's day key and nothing else; entitlement is dated against the
   // real `Date.now()` inside the callable. Anchoring these expiries to the
   // simulated June day instead would put every one of them months in the past,

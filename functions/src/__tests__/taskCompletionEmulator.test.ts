@@ -2,7 +2,7 @@
  * `recordTaskCompletion` — the core loop — driven against a REAL Firestore.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT THE EXISTING GATES DO AND DO NOT PROVE
+ * CRITICAL: WHAT THE EXISTING GATES DO AND DO NOT PROVE
  * ---------------------------------------------------------------------------
  *
  * This callable is the one a player invokes more than any other, and it was
@@ -13,12 +13,12 @@
  *     It proves the word is present. It never executes anything, and it stays
  *     green for a transaction that reads the wrong thing inside it.
  *   · `xp.test.ts` and `streak.test.ts` DO execute the handler — against the
- *     hand-written fake `firebase-admin`. ⚠️ A fake `runTransaction` RUNS THE
+ * hand-written fake `firebase-admin`. WARNING: A fake `runTransaction` RUNS THE
  *     CALLBACK ONCE AND NEVER RETRIES. Contention does not exist there, so the
  *     one property that makes an economy safe cannot be tested.
  *   · `make test` drives the client against fakes.
  *
- * 🔑 SO THE GAP IS NOT "NEVER EXECUTED". It is "never executed where two calls
+ * KEY: SO THE GAP IS NOT "NEVER EXECUTED". It is "never executed where two calls
  * can overlap" — and this callable pays currency, so that is the gap that costs
  * money. `grantTaskRewards` guards a replay with a LEDGER READ INSIDE THE
  * TRANSACTION (`users/{uid}/economy/taskRewards`). Move that read outside and
@@ -26,11 +26,11 @@
  * the grep, and the fake runs sequentially so a stale read never happens. Only
  * two genuinely concurrent calls against a real Firestore can tell.
  *
- * ⚠️ THE POINT OF `the SAME day paid ONCE under CONCURRENT calls` IS THAT NO
+ * WARNING: THE POINT OF `the SAME day paid ONCE under CONCURRENT calls` IS THAT NO
  * OTHER TEST IN THIS REPO CAN GO RED FOR IT.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT THIS STILL CANNOT PROVE
+ * CRITICAL: WHAT THIS STILL CANNOT PROVE
  * ---------------------------------------------------------------------------
  *
  *   · IT DOES NOT ASK PRODUCTION ANYTHING. It runs `index.ts` from THIS working
@@ -79,7 +79,7 @@ function shiftDay(day: string, n: number): string {
 }
 
 /**
- * ⚠️ THE DAY KEY FLOATS NOW, AND IT HAS TO.
+ * WARNING: THE DAY KEY FLOATS NOW, AND IT HAS TO.
  *
  * This file used to pin `2026-08-16` so the key could not drift under a
  * midnight run. `recordTaskCompletion` now BOUNDS the client's key against the
@@ -87,7 +87,7 @@ function shiftDay(day: string, n: number): string {
  * the callable is supposed to refuse — a pinned date would make every test here
  * assert `invalid-argument`.
  *
- * 📌 Drift is handled by the bound itself rather than by pinning: the admitted
+ * NOTE: Drift is handled by the bound itself rather than by pinning: the admitted
  * window is +/- one day, so a run that crosses UTC midnight turns TODAY into
  * yesterday and TOMORROW into today, both still inside it. The two tests that
  * probe the +/-1 EDGE re-derive their key at call time for the same reason.
@@ -123,7 +123,7 @@ async function seedCompletedTasks(uid: string, count: number) {
 /**
  * The reward ledger for [day] — `users/{uid}/days/{day}` since W2-174.
  *
- * ⚠️ IT MOVED, AND THAT IS THE FIX RATHER THAN A REFACTOR. It used to be one
+ * WARNING: IT MOVED, AND THAT IS THE FIX RATHER THAN A REFACTOR. It used to be one
  * document, `users/{uid}/economy/taskRewards`, carrying a `date` field that the
  * three counters compared against a CALLER-CHOSEN key — so naming a different
  * day reset all three. A day is now a document ID, which has no comparison to
@@ -180,7 +180,7 @@ describe('recordTaskCompletion against a real Firestore', () => {
     expect(res.granted.sponges).toBe(TASK_SPONGE_REWARD);
     expect(res.granted.xp).toBe(XP_TASK);
 
-    // 🔑 THE STORED DOCUMENTS, NOT THE RESPONSE. A handler can return the right
+    // KEY: THE STORED DOCUMENTS, NOT THE RESPONSE. A handler can return the right
     // numbers while writing nothing, and the response is what every existing
     // unit test already checks against a fake.
     const ledger = await ledgerOf(SOLO);
@@ -216,7 +216,7 @@ describe('recordTaskCompletion against a real Firestore', () => {
   });
 
   test('🔴 the same day is paid ONCE under CONCURRENT calls', async () => {
-    // ⚠️ THE ASSERTION NO OTHER TEST IN THIS REPO CAN MAKE.
+    // WARNING: THE ASSERTION NO OTHER TEST IN THIS REPO CAN MAKE.
     //
     // Two overlapping invocations of the real handler against a real Firestore.
     // The replay guard is a ledger read INSIDE `grantTaskRewards`' transaction;
@@ -224,13 +224,13 @@ describe('recordTaskCompletion against a real Firestore', () => {
     // pay, and the player is paid twice for one task — silently, and only when
     // two calls overlap.
     //
-    // 🔑 EVERY EXISTING GATE STAYS GREEN FOR THAT MUTATION. economyIdempotency
+    // KEY: EVERY EXISTING GATE STAYS GREEN FOR THAT MUTATION. economyIdempotency
     // greps for the word `runTransaction`, which is still present; the fake
     // firestore in xp.test.ts and streak.test.ts runs the callback once and
     // never retries, so a stale read cannot occur there at all. This is the
     // whole marginal value of the file.
     await seedCompletedTasks(RACER, 1);
-    // 🔑 THE STREAK DOC IS PRE-SEEDED, AND THAT IS WHAT MAKES THIS A RACE.
+    // KEY: THE STREAK DOC IS PRE-SEEDED, AND THAT IS WHAT MAKES THIS A RACE.
     // Without it both calls hit the `streakSnap does not exist` branch and
     // contend on CREATING
     // it, so Firestore serialises them in the streak transaction and the
@@ -257,7 +257,7 @@ describe('recordTaskCompletion against a real Firestore', () => {
     expect(spongesPaid).toBe(TASK_SPONGE_REWARD);
     expect(xpPaid).toBe(XP_TASK);
 
-    // 🔴 AND THE DATABASE AGREES. Two responses summing correctly while the
+    // CRITICAL: AND THE DATABASE AGREES. Two responses summing correctly while the
     // balance was written twice is exactly what a lost-update looks like, so
     // the stored balance is the real assertion.
     const profile = await profileOf(RACER);
@@ -267,7 +267,7 @@ describe('recordTaskCompletion against a real Firestore', () => {
     const ledger = await ledgerOf(RACER);
     expect(ledger?.paidCount).toBe(1);
     expect(ledger?.xpPaidCount).toBe(1);
-    // ⚠️ 30s, not jest's 5s default. Two genuinely contending transactions
+    // WARNING: 30s, not jest's 5s default. Two genuinely contending transactions
     // RETRY, and retrying is the whole mechanism under test — the default
     // timeout fired here the moment the race window actually opened, which
     // read as a hang rather than as the property working.
@@ -312,7 +312,7 @@ describe('recordTaskCompletion against a real Firestore', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-174 · THE DAY KEY WAS CHOSEN BY THE CALLER, AND IT GATED THREE LEDGERS
+// CRITICAL: W2-174 · THE DAY KEY WAS CHOSEN BY THE CALLER, AND IT GATED THREE LEDGERS
 // ---------------------------------------------------------------------------
 //
 // `recordTaskCompletion` derived its day key as `clientNowIso.slice(0, 10)`, and
@@ -327,7 +327,7 @@ describe('recordTaskCompletion against a real Firestore', () => {
 // So alternating two well-formed dates re-minted all three. W2-173 executed it:
 // 15 sponges against a cap of 5, one account, three calls.
 //
-// 🔑 WHY THE FIX IS NOT A SERVER-DERIVED UTC KEY. `dayKey` is also the QUERY key
+// KEY: WHY THE FIX IS NOT A SERVER-DERIVED UTC KEY. `dayKey` is also the QUERY key
 // over `users/{uid}/tasks.completedDate`, which the CLIENT stamps from a bare
 // local `DateTime.now()`. A UTC key would match nothing a Los Angeles player
 // completed after 17:00 local, or an Auckland player completed before 13:00 —
@@ -335,7 +335,7 @@ describe('recordTaskCompletion against a real Firestore', () => {
 // rather than shipping. taskRewards.ts:308 predicted it in advance about a
 // smaller version of the same mistake.
 //
-// ✅ WHAT SHIPPED INSTEAD. The client still names its own local day, but:
+// OK: WHAT SHIPPED INSTEAD. The client still names its own local day, but:
 //   1. BOUNDED   — a key more than one day from the server's UTC date is
 //                  refused. Real offsets span UTC-12..UTC+14, so every honest
 //                  local date is within one day of UTC and nothing legitimate
@@ -346,13 +346,13 @@ describe('recordTaskCompletion against a real Firestore', () => {
 //   3. RATCHETED — a key earlier than the high-water mark is refused outright,
 //                  so the rotation fails LOUDLY instead of quietly paying zero.
 //
-// ⚠️ THE RESIDUAL, MEASURED AND STATED RATHER THAN HIDDEN. The admitted window
+// WARNING: THE RESIDUAL, MEASURED AND STATED RATHER THAN HIDDEN. The admitted window
 // is three keys wide, so a determined caller can pull forward at most TWO extra
 // days' cap, ONCE — after which each real day admits exactly one new key and the
 // long-run rate is the honest one. Deploy 3 of the migration removes even that by
 // dropping the client key entirely once timezone coverage is high enough.
 //
-// 📌 WHICH SCRIPT RUNS THIS FILE: `npm run test:e2e`, NOT `npm test`. The base
+// NOTE: WHICH SCRIPT RUNS THIS FILE: `npm run test:e2e`, NOT `npm test`. The base
 // jest config ignores `*Emulator.test.ts` (see jest.config.js), so quoting
 // `npm test` as this brief's gate would quote a run that never loaded the file.
 
@@ -372,7 +372,7 @@ async function stampTasks(uid: string, ids: string[], day: string) {
 /**
  * What the player has actually been PAID, read off the stored profile.
  *
- * 🔑 Deliberately not the ledger: this is the one quantity whose meaning does
+ * KEY: Deliberately not the ledger: this is the one quantity whose meaning does
  * not change when the ledger's SHAPE changes, so the same assertion is
  * meaningful against the old single document and the new per-day one. A response
  * payload can be right while the write is wrong; the balance cannot.
@@ -498,7 +498,7 @@ describe('🔴 the reward day key is bounded and ratcheted', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 🔴 Ledger 1 of 3 — sponges.
+  // CRITICAL: Ledger 1 of 3 — sponges.
   // -------------------------------------------------------------------------
 
   test('🔴 a rotated day key re-mints NO SPONGES', () => {
@@ -508,7 +508,7 @@ describe('🔴 the reward day key is bounded and ratcheted', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 🔴 Ledger 2 of 3 — XP. The silent one.
+  // CRITICAL: Ledger 2 of 3 — XP. The silent one.
   // -------------------------------------------------------------------------
 
   test('🔴 a rotated day key re-mints NO XP', () => {
@@ -520,7 +520,7 @@ describe('🔴 the reward day key is bounded and ratcheted', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 🔴 Ledger 3 of 3 — the daily 2x bonus.
+  // CRITICAL: Ledger 3 of 3 — the daily 2x bonus.
   // -------------------------------------------------------------------------
 
   test('🔴 a rotated day key re-mints NO 2x DAILY BONUS', () => {
@@ -561,7 +561,7 @@ describe('🔴 the reward day key is bounded and ratcheted', () => {
   });
 
   test('🔴 the PER-DAY DOCUMENT carries the money, not the ratchet', async () => {
-    // 🔑 THE SEPARATION, MADE MEASURABLE. The rotation above is refused by the
+    // KEY: THE SEPARATION, MADE MEASURABLE. The rotation above is refused by the
     // ratchet, so those assertions cannot tell which of the two guards is doing
     // the work — and if the ratchet were ever relaxed, that ambiguity would be
     // a hole nobody could see. This call is AT the high-water mark, which the
@@ -574,7 +574,7 @@ describe('🔴 the reward day key is bounded and ratcheted', () => {
   });
 
   test('a refused rotation does not also break the streak', async () => {
-    // 🔑 THE ORDERING ASSERTION. The reward transaction runs BEFORE the streak
+    // KEY: THE ORDERING ASSERTION. The reward transaction runs BEFORE the streak
     // transaction, so a refused key writes nothing at all. With the two the
     // other way round the throw lands after the streak has already been reset
     // by the backwards date — refusing the call and costing the player their
@@ -611,7 +611,7 @@ describe('🔴 the reward day key is bounded and ratcheted', () => {
   });
 
   test('the bound is not a UTC key in disguise — one day EITHER side is paid', async () => {
-    // 🔴 THE DISPROOF CLAUSE FROM W2-173, KEPT AS A TEST. A Los Angeles player
+    // CRITICAL: THE DISPROOF CLAUSE FROM W2-173, KEPT AS A TEST. A Los Angeles player
     // at 17:00 local sends a key one day BEHIND UTC; an Auckland player at 10:00
     // local sends one a day AHEAD. Both are honest and both must be paid, which
     // is precisely what a server-derived UTC key would have stopped.

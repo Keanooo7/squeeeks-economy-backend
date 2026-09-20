@@ -22,7 +22,7 @@ export const BUNDLE_ID = 'com.brendankeane.cleaning';
  * → General Information → Apple ID on 2026-08-05, and corroborated by the console
  * URL for the same page (`/apps/6797102615/distribution`).
  *
- * ⚠️ Do not set this back to `null`. While it was null the Production verifier
+ * WARNING: Do not set this back to `null`. While it was null the Production verifier
  * could not be *constructed* at all — `new SignedDataVerifier(...,
  * Environment.PRODUCTION, ...)` throws `appAppleId is required when the
  * environment is Production` in v3.1.0, because the constructor validates the
@@ -36,7 +36,7 @@ export const APP_APPLE_ID: number | null = 6797102615;
 /**
  * The one transaction carried by a StoreKit 2 JWS, normalised.
  *
- * ⚠️ A JWS describes exactly ONE transaction — unlike a StoreKit 1 app receipt,
+ * WARNING: A JWS describes exactly ONE transaction — unlike a StoreKit 1 app receipt,
  * which was a cumulative list of every purchase on the device. That difference
  * is the whole reason this module exists; see the header comment on
  * `validateAppleTransaction` in index.ts.
@@ -48,7 +48,7 @@ export interface AppleTransaction {
    * The id of the transaction that STARTED the subscription, stable across
    * every renewal of it.
    *
-   * 🔑 This is the only durable link between a server notification and one of
+ * KEY: This is the only durable link between a server notification and one of
    * our accounts. `transactionId` changes on every renewal and
    * `appAccountToken` is a **one-way** uuidv5 of the uid
    * (`purchaseAccountToken.ts`) that cannot be inverted, so neither can answer
@@ -69,7 +69,7 @@ export interface AppleTransaction {
    * UNIX ms at which Apple refunded or revoked this transaction; null when it
    * still stands.
    *
-   * ⚠️ A refund can land in the MIDDLE of a paid period, so this is the one
+ * WARNING: A refund can land in the MIDDLE of a paid period, so this is the one
    * signal that must revoke an entitlement whose `expiresDate` is still in the
    * future. Everything else can be left to lapse on the clock.
    */
@@ -92,7 +92,7 @@ export interface AppleNotification {
   /**
    * Apple's own unique id for this NOTIFICATION.
    *
-   * 🔴 The idempotency key, and deliberately NOT `transactionId`. Apple sends
+ * CRITICAL: The idempotency key, and deliberately NOT `transactionId`. Apple sends
    * more than one notification about the same transaction — `DID_FAIL_TO_RENEW`
    * and then `EXPIRED` both carry the last renewal's transaction — so a ledger
    * keyed on the transaction id would swallow the second one as
@@ -107,7 +107,7 @@ export interface AppleNotification {
 /**
  * Verifies a StoreKit 2 signed transaction **offline** and returns its payload.
  *
- * 🔑 Offline is the entire point. `SignedDataVerifier` validates the JWS `x5c`
+ * KEY: Offline is the entire point. `SignedDataVerifier` validates the JWS `x5c`
  * chain against Apple's public root CAs locally, so the purchase path makes no
  * network call and needs no App Store Connect API key. (Only
  * `AppStoreServerAPIClient` — which queries transaction *history* — needs an
@@ -119,7 +119,7 @@ export interface AppleNotification {
  * constructed with, so a Sandbox transaction raises INVALID_ENVIRONMENT against
  * the Production verifier and is then re-verified against Sandbox.
  *
- * ⚠️ While {@link APP_APPLE_ID} is null the Production attempt is skipped
+ * WARNING: While {@link APP_APPLE_ID} is null the Production attempt is skipped
  * entirely, because the verifier cannot be constructed without it. Sandbox — and
  * therefore TestFlight — is fully functional; App Store release is not.
  */
@@ -160,7 +160,7 @@ export function makeVerify(
 /**
  * Builds a notification verify function bound to a set of trust anchors.
  *
- * 🔑 A notification is a DIFFERENT JWS shape from a transaction and needs a
+ * KEY: A notification is a DIFFERENT JWS shape from a transaction and needs a
  * different library call — `verifyAndDecodeNotification`, which asserts the
  * bundle id, app id and environment out of the payload's `data` block rather
  * than out of a transaction. `verifyAndDecodeTransaction` cannot parse one.
@@ -206,7 +206,7 @@ export function makeVerifyNotification(
       },
       'Rejected a Production notification because APP_APPLE_ID is unset — ' +
         'set it in appleJws.ts before App Store release',
-      // 🔴 A NOTIFICATION NEEDS A WIDER RETRY PREDICATE THAN A TRANSACTION, and
+      // CRITICAL: A NOTIFICATION NEEDS A WIDER RETRY PREDICATE THAN A TRANSACTION, and
       // getting this wrong breaks Sandbox — which is TestFlight, which is the
       // only environment that can be tested before release.
       //
@@ -285,7 +285,7 @@ function assertConfigured(roots: Buffer[], bundleId: string, message: string): v
  * environment mismatch — the same two-environment shape the old `verifyReceipt`
  * path had in its `21007` retry.
  *
- * ⚠️ While {@link APP_APPLE_ID} is null the Production attempt is SKIPPED
+ * WARNING: While {@link APP_APPLE_ID} is null the Production attempt is SKIPPED
  * entirely, because `SignedDataVerifier` throws on construction without it.
  * Sandbox — and therefore TestFlight — is fully functional; App Store release
  * is not, which is what `productionSkippedMessage` says out loud.
@@ -358,7 +358,7 @@ function isEnvironmentMismatch(error: unknown): boolean {
 }
 
 /**
- * ⚠️ On the NOTIFICATION path this is an environment mismatch wearing another
+ * WARNING: On the NOTIFICATION path this is an environment mismatch wearing another
  * status code, not an assertion that the payload is for another app — see the
  * retry predicate in {@link makeVerifyNotification}. It is not part of the
  * transaction path's predicate, where it means what it says.
@@ -389,7 +389,7 @@ function asHttpsError(error: unknown): HttpsError {
 /**
  * The verification seam.
  *
- * 🔑 Exported as a **mutable object** so tests can replace `appleJws.verify`
+ * KEY: Exported as a **mutable object** so tests can replace `appleJws.verify`
  * with a stub. That is forced rather than stylistic: the previous test harness
  * intercepted Apple by replacing `global.fetch`, and offline verification makes
  * **no HTTP call at all** — there is no transport left to mock. Driving the

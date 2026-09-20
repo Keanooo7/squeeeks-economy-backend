@@ -151,7 +151,7 @@ function stubDb(opts: {
    * Friend-edge paths that ALREADY exist. Everything under `/friends/` is
    * absent unless named here.
    *
-   * ⚠️ This stub used to answer `exists: true` for EVERY path, including friend
+ * WARNING: This stub used to answer `exists: true` for EVERY path, including friend
    * edges a brand-new account cannot have. That was invisible while
    * `ensureGibbyFriendship` wrote unconditionally and never read — the fixture
    * asserted a state no new user is ever in, and nothing consulted it. It
@@ -162,7 +162,7 @@ function stubDb(opts: {
    * Inventory item ids the player ALREADY owns. Everything under `/inventory/`
    * is absent unless named here.
    *
-   * 🔴 THE SAME DEFECT AS `existingFriendEdges`, FOUND THE SAME WAY — W2-161.
+ * CRITICAL: THE SAME DEFECT AS `existingFriendEdges`, FOUND THE SAME WAY — W2-161.
    * This stub answered `exists: true` for every inventory path, so the moment
    * claimDailyGift started ASKING whether the gifted item was already owned, the
    * fixture said yes for a brand-new account that owns nothing, and the grant
@@ -605,7 +605,7 @@ describe('claimDailyGift as a gift from Gibby', () => {
   // W2-161 — the bare `tx.set` that replaced the document
   // -------------------------------------------------------------------------
   //
-  // 🔴 RED ON `main` AT ed008c0. The write this guards was
+  // CRITICAL: RED ON `main` AT ed008c0. The write this guards was
   //
   //     tx.set(db.doc(`users/${uid}/inventory/${chestItem.itemId}`), {
   //       itemId, ownedAt: Timestamp.now(), equipped: false, source: QUEST_SOURCE,
@@ -616,7 +616,7 @@ describe('claimDailyGift as a gift from Gibby', () => {
   // today, silently UNEQUIPPED an item they were wearing, and destroyed any
   // field this write does not name.
   //
-  // ⚠️ THE ASSERTION IS THE ABSENCE OF A WRITE, AND THAT IS DELIBERATE. A
+  // WARNING: THE ASSERTION IS THE ABSENCE OF A WRITE, AND THAT IS DELIBERATE. A
   // blanket `merge: true` — the fix the brief explicitly rules out — would
   // preserve `equipped` and still move `ownedAt` forward, and it would pass any
   // test that only checked `equipped`. Asserting that NOTHING is written to an
@@ -639,7 +639,7 @@ describe('claimDailyGift as a gift from Gibby', () => {
   });
 
   it('THE CONTROL: an unowned gift is still written, so the guard is not a blanket refusal', async () => {
-    // 🔑 Without this, `if (false)` around the write would pass the test above.
+    // KEY: Without this, `if (false)` around the write would pass the test above.
     // The guard has to be selective, not a stop.
     let sawChest = false;
     for (let i = 0; i < 600 && !sawChest; i++) {
@@ -705,7 +705,7 @@ describe('claimDailyGift as a gift from Gibby', () => {
 //      `friendship=${wrote ? 'written' : 'skipped'}` could never say 'skipped',
 //      and backfillGibbyFriendship's `befriended N/M` always had N === M.
 //
-// 🔑 That second point is why this matters for an INVESTIGATION and not only
+// KEY: That second point is why this matters for an INVESTIGATION and not only
 // for correctness: both instruments reported the same answer no matter what was
 // true, so a green run of either could never tell anyone how many accounts were
 // actually missing Gibby.

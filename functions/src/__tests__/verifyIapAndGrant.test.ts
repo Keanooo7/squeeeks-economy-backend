@@ -36,7 +36,7 @@ function docMock(path: string) {
     }),
     // 2026-08-15 (W2-86) — `update` and `delete` added. joinFamily uses both,
     // and the tx fake could only get/set, so the callable could not be driven
-    // here at all. ⚠️ `update` MERGES and requires the document to exist, which
+    // here at all. WARNING: `update` MERGES and requires the document to exist, which
     // is the real Firestore contract and NOT the same as set+merge: a test that
     // updates a missing document should fail rather than quietly create one.
     update: jest.fn(async (val: Record<string, unknown>) => {
@@ -148,7 +148,7 @@ import { accountTokenRollout, purchaseTokenForUid } from '../purchaseAccountToke
 // ---------------------------------------------------------------------------
 // Apple stubbed at the VERIFIER seam, not at the transport.
 //
-// ⚠️ This replaced a `global.fetch` stub returning legacy `verifyReceipt` JSON
+// WARNING: This replaced a `global.fetch` stub returning legacy `verifyReceipt` JSON
 // (`{status: 0, receipt: {in_app: […]}}`) at 14 call sites. Offline JWS
 // verification makes **no HTTP call at all**, so there is no transport left to
 // intercept — every one of those fixtures became meaningless the moment the
@@ -159,7 +159,7 @@ import { accountTokenRollout, purchaseTokenForUid } from '../purchaseAccountToke
 // always actually about: the ledger, idempotency, the grant, and the account
 // boundary — none of which are about Apple.
 //
-// 🔑 A JWS describes exactly ONE transaction, unlike a StoreKit 1 app receipt,
+// KEY: A JWS describes exactly ONE transaction, unlike a StoreKit 1 app receipt,
 // which listed every purchase ever made on the device. That is why these
 // fixtures are single transactions and why the "restore batch" block below
 // hands each callable its own string.
@@ -215,7 +215,7 @@ function seedDoc(path: string, data: Record<string, unknown> | null) {
 /**
  * How many documents each collection query actually RETURNED, in call order.
  *
- * 🔴 Exists because the first version of the bounded-query test did not test
+ * CRITICAL: Exists because the first version of the bounded-query test did not test
  * the bound. It seeded ancient records and asserted they did not COUNT — which
  * `evaluatePromo` guarantees on its own by filtering to the window, so the
  * assertion held whether or not the query was bounded. Reverting the `where`
@@ -255,7 +255,7 @@ function realisticCollections() {
           if (op === '>=') return got.ms >= value.ms;
           throw new Error(`fake collection: unsupported operator ${op}`);
         }, cap),
-      // ⚠️ TRUNCATES THE RESULT, it does not merely annotate the query. A
+      // WARNING: TRUNCATES THE RESULT, it does not merely annotate the query. A
       // `limit` that returned everything would make a caller taking `docs[0]`
       // look correct while reading the whole collection — the same
       // "read everything and discarded most of it" the queryReads counter
@@ -405,7 +405,7 @@ describe('verifyIapAndGrant', () => {
     ).rejects.toMatchObject({ code: 'permission-denied' });
 
     expect(docStore['users/uid-a/profile/data']?.data).toBeUndefined();
-    // 🔑 And the ledger is NOT written. Writing the lock on a rejected grant
+    // KEY: And the ledger is NOT written. Writing the lock on a rejected grant
     // would burn the transaction id, so the rightful owner could never claim it.
     expect(Object.keys(docStore).filter((k) => k.startsWith('processedReceipts/'))).toEqual([]);
   });
@@ -480,14 +480,14 @@ describe('verifySubscriptionReceipt', () => {
   // W2-105 — the two writers of one field, and the two owners of one index
   // -------------------------------------------------------------------------
   //
-  // 🔴 `appStoreNotificationsV2` guards `subscriptionExpiresAt` with a staleness
+  // CRITICAL: `appStoreNotificationsV2` guards `subscriptionExpiresAt` with a staleness
   // check; this path wrote the same field with NO comparison. Measured against
   // the emulator before the fix: the webhook applied an expiry six months out,
   // a restore of an older still-valid transaction overwrote it with one month,
   // and the stored value was the older one — a paying subscriber silently
   // losing five months.
   //
-  // ⚠️ THE IDEMPOTENCY LEDGER CANNOT STAND IN FOR THIS. The webhook records
+  // WARNING: THE IDEMPOTENCY LEDGER CANNOT STAND IN FOR THIS. The webhook records
   // `processedNotifications/{uuid}` and this path checks
   // `processedReceipts/{productId}_{transactionId}`, so a renewal applied by
   // the webhook leaves nothing this path can see.
@@ -516,7 +516,7 @@ describe('verifySubscriptionReceipt', () => {
   });
 
   test('🔑 a restore that grants MORE still applies — the guard is not a freeze', async () => {
-    // ⚠️ THE PERMIT THAT MAKES THE REFUSAL ABOVE MEAN SOMETHING. A guard that
+    // WARNING: THE PERMIT THAT MAKES THE REFUSAL ABOVE MEAN SOMETHING. A guard that
     // rejected every restore would satisfy that test too — and would break the
     // one path a player uses when they reinstall, turning a silent loss into a
     // support ticket.
@@ -563,7 +563,7 @@ describe('verifySubscriptionReceipt', () => {
       data: { uid: 'uid-first-owner', productId: 'sub_pro_monthly' },
     } as any;
 
-    // ⚠️ originalTransactionId PINNED. `mockJws` defaults it to the transaction
+    // WARNING: originalTransactionId PINNED. `mockJws` defaults it to the transaction
     // id, so without this the handler writes subscriptionOwners/tx-other-acct
     // and never touches the seeded key — the assertion below would then pass
     // while the collision branch was never reached. Caught by its sibling test
@@ -608,19 +608,19 @@ describe('verifySubscriptionReceipt', () => {
   // W2-108 — an anonymous buyer is RECORDED, never refused
   // -------------------------------------------------------------------------
   //
-  // 🔴 THE SAFETY PROPERTY, AND IT IS THE OPPOSITE OF WHAT THE COMPLAINT
+  // CRITICAL: THE SAFETY PROPERTY, AND IT IS THE OPPOSITE OF WHAT THE COMPLAINT
   // SOUNDS LIKE. "Anonymous users should not be able to buy" is right about the
   // product and wrong about where to enforce it: Apple has ALREADY CHARGED THE
   // CARD by the time this callable runs. A server that refused here produces a
   // player who HAS PAID AND RECEIVED NOTHING — unrecoverable without a manual
   // refund, and a certain App Review rejection.
   //
-  // 📌 The same shape as `accountTokenRollout.epochMs`, still null for exactly
+  // NOTE: The same shape as `accountTokenRollout.epochMs`, still null for exactly
   // this reason: a guard correct in intent and catastrophic because it fires
   // after the money moved. The account requirement belongs BEFORE the charge,
   // in the client (W1-116), or it does not exist.
   //
-  // ⚠️ SO THIS TEST EXISTS TO GO RED IF ANYONE EVER "TIGHTENS" THIS. It is not
+  // WARNING: SO THIS TEST EXISTS TO GO RED IF ANYONE EVER "TIGHTENS" THIS. It is not
   // describing today's behaviour for completeness; it is the tripwire on a
   // change that would look like an improvement in a diff.
 
@@ -638,7 +638,7 @@ describe('verifySubscriptionReceipt', () => {
     // success would be worse than one that threw.
     expect((docStore['users/uid-anon']?.data as any).subscriptionTier).toBe('pro');
 
-    // ⚠️ ASSERTED IN THE SAME TEST, not a sibling: `beforeEach` calls
+    // WARNING: ASSERTED IN THE SAME TEST, not a sibling: `beforeEach` calls
     // resetStore(), so a second test reading this document finds nothing and
     // fails for a reason that has nothing to do with the property.
     //
@@ -651,7 +651,7 @@ describe('verifySubscriptionReceipt', () => {
   });
 
   test('🔑 a SIGNED-IN buyer is recorded as not anonymous — the pair', () => {
-    // ⚠️ Without this, `purchaserWasAnonymous: true` also passes for a field
+    // WARNING: Without this, `purchaserWasAnonymous: true` also passes for a field
     // hard-coded to true, and the count it exists to support would be every
     // purchase ever made.
     const future = Date.now() + 90 * 24 * 3600 * 1000;
@@ -781,7 +781,7 @@ describe('verifySubscriptionReceipt', () => {
 // having granted nothing — a paying customer reinstalls and silently loses
 // their subscription tier.
 //
-// ⚠️ The note that used to sit here explained the collision via StoreKit 1,
+// WARNING: The note that used to sit here explained the collision via StoreKit 1,
 // where `serverVerificationData` is one cumulative app receipt covering every
 // purchase on the device, so the two callables were literally handed the same
 // string. **That is not this app's code path** — the app runs StoreKit 2 and
@@ -881,7 +881,7 @@ describe('one restore batch, two products', () => {
 // 'sub_premium_monthly' and had never heard of the annual. A real annual
 // purchase was rejected as "Not a subscription product".
 //
-// ⚠️ BEFORE THIS BLOCK, NO TEST ANYWHERE EXERCISED A REJECTED PRODUCT ID.
+// WARNING: BEFORE THIS BLOCK, NO TEST ANYWHERE EXERCISED A REJECTED PRODUCT ID.
 // Every existing case fed the allow-list something it already accepted, so the
 // negative half of that gate — the half that stops an arbitrary string being
 // billed as a subscription — had never once been executed.
@@ -942,7 +942,7 @@ describe('verifySubscriptionReceipt — product id decoding', () => {
 // ---------------------------------------------------------------------------
 // appStoreNotificationsV2 — the renewal path
 //
-// 🔴 THE FAILURE THIS ENDPOINT EXISTS FOR. Both client purchase listeners are
+// CRITICAL: THE FAILURE THIS ENDPOINT EXISTS FOR. Both client purchase listeners are
 // created INSIDE a buy action and cancelled when it resolves
 // (`subscription_purchase_provider.dart:71`, `shop_purchase_provider.dart:81`),
 // so `verifySubscriptionReceipt` is only ever reached from inside an active buy
@@ -1078,7 +1078,7 @@ describe('appStoreNotificationsV2 — idempotency', () => {
   });
 
   test('the ledger is keyed on notificationUUID, so EXPIRED after DID_RENEW still lands', async () => {
-    // 🔴 THE REGRESSION THIS KEY EXISTS TO PREVENT. Apple sends more than one
+    // CRITICAL: THE REGRESSION THIS KEY EXISTS TO PREVENT. Apple sends more than one
     // notification about the SAME transaction. A notification ledger keyed on
     // `transactionId` — which the brief described as already sufficient, and
     // which `receiptLedgerRef` uses correctly for PURCHASES — would classify
@@ -1104,7 +1104,7 @@ describe('appStoreNotificationsV2 — idempotency', () => {
 
 describe('appStoreNotificationsV2 — delivery order', () => {
   test('a stale EXPIRED redelivered AFTER a renewal does not wipe the entitlement', async () => {
-    // 🔴 Apple does not guarantee order and retries for ~3 days. Without the
+    // CRITICAL: Apple does not guarantee order and retries for ~3 days. Without the
     // signedDate guard, an EXPIRED that arrives late — after the DID_RENEW that
     // superseded it — would drop a paying subscriber to free.
     seedOwner();
@@ -1144,7 +1144,7 @@ describe('appStoreNotificationsV2 — delivery order', () => {
 
 describe('appStoreNotificationsV2 — a refund cuts access immediately', () => {
   test('REFUND drops the tier even though the paid period has weeks left', async () => {
-    // 🔴 The one ending the clock cannot handle. #343 made every reader date
+    // CRITICAL: The one ending the clock cannot handle. #343 made every reader date
     // the stored tier against the clock, which correctly handles a cancellation
     // or a natural expiry with no server write at all — but a refund happens
     // MID-PERIOD, leaving `subscriptionExpiresAt` weeks in the future on a
@@ -1216,7 +1216,7 @@ describe('appStoreNotificationsV2 — the signature IS the authentication', () =
 
 describe('appStoreNotificationsV2 — an unknown subscription', () => {
   test('an unmatched notification asks Apple to RETRY and takes no lock', async () => {
-    // ⚠️ 503 rather than 200, and deliberately no ledger write. Apple sends
+    // WARNING: 503 rather than 200, and deliberately no ledger write. Apple sends
     // SUBSCRIBED at the same moment the client calls verifySubscriptionReceipt,
     // so this is a genuine race that a retry wins once the owner index appears.
     // Taking the lock here would make that retry a no-op and strand the
@@ -1423,7 +1423,7 @@ describe('claimRetentionPromo', () => {
     // shape used elsewhere (`db.collection(...).get()`, index.ts) would read a
     // player's entire history to answer a 21-day question.
     //
-    // ⚠️ THIS ASSERTS THE READ, NOT THE OUTCOME, and the distinction is the
+    // WARNING: THIS ASSERTS THE READ, NOT THE OUTCOME, and the distinction is the
     // whole test. An earlier version checked only that ancient records did not
     // COUNT — which `evaluatePromo` guarantees by itself — so deleting the
     // `where` clause left it green. `queryReads` measures what came back.
@@ -1489,7 +1489,7 @@ const callPlants = (data: any = {}, uid: string | null = 'uid-a') =>
 
 describe('getPlantDirectory', () => {
   test('serves the bundled directory when nothing is configured', async () => {
-    // 🔑 THE DEFAULT PATH, and the one that matters most. A hand-seeded config
+    // KEY: THE DEFAULT PATH, and the one that matters most. A hand-seeded config
     // document that nothing writes is a trap this repo has fallen into twice —
     // shopConfig/weeklyOffers was never seeded in production and rotation
     // warned and returned every Monday, and the unseeded `items` collection
@@ -1606,7 +1606,7 @@ describe('getPlantDirectory', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-79 — the family entitlement fan-out, driven through the real handler
+// CRITICAL: W2-79 — the family entitlement fan-out, driven through the real handler
 // ---------------------------------------------------------------------------
 //
 // W2-76 left the residual in its own header: `familyProExpiresAt` is the
@@ -1616,7 +1616,7 @@ describe('getPlantDirectory', () => {
 // end to end rather than the plan function, because the plan was already
 // green while the path to it was inert.
 //
-// 🔴 AND THAT IS NOT HYPOTHETICAL. `sub_family_monthly` was missing from
+// CRITICAL: AND THAT IS NOT HYPOTHETICAL. `sub_family_monthly` was missing from
 // SUBSCRIPTION_PRODUCT_TIERS, so `effectOf` classified EVERY family
 // notification as `ignore` — "not a subscription product" — before it ever
 // looked at the type. The fan-out could not have fired once, and every test
@@ -1629,7 +1629,7 @@ describe('appStoreNotificationsV2 — the family fan-out', () => {
   const OTHER_KID = 'uid-other-kid';
 
   function seedFamilies() {
-    // 🔴 THE DECOY IS SEEDED FIRST, AND THE ORDER IS LOAD-BEARING — it is the
+    // CRITICAL: THE DECOY IS SEEDED FIRST, AND THE ORDER IS LOAD-BEARING — it is the
     // only reason the cross-family control below can fail.
     //
     // The read is `.where('ownerUid', '==', uid).limit(1)`, and the fake
@@ -1644,7 +1644,7 @@ describe('appStoreNotificationsV2 — the family fan-out', () => {
     // Verified by mutation both ways: scoping intact + this order → green;
     // scoping removed + this order → 4 red, including this control.
     //
-    // 🔑 A control over a QUERY has to be seeded so the wrong query returns the
+    // KEY: A control over a QUERY has to be seeded so the wrong query returns the
     // wrong row. Two rows where the right one happens to be first is a fixture
     // that cannot distinguish the predicate from the ordering.
     seedDoc('families/fam-theirs', {
@@ -1806,7 +1806,7 @@ describe('appStoreNotificationsV2 — the family fan-out', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-156 — THE APPLE FAMILY SHARING RECIPIENT: THE FAMILY PRODUCT WITH NO
+// CRITICAL: W2-156 — THE APPLE FAMILY SHARING RECIPIENT: THE FAMILY PRODUCT WITH NO
 // SQUEEEKS FAMILY AT ALL
 // ---------------------------------------------------------------------------
 //
@@ -1818,24 +1818,24 @@ describe('appStoreNotificationsV2 — the family fan-out', () => {
 // a different set of people, capped at FAMILY_CAP (5), and it only exists if
 // somebody built one in-app.
 //
-// 🔑 SO THIS SHAPE IS NOT AN EDGE CASE, IT IS A PAYING CUSTOMER: an account
+// KEY: SO THIS SHAPE IS NOT AN EDGE CASE, IT IS A PAYING CUSTOMER: an account
 // holding `sub_family_monthly` that never purchased it and belongs to NO
 // Squeeeks family. They must be Pro. Nothing about an in-app family should be
 // required for that, because Apple already decided they are entitled.
 //
-// ⚠️ WHY IT WAS UNTESTED RATHER THAN UNREACHABLE. Every pre-existing
+// WARNING: WHY IT WAS UNTESTED RATHER THAN UNREACHABLE. Every pre-existing
 // `sub_family_monthly` notification test calls `seedFamilies()` first
 // (:1673, :1694, :1719, :1787), and the one test that constructs "subscriber
 // owning NO family" (:1770) hardcodes `sub_pro_monthly` through both
 // `mockNotification` (:972) and `seedOwner` (:1013). Right shape, wrong
 // product — the two halves have never been held at once.
 //
-// 🔑 THE BEHAVIOUR IS CORRECT TODAY, AND IT IS CORRECT BY ORDERING. The tier
+// KEY: THE BEHAVIOUR IS CORRECT TODAY, AND IT IS CORRECT BY ORDERING. The tier
 // write (index.ts:1828) is UNCONDITIONAL and comes FIRST; the family lookup
 // (index.ts:1882) is `if (ownedFamily)` — A SKIP, NOT A REFUSAL — and comes
 // after. These tests buy that ordering, which no existing assertion can see.
 //
-// 📌 NOT the same surface as `🔴 W2-90 Family Sharing and the account boundary`
+// NOTE: NOT the same surface as `CRITICAL: W2-90 Family Sharing and the account boundary`
 // below. That block drives `verifyIapAndGrant` over a CONSUMABLE
 // (`sponge_pack_100`) and is about `appAccountToken`; this one drives
 // `appStoreNotificationsV2` over the SUBSCRIPTION. Neither covers the other.
@@ -1949,7 +1949,7 @@ describe('🔴 W2-156 Apple Family Sharing recipient — family product, NO fami
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-86 — a joiner is entitled AT THE MOMENT THEY JOIN
+// CRITICAL: W2-86 — a joiner is entitled AT THE MOMENT THEY JOIN
 // ---------------------------------------------------------------------------
 //
 // THE DEFECT THIS FILE NOW GUARDS, and it shipped green in W2-83:
@@ -1958,7 +1958,7 @@ describe('🔴 W2-156 Apple Family Sharing recipient — family product, NO fami
 // received nothing until the owner's next DID_RENEW, up to a full billing month
 // of a paid-for member getting nothing.
 //
-// 🔑 THESE TESTS MUST FAIL AGAINST THE CODE AS IT STOOD BEFORE THIS PR. That is
+// KEY: THESE TESTS MUST FAIL AGAINST THE CODE AS IT STOOD BEFORE THIS PR. That is
 // the known-positive: a test for a missing write that passes against the
 // version without the write is testing nothing. Verified by deleting the new
 // tx.set and watching them go red.
@@ -2039,14 +2039,14 @@ describe('🔴 W2-86 joinFamily grants the entitlement immediately', () => {
   });
 
   test('🔴 CONTROL — an owner on a PERSONAL pro grants nothing, and now so does the gate', () => {
-    // 📌 THE OPEN QUESTION THIS TEST PINNED IS CLOSED (W2-177, Brendan
+    // NOTE: THE OPEN QUESTION THIS TEST PINNED IS CLOSED (W2-177, Brendan
     // 2026-09-04). It used to read: "planFamilyCreation ACCEPTS a personal Pro
     // owner, but the fan-out grants only for the FAMILY product, so such an
     // owner can create a family that entitles nobody. Which side moves is a
     // pricing decision and is Brendan's." The CREATE GATE moved: it now refuses
     // a personal Pro with `needs-family-subscription`.
     //
-    // 🔑 THE ASSERTION BELOW IS UNCHANGED AND STILL LOAD-BEARING. It is about
+    // KEY: THE ASSERTION BELOW IS UNCHANGED AND STILL LOAD-BEARING. It is about
     // the FAN-OUT, which did not move, and it is the reason the two halves now
     // agree rather than a restatement of the gate. It also still covers the
     // families created BEFORE the ruling, whose owners hold a personal Pro and
@@ -2074,7 +2074,7 @@ describe('🔴 W2-86 joinFamily grants the entitlement immediately', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-90 — FAMILY SHARING, and the boundary that will refuse it on a date
+// CRITICAL: W2-90 — FAMILY SHARING, and the boundary that will refuse it on a date
 //            somebody chooses
 // ---------------------------------------------------------------------------
 //
@@ -2089,11 +2089,11 @@ describe('🔴 W2-86 joinFamily grants the entitlement immediately', () => {
 // Everything turns on what Apple puts in `appAccountToken` on a family-shared
 // transaction, because `assertAccountBoundary` compares exactly that field.
 //
-// 📌 APPLE'S DOCUMENTATION SAYS IT IS NOT THERE: "If your app supports Family
+// NOTE: APPLE'S DOCUMENTATION SAYS IT IS NOT THERE: "If your app supports Family
 // Sharing, note that appAccountToken is not available for family shared
 // transactions", and the same pages direct you to `appTransactionId` instead.
 //
-// ⚠️ PROVENANCE, STATED BECAUSE THIS WHOLE BRIEF IS ABOUT LABELLING RELAYS:
+// WARNING: PROVENANCE, STATED BECAUSE THIS WHOLE BRIEF IS ABOUT LABELLING RELAYS:
 // developer.apple.com renders its docs client-side, so a fetch of those pages
 // returns the title and no body. That sentence comes from the SEARCH INDEX of
 // Apple's own pages, corroborated across two independent queries — not from
@@ -2102,7 +2102,7 @@ describe('🔴 W2-86 joinFamily grants the entitlement immediately', () => {
 // possible shape, so the behaviour is established either way.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE HYPOTHESIS IN THE BRIEF IS WRONG, AND THE INVERSE IS THE FINDING
+// CRITICAL: THE HYPOTHESIS IN THE BRIEF IS WRONG, AND THE INVERSE IS THE FINDING
 // ---------------------------------------------------------------------------
 //
 // The brief expected family members to be REFUSED today — Apple grants the
@@ -2112,7 +2112,7 @@ describe('🔴 W2-86 joinFamily grants the entitlement immediately', () => {
 // member IS granted — BY THE COMPATIBILITY BRANCH, which is exactly the "it may
 // already work by accident" case the brief told me to check first.
 //
-// 🔴 AND THAT IS A LANDMINE RATHER THAN A RELIEF. `purchaseAccountToken.ts:24`
+// CRITICAL: AND THAT IS A LANDMINE RATHER THAN A RELIEF. `purchaseAccountToken.ts:24`
 // instructs the next person to "Set it to the release date of the first stamped
 // build once that build is actually live". The moment somebody follows that
 // written instruction, EVERY FAMILY-SHARED TRANSACTION STARTS BEING REFUSED —
@@ -2123,7 +2123,7 @@ describe('🔴 W2-90 Family Sharing and the account boundary', () => {
   const PURCHASER = 'uid-parent';
   const MEMBER = 'uid-child';
 
-  // ⚠️ Re-declared rather than hoisted: `call` lives inside the
+  // WARNING: Re-declared rather than hoisted: `call` lives inside the
   // `verifyIapAndGrant` describe above and is not in scope here. Appending a
   // block that referenced it compiled under `tsc --noEmit` (which does not
   // include this file's project) and failed under ts-jest as
@@ -2168,7 +2168,7 @@ describe('🔴 W2-90 Family Sharing and the account boundary', () => {
     // refusal — and takes Family Sharing with it, silently, because a shared
     // transaction has no token to present.
     //
-    // 🔑 THIS IS THE FINDING. It is not broken today; it breaks on a date
+    // KEY: THIS IS THE FINDING. It is not broken today; it breaks on a date
     // somebody chooses on purpose, for a reason unrelated to families.
     accountTokenRollout.epochMs = 1_000;
     mockJws({
@@ -2215,7 +2215,7 @@ describe('🔴 W2-90 Family Sharing and the account boundary', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-163 — THE FAMILY THE BUYER ALREADY HAS
+// CRITICAL: W2-163 — THE FAMILY THE BUYER ALREADY HAS
 // ---------------------------------------------------------------------------
 //
 // A player buys `sub_family_monthly` and someone ALREADY in their family gets
@@ -2228,9 +2228,9 @@ describe('🔴 W2-90 Family Sharing and the account boundary', () => {
 // Server Notifications URL has never been confirmed registered. So an existing
 // member got `familyProExpiresAt` from NEITHER route.
 //
-// ✅ Brendan, 2026-08-30: fan out to existing members on purchase.
+// OK: Brendan, 2026-08-30: fan out to existing members on purchase.
 //
-// 🔑 THE DECOY FAMILY IS SEEDED FIRST, AND THE ORDER IS LOAD-BEARING — the same
+// KEY: THE DECOY FAMILY IS SEEDED FIRST, AND THE ORDER IS LOAD-BEARING — the same
 // lesson the notification block above this file already paid for. The read is
 // `.where('ownerUid','==',uid).limit(1)` and the fake returns matches in
 // insertion order, so with the RIGHT family seeded first `.limit(1)` hands it
@@ -2304,7 +2304,7 @@ describe('🔴 W2-163 the buyer already has a family', () => {
   });
 
   test('🔴 CONTROL: buying a PERSONAL pro does NOT revoke the family', async () => {
-    // 🔴 THE ONE THAT WOULD HAVE BEEN A DISASTER, and the reason this call site
+    // CRITICAL: THE ONE THAT WOULD HAVE BEEN A DISASTER, and the reason this call site
     // uses `planFamilyFanOutForEffect` rather than `planFamilyFanOut` directly.
     // `planFamilyFanOut` plans a REVOKE for every subject whenever
     // `ownerHasFamilySubscription` is false — one function that both grants and

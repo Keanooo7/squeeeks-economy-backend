@@ -2,7 +2,7 @@
  * What a housemate is allowed to see of another account.
  *
  * ---------------------------------------------------------------------------
- * 🔑 PROJECT, DO NOT WIDEN — AND THIS FILE IS THE PROJECTION
+ * KEY: PROJECT, DO NOT WIDEN — AND THIS FILE IS THE PROJECTION
  * ---------------------------------------------------------------------------
  *
  * Equipped skins live at `users/{uid}/inventory/{itemId}`, which is owner-only
@@ -11,7 +11,7 @@
  * reviewed yet — the same argument `publicProfiles` already makes for existing
  * as a separate document rather than as a relaxation of `users/{uid}`.
  *
- * ⚠️ AND IT WOULD LEAK MORE THAN THE FEATURE ASKS FOR. The inventory says what
+ * WARNING: AND IT WOULD LEAK MORE THAN THE FEATURE ASKS FOR. The inventory says what
  * a player owns, so a reader of the whole collection learns what they have NOT
  * unlocked — a proxy for how long they have played and how much they have
  * spent. The screen needs only what is currently WORN.
@@ -23,7 +23,7 @@
  * a direct client read has none.
  *
  * ---------------------------------------------------------------------------
- * 🔴 TASKS ARE DELIBERATELY ABSENT, AND THE REASON IS NOT "LATER"
+ * CRITICAL: TASKS ARE DELIBERATELY ABSENT, AND THE REASON IS NOT "LATER"
  * ---------------------------------------------------------------------------
  *
  * The spec asks for the host's tasks for TODAY. That cannot be computed here,
@@ -44,7 +44,7 @@
  * `cleaningDayOfWeek` and `weekStartDate`, and neither says what day the host
  * is currently having.
  *
- * 📌 `streak.ts`'s pattern does not rescue it. That works because the CLIENT
+ * NOTE: `streak.ts`'s pattern does not rescue it. That works because the CLIENT
  * writes a naive-local wall-clock string and the server does arithmetic in
  * that frame — but "today's tasks" is not a completion record, it is a lookup
  * into a schedule, and no host-written date exists to key it by.
@@ -62,7 +62,7 @@ import { rosterOf } from './housemateToken';
 /**
  * The complete set of keys a housemate view may contain.
  *
- * 🔴 THE TEST ON THIS IS "ONLY THESE", NEVER "CONTAINS THESE". A presence
+ * CRITICAL: THE TEST ON THIS IS "ONLY THESE", NEVER "CONTAINS THESE". A presence
  * assertion passes when a field is ADDED to the source and carried through,
  * which is the entire failure this module exists to prevent — the source
  * documents will gain fields, and every one of them must be excluded by
@@ -85,27 +85,27 @@ export const STARTER_FRIEND_UID = 'gibby';
 /**
  * Whether [guestUid] may see inside [hostUid]'s account.
  *
- * 🔑 THE SAME PREDICATE AS `canViewHouse` IN firestore.rules — deliberately,
+ * KEY: THE SAME PREDICATE AS `canViewHouse` IN firestore.rules — deliberately,
  * and built on the exported `rosterOf` rather than re-parsing the roster:
  *
  *     canViewHouse(uid) = (isFriend(uid) && housemates(uid).hasAny([auth.uid]))
  *                       || sharesFamilyWith(uid)
  *
- * 🔑 THE FAMILY DISJUNCT READS THE ROSTER, NOT THE POINTER (W2-111). The rules
+ * KEY: THE FAMILY DISJUNCT READS THE ROSTER, NOT THE POINTER (W2-111). The rules
  * resolve users/{guest}.familyId only to LOOK UP families/{id}, then decide on
  * memberUids — so this takes the resolved roster and asks it the same
  * question. Mirroring the pointer comparison instead (guest.familyId ===
  * host.familyId) would be a second, subtly different predicate that agrees
  * with the rules right up until the two documents disagree.
  *
- * ⚠️ It has to be re-expressed here because the Admin SDK bypasses rules
+ * WARNING: It has to be re-expressed here because the Admin SDK bypasses rules
  * entirely, so a callable that read with admin privileges and did not check
  * would be a hole straight through the consent model. That duplication is
  * forced by the platform, not chosen — the mitigation is that both sides read
  * the SAME roster field through the SAME helper, and that this is stated
  * rather than left for someone to discover.
  *
- * 📌 Friendship alone is not enough, which is the whole point of the split
+ * NOTE: Friendship alone is not enough, which is the whole point of the split
  * argued in the rules: accepting a friend request and letting someone into
  * your home are two different consents.
  */
@@ -117,7 +117,7 @@ export function mayViewHousemateData(args: {
   /**
    * `memberUids` of the GUEST's family, or `[]` when they are in none.
    *
-   * ⚠️ Defaulted so an existing call site cannot silently widen access, and
+ * WARNING: Defaulted so an existing call site cannot silently widen access, and
    * read through `familyRosterOf` for the same reason `rosterOf` exists: a
    * malformed document must mean "no family", not a thrown callable.
    */
@@ -130,7 +130,7 @@ export function mayViewHousemateData(args: {
   if (hostUid === guestUid) return true;
   // Gibby is everybody's housemate by construction; the rules say the same.
   if (hostUid === STARTER_FRIEND_UID) return true;
-  // 🔑 BEFORE the friendship gate, not after. A family member need not be a
+  // KEY: BEFORE the friendship gate, not after. A family member need not be a
   // friend — that is the entire point of W2-111 — and the early return below
   // would otherwise refuse them one line before this could answer.
   const family = args.guestFamilyMemberUids ?? [];
@@ -159,11 +159,11 @@ export function familyRosterOf(
 /**
  * Equipped skins from raw inventory rows, keyed by slot.
  *
- * ⚠️ Reads `isEquipped === true` STRICTLY. A missing field, `null`, `0` or the
+ * WARNING: Reads `isEquipped === true` STRICTLY. A missing field, `null`, `0` or the
  * string `"true"` all mean not-equipped: a truthy check here would publish a
  * row that the owner's own screen does not draw as worn.
  *
- * 🔑 CHARACTER SKINS ARE INCLUDED, and that is the actual gap. If you can see
+ * KEY: CHARACTER SKINS ARE INCLUDED, and that is the actual gap. If you can see
  * someone's house you already see their walls, their floors and their
  * furniture — the animal standing in it was the one thing missing, which made
  * the visit read as a different person's home.

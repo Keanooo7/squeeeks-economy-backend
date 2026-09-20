@@ -2,7 +2,7 @@
 //
 // W2-13. Replaying the completion log through the live evaluator.
 //
-// 🔴 The gate the brief asked for by name is the third block: A RECOMPUTE
+// CRITICAL: The gate the brief asked for by name is the third block: A RECOMPUTE
 // CANNOT RE-GRANT A CLAIMED TIER, tested by attempting exactly that rather than
 // by asserting the happy path.
 
@@ -310,7 +310,7 @@ describe('the recompute does not mutate what it is given', () => {
 // The callable's read-only contract, gated rather than asserted
 // ---------------------------------------------------------------------------
 //
-// 🔴 EVERY SAFETY CLAIM IN THIS FEATURE RESTS ON "IT GRANTS NOTHING". Prose
+// CRITICAL: EVERY SAFETY CLAIM IN THIS FEATURE RESTS ON "IT GRANTS NOTHING". Prose
 // saying so is not a gate — the reachability suite in this repo exists because
 // a prose warning at index.ts:60 did not prevent anything. So the handler body
 // is checked against the source.
@@ -318,7 +318,7 @@ describe('recomputeQuestReport writes nothing, by gate not by promise', () => {
   /**
    * CODE view of the handler, via the shared helper (W2-30).
    *
-   * 🔑 Measured before changing: every forbidden token — `.set(`, `awardXp`,
+ * KEY: Measured before changing: every forbidden token — `.set(`, `awardXp`,
    * `runTransaction`, `recomputeFromLog(` — was absent RAW and STRIPPED, so
    * this guard was never lying. But `recomputeFromLog` DOES appear in a comment
    * inside the slice; it escaped only because the assertion includes the

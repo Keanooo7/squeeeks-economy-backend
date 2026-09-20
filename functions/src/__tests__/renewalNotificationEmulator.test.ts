@@ -2,7 +2,7 @@
  * `appStoreNotificationsV2` under contention — the only race Apple creates for us.
  *
  * ---------------------------------------------------------------------------
- * 🔴 EVERY OTHER CONTENTION TEST IN THIS REPO MANUFACTURES THE COLLISION
+ * CRITICAL: EVERY OTHER CONTENTION TEST IN THIS REPO MANUFACTURES THE COLLISION
  * ---------------------------------------------------------------------------
  *
  * This one is the production case. It is a server-to-server webhook, **Apple
@@ -13,14 +13,14 @@
  * WHAT THE KILLING QUESTION TURNED UP, BEFORE THIS FILE WAS WRITTEN
  * ---------------------------------------------------------------------------
  *
- * 🔑 THE DUPLICATE CASE IS NEARLY UNTESTABLE, AND THAT IS THE INTERESTING PART.
+ * KEY: THE DUPLICATE CASE IS NEARLY UNTESTABLE, AND THAT IS THE INTERESTING PART.
  * Applying an `entitle` effect twice writes the SAME tier, product id and
  * expiry — it is idempotent by value. So hoisting the lock read out of the
  * transaction produces almost no observable difference on a redelivery, and a
  * test built around "Apple retried, was it applied once?" would be weak
  * evidence dressed as a strong claim.
  *
- * 🔴 THE PROPERTY THAT IS *NOT* IDEMPOTENT IS THE STALENESS GUARD, and it is
+ * CRITICAL: THE PROPERTY THAT IS *NOT* IDEMPOTENT IS THE STALENESS GUARD, and it is
  * the one that costs a subscription. `subscriptionNotifiedAt` is read INSIDE
  * the transaction and compared against `signedDateMs`. Two notifications of
  * DIFFERENT ages arriving together — an older EXPIRED redelivered after a newer
@@ -38,7 +38,7 @@
  * That is the sentence under test. It had never been driven against a database
  * that can actually make two writers collide.
  *
- * 📌 AND THE RACE WINDOW IS REACHABLE — TRACED FIRST, NOT DISCOVERED AFTER.
+ * NOTE: AND THE RACE WINDOW IS REACHABLE — TRACED FIRST, NOT DISCOVERED AFTER.
  * Before `runTransaction` the handler does: `verifyNotification` (local, no
  * Firestore), `effectOf` (pure), and `subscriptionOwnerRef(...).get()` (a
  * READ). **There is no write**, so nothing serialises the two deliveries
@@ -53,12 +53,12 @@
  *   processedNotifications/{notificationUUID}       THIS handler's lock
  *   subscriptionOwners/{originalTransactionId}      the account index
  *
- * 🔑 The notification lock is keyed on the NOTIFICATION, never the transaction —
+ * KEY: The notification lock is keyed on the NOTIFICATION, never the transaction —
  * `DID_FAIL_TO_RENEW` and `EXPIRED` both carry the same renewal transaction, so
  * a transaction-keyed ledger would swallow the second and never revoke.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT THIS STILL CANNOT PROVE
+ * CRITICAL: WHAT THIS STILL CANNOT PROVE
  * ---------------------------------------------------------------------------
  *
  *   · NOTHING ABOUT APPLE'S SIGNATURES. `verifyNotification` is stubbed by
@@ -194,7 +194,7 @@ describe('appStoreNotificationsV2 against a real Firestore', () => {
   });
 
   test('🔑 a LATER notification DOES apply — the guard is ordering, not a freeze', async () => {
-    // ⚠️ THE CONTROL WITHOUT WHICH EVERY REFUSAL BELOW IS MEANINGLESS. A handler
+    // WARNING: THE CONTROL WITHOUT WHICH EVERY REFUSAL BELOW IS MEANINGLESS. A handler
     // that ignored everything after the first notification would satisfy the
     // stale test and the concurrency test both — and would also mean a
     // subscription could never be renewed, cancelled or refunded again.
@@ -211,7 +211,7 @@ describe('appStoreNotificationsV2 against a real Firestore', () => {
   });
 
   test('🔴 an OLDER notification racing a NEWER one cannot wipe the entitlement', async () => {
-    // ⚠️ THE ASSERTION NO OTHER TEST IN THIS REPO CAN MAKE, and the reason this
+    // WARNING: THE ASSERTION NO OTHER TEST IN THIS REPO CAN MAKE, and the reason this
     // file exists. Apple retries and does not guarantee order, so an EXPIRED
     // signed BEFORE a DID_RENEW can arrive AFTER it — or, as here, at the same
     // moment. The staleness guard reads `subscriptionNotifiedAt` INSIDE the
@@ -219,7 +219,7 @@ describe('appStoreNotificationsV2 against a real Firestore', () => {
     // `lastMs`, both pass, and the last writer wins. If that is the EXPIRED, a
     // live paid-for entitlement is wiped.
     //
-    // 📌 The duplicate case is deliberately NOT the headline here: applying an
+    // NOTE: The duplicate case is deliberately NOT the headline here: applying an
     // `entitle` twice writes identical values and is idempotent, so it is weak
     // evidence. Ordering is where the money is.
     const base = T0 + 2 * MONTH;
@@ -233,7 +233,7 @@ describe('appStoreNotificationsV2 against a real Firestore', () => {
     expect(s).toBe(200);
     expect(f).toBe(200);
 
-    // 🔴 THE STORED DOCUMENT IS THE ASSERTION. Whichever order they committed
+    // CRITICAL: THE STORED DOCUMENT IS THE ASSERTION. Whichever order they committed
     // in, the NEWER notification's effect is the one that survives.
     const user = await userOf();
     expect(user?.subscriptionTier).toBe('pro');
@@ -272,7 +272,7 @@ describe('appStoreNotificationsV2 against a real Firestore', () => {
     appleWillSend({'payload-orphan': orphan});
 
     expect(await deliver('payload-orphan')).toBe(503);
-    // 🔑 Taking the lock here would make the retry a no-op and strand a real
+    // KEY: Taking the lock here would make the retry a no-op and strand a real
     // subscriber — so its ABSENCE is the assertion.
     expect((await db.doc('processedNotifications/uuid-orphan').get()).exists).toBe(false);
   });

@@ -6,11 +6,11 @@
 // W2-92. The gate that would have caught nine undeployed family callables on
 // the day they landed.
 //
-// 🔴 THIS IS THE ONE CHECK IN THE REPO THAT ASKS PRODUCTION A QUESTION. Every
+// CRITICAL: THIS IS THE ONE CHECK IN THE REPO THAT ASKS PRODUCTION A QUESTION. Every
 // other gate reads the source, the repo's rules file, or a fake. That is why an
 // entire feature sat undeployed for days with 1170 tests green.
 //
-// ⚠️ IT NEEDS CREDENTIALS, so it cannot be a jest test while CI is out of
+// WARNING: IT NEEDS CREDENTIALS, so it cannot be a jest test while CI is out of
 // billing. Run it before declaring a backend feature done:
 //
 //     make check-deployed
@@ -24,7 +24,7 @@
 //   1  DRIFT — something declared is not deployed, or vice versa
 //   3  ENVIRONMENT — could not ask production at all
 //
-// 🔑 3 IS SEPARATE FROM 1 ON PURPOSE, and it is the same distinction
+// KEY: 3 IS SEPARATE FROM 1 ON PURPOSE, and it is the same distinction
 // check-test-floor.cjs draws: "could not measure" must never read as "measured
 // and fine". A missing credential silently reported as green is how this class
 // of bug survives.
@@ -49,7 +49,7 @@ function declaredFunctions() {
   // now, so this script and the jest gate cannot disagree about what index.ts
   // declares. That mattered: this is the half that talks to production.
   const src = stripComments(raw);
-  // ⚠️ `functionsV1Auth` has NO trailing dot on purpose — onNewUserBefriendGibby
+  // WARNING: `functionsV1Auth` has NO trailing dot on purpose — onNewUserBefriendGibby
   // is written `= functionsV1Auth\n  .user()`, and a pattern requiring the dot
   // skipped it, producing a phantom "deployed but not declared" the first time
   // this ran.
@@ -152,7 +152,7 @@ function main() {
     );
   }
 
-  // 🔴 TWO OPPOSITE CAUSES, AND THE OLD MESSAGE KNEW ONLY ONE OF THEM.
+  // CRITICAL: TWO OPPOSITE CAUSES, AND THE OLD MESSAGE KNEW ONLY ONE OF THEM.
   //
   // Both land a ledger entry in "stale", but the correct response is the
   // reverse of the other, and the single instruction this used to print —
@@ -165,7 +165,7 @@ function main() {
   // decision instead of acting on it, and leaving nothing behind to say the
   // question had ever been asked.
   //
-  // 🔑 THE SCRIPT CANNOT TELL "deployed on purpose" FROM "deployed by
+  // KEY: THE SCRIPT CANNOT TELL "deployed on purpose" FROM "deployed by
   // accident", so it must not pick. It names both remedies and makes the
   // reader choose — the same discipline as exit 3: when the instrument cannot
   // know, it says so rather than guessing in the reassuring direction.
@@ -218,7 +218,7 @@ function main() {
  *   noLongerDeclared  index.ts no longer declares it. The code drifted, the
  *                     exemption has no subject, and removing the entry is right.
  *
- * ⚠️ AN ENTRY CAN BE BOTH — live AND undeclared — which is the "deployed but
+ * WARNING: AN ENTRY CAN BE BOTH — live AND undeclared — which is the "deployed but
  * not declared" case the `extra` check already reports. It is listed under
  * `nowDeployed` only, because that is the half with the dangerous remedy, and
  * reporting one name twice under contradictory instructions is how a reader
@@ -238,7 +238,7 @@ function classifyStaleLedger(declared, deployed, ledgered) {
 
 module.exports = {classifyStaleLedger};
 
-// 🔑 GUARDED so requiring this module for `classifyStaleLedger` does not run
+// KEY: GUARDED so requiring this module for `classifyStaleLedger` does not run
 // the credentialled check as a side effect. Without it, importing the pure
 // function from a jest test would shell out to `firebase functions:list`.
 if (require.main === module) {

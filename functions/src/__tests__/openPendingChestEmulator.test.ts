@@ -2,7 +2,7 @@
  * `openPendingChest`, driven end to end against a REAL Firestore. (W2-124)
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHY THIS FILE EXISTS: A VALUE-MOVING CALLABLE WITH A LIVE CLIENT AND NO
+ * CRITICAL: WHY THIS FILE EXISTS: A VALUE-MOVING CALLABLE WITH A LIVE CLIENT AND NO
  *    END-TO-END TEST AT ALL
  * ---------------------------------------------------------------------------
  *
@@ -21,23 +21,23 @@
  * the one thing the unit suite is structurally incapable of observing.
  *
  * ---------------------------------------------------------------------------
- * 🔑 THE POINT OF THE FILE IS ONE ASSERTION, AND THE BRIEF PREDICTED IT MIGHT
+ * KEY: THE POINT OF THE FILE IS ONE ASSERTION, AND THE BRIEF PREDICTED IT MIGHT
  *    BE VACUOUS
  * ---------------------------------------------------------------------------
  *
  * `index.ts` names its own guard:
  *
- *   > 🔴 THE RE-READ IS THE REPLAY GUARD. Two taps in flight at once both pass
+ * > CRITICAL: THE RE-READ IS THE REPLAY GUARD. Two taps in flight at once both pass
  *   > the pre-flight check above; only one can pass this one.
  *
- * ⚠️ But there is a `chestRef.get()` pre-flight OUTSIDE the transaction that
+ * WARNING: But there is a `chestRef.get()` pre-flight OUTSIDE the transaction that
  * throws `already-exists` on its own. If two calls do not genuinely overlap,
  * the second one fails at THAT check, never reaching the transaction — and the
  * test passes identically with the transactional re-read deleted. That is a
  * known shape in this codebase: a concurrency test that passed under its own
  * mutation because an earlier lock had closed the race window.
  *
- * ✅ SO THE OVERLAP MECHANISM IS PART OF THE TEST, NOT A DETAIL.
+ * OK: SO THE OVERLAP MECHANISM IS PART OF THE TEST, NOT A DETAIL.
  * `--runInBand` serialises jest FILES; it does not serialise promises. Both
  * invocations are started in the SAME TICK and neither is awaited until both
  * are in flight, so call B issues its pre-flight `get()` while call A is still
@@ -46,12 +46,12 @@
  * with `openedAt == null`, which is exactly the state the transactional
  * re-read exists to resolve.
  *
- * 🔑 THE MUTATION RESULT IS RECORDED IN THE RETURN BLOCK AND IN THE PR, not
+ * KEY: THE MUTATION RESULT IS RECORDED IN THE RETURN BLOCK AND IN THE PR, not
  * inferred here. The gate on this file is not "does it pass" — it is "delete
  * the transactional re-read in index.ts and watch THIS test go red".
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT THIS FILE STILL CANNOT PROVE
+ * CRITICAL: WHAT THIS FILE STILL CANNOT PROVE
  * ---------------------------------------------------------------------------
  *
  *   · IT SAYS NOTHING ABOUT PRODUCTION, STRUCTURALLY AND PERMANENTLY. It runs
@@ -61,7 +61,7 @@
  *     second one.** Do not restate a deployment STATE here — it rots within
  *     hours; run the check.
  *
- *     🔑 THAT CAVEAT STOPPED BEING PEDANTIC ON THE DAY IT WAS WRITTEN.
+ * KEY: THAT CAVEAT STOPPED BEING PEDANTIC ON THE DAY IT WAS WRITTEN.
  *     2026-08-19: the deploy went through in halves. The functions deployed at
  *     04:43Z and the rules did not, so for six minutes `adminGrant` responded
  *     in production while the rules guarding its output were not running —
@@ -80,7 +80,7 @@
  *     the roll is not. Drop-rate correctness is `itemPool`'s unit suite.
  *
  * ---------------------------------------------------------------------------
- * 📌 THE FIXTURE USED TO BE A LIE, AND W2-125 REPAIRED IT — history kept
+ * NOTE: THE FIXTURE USED TO BE A LIE, AND W2-125 REPAIRED IT — history kept
  * ---------------------------------------------------------------------------
  *
  * When W2-124 wrote this file, `openPendingChest` passed a chest CATEGORY into
@@ -90,7 +90,7 @@
  * manufactured a world in which the defect did not exist, and the file said so
  * in this position rather than letting the suite read as proof the path worked.
  *
- * ✅ IT IS NOW A REAL SUBJECT. `subjectForDay('furniture', …)` resolves to
+ * OK: IT IS NOW A REAL SUBJECT. `subjectForDay('furniture', …)` resolves to
  * `sofa` (DAILY_SUBJECT_POOLS), which is what `seedShopData` writes and what
  * the mint now freezes, so the seeded rows below are shaped exactly like
  * production rows. The note survives its own fix because the reason the
@@ -98,7 +98,7 @@
  * shortening this to "seed some items" would remove the only account of why
  * these particular values.
  *
- * 🔑 AND THE TWO CHARACTERISATION TESTS THAT ASSERTED THE BROKEN BEHAVIOUR ARE
+ * KEY: AND THE TWO CHARACTERISATION TESTS THAT ASSERTED THE BROKEN BEHAVIOUR ARE
  * NOW ASSERTIONS OF THE FIXED ONE. They were written to go RED the day it was
  * fixed, and they did exactly that — which is how the fix knew it had landed.
  */
@@ -131,7 +131,7 @@ const idx = require('../index') as Record<string, {run: (req: unknown) => Promis
 const RULES_PATH = resolve(__dirname, '../../../firestore.rules');
 
 /**
- * 🔴 READ FROM THE ENVIRONMENT, NEVER A LITERAL. `emulators:exec` sets it. A
+ * CRITICAL: READ FROM THE ENVIRONMENT, NEVER A LITERAL. `emulators:exec` sets it. A
  * different id here would point the rules-test client at a different database,
  * and every `assertFails` would pass against an empty project.
  */
@@ -143,7 +143,7 @@ const OTHER = 'e2e-chest-other';
 /**
  * The chest category under test, and the subject it actually rolls on.
  *
- * 🔑 `furniture` has a SINGLE-ENTRY subject pool (`DAILY_SUBJECT_POOLS`:
+ * KEY: `furniture` has a SINGLE-ENTRY subject pool (`DAILY_SUBJECT_POOLS`:
  * `furniture: ['sofa']`), so `subjectForDay` returns `sofa` on every date. That
  * makes this fixture stable without pinning a clock — deliberately chosen over
  * `characters`, whose pool is `['character', 'fox_outfit']` and therefore
@@ -183,7 +183,7 @@ async function refusalCodeOf(p: Promise<unknown>): Promise<string | null> {
 /**
  * Mint a pending chest the way `adminGrant` mints one.
  *
- * ⚠️ BOTH FROZEN AXES, because a fixture that writes only one of them tests a
+ * WARNING: BOTH FROZEN AXES, because a fixture that writes only one of them tests a
  * document shape the mint no longer produces. `dropTable` freezes the rarity
  * odds and `subject` freezes the theme; W2-125 added the second after every
  * chest minted without it turned out to be unopenable.
@@ -239,7 +239,7 @@ beforeAll(async () => {
     await db.doc(`users/${uid}/profile/data`).set({spongeBalance: 0});
   }
 
-  // 🔴 THE `items` SEEDING THAT STOOD HERE IS GONE — W2-134 retired the read.
+  // CRITICAL: THE `items` SEEDING THAT STOOD HERE IS GONE — W2-134 retired the read.
   //
   // It seeded one row per rarity so `pickChestItem` was deterministic in WHICH
   // item it returned while `rollRarity` stayed random, and it seeded both
@@ -250,7 +250,7 @@ beforeAll(async () => {
   // so the Firestore branch had never been taken in production and the three
   // reads were deleted.
   //
-  // 🔑 WHAT REPLACES EACH, because neither property was dropped:
+  // KEY: WHAT REPLACES EACH, because neither property was dropped:
   //   • determinism — the assertions no longer name an id at all. They check the
   //     granted id against SEED_ITEMS for the right subject and rarity, which is
   //     the property the pinned id was standing in for.
@@ -313,7 +313,7 @@ describe('openPendingChest — the grant lands as real documents', () => {
     expect(typeof res.name).toBe('string');
     expect(typeof res.artUrl).toBe('string');
 
-    // 🔑 AND THE DOCUMENTS, WHICH ARE THE PART A RETURN VALUE CANNOT FAKE.
+    // KEY: AND THE DOCUMENTS, WHICH ARE THE PART A RETURN VALUE CANNOT FAKE.
     expect(await inventoryIdsOf(PLAYER)).toEqual([res.itemId]);
     const chest = (await db.doc(`users/${PLAYER}/pendingChests/chest-happy`).get()).data()!;
     expect(chest.openedAt).not.toBeNull();
@@ -342,7 +342,7 @@ describe('openPendingChest — the grant lands as real documents', () => {
     const res = await call('openPendingChest', PLAYER, {pendingChestId: 'chest-dupe'});
 
     expect(res.isDuplicate).toBe(true);
-    // 🔴 RE-DERIVED IN W2-161, NOT LOOSENED. This asserted
+    // CRITICAL: RE-DERIVED IN W2-161, NOT LOOSENED. This asserted
     //
     //     expect(res.refund).toBe(DUPLICATE_REFUNDS[res.rarity]);
     //
@@ -352,7 +352,7 @@ describe('openPendingChest — the grant lands as real documents', () => {
     // what the chest rolled — it is 75% of what the chest cost, and a granted
     // chest's cost is the list price of the category it was minted as.
     //
-    // 🔑 SO THE ASSERTION STILL REFUSES A LITERAL, on the same reasoning, and it
+    // KEY: SO THE ASSERTION STILL REFUSES A LITERAL, on the same reasoning, and it
     // is still derived from the constants rather than transcribed: it now keys
     // on the axis that actually determines the payment. If it had been "fixed"
     // by pinning 187 here, it would stop testing the consolation the day a price
@@ -377,7 +377,7 @@ describe('openPendingChest — the grant lands as real documents', () => {
   });
 
   test("another player's chest is not-found, because the path is scoped by the CALLER's uid", async () => {
-    // 🔑 THIS IS NOT AN AUTHORISATION CHECK AND MUST NOT BE READ AS ONE. The
+    // KEY: THIS IS NOT AN AUTHORISATION CHECK AND MUST NOT BE READ AS ONE. The
     // handler builds `users/${request.auth.uid}/pendingChests/${id}`, so a
     // caller cannot even ADDRESS someone else's chest — the refusal is
     // not-found rather than permission-denied. Asserting the CODE is what
@@ -402,7 +402,7 @@ describe('openPendingChest — the grant lands as real documents', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 THE REPLAY GUARD — the assertion this whole file exists for
+// CRITICAL: THE REPLAY GUARD — the assertion this whole file exists for
 // ---------------------------------------------------------------------------
 
 describe('🔴 W2-124 the transactional re-read is the replay guard', () => {
@@ -411,7 +411,7 @@ describe('🔴 W2-124 the transactional re-read is the replay guard', () => {
     const balanceBefore = await spongeBalanceOf(OTHER);
     expect(await inventoryIdsOf(OTHER)).toEqual([]);
 
-    // 🔑 THE OVERLAP MECHANISM, STATED AS CODE. Both promises are created in
+    // KEY: THE OVERLAP MECHANISM, STATED AS CODE. Both promises are created in
     // the same tick and NEITHER is awaited until both are in flight. Call B's
     // pre-flight `get()` is therefore issued while call A is still between its
     // own pre-flight and its transaction — A has a `rollRarity` and a
@@ -425,7 +425,7 @@ describe('🔴 W2-124 the transactional re-read is the replay guard', () => {
     const fulfilled = settled.filter((s) => s.status === 'fulfilled');
     const rejected = settled.filter((s) => s.status === 'rejected');
 
-    // 🔴 THIS IS THE LINE THE MUTATION MOVES. With the transactional re-read
+    // CRITICAL: THIS IS THE LINE THE MUTATION MOVES. With the transactional re-read
     // deleted, both calls commit and `fulfilled` is 2.
     expect(fulfilled).toHaveLength(1);
     expect(rejected).toHaveLength(1);
@@ -433,7 +433,7 @@ describe('🔴 W2-124 the transactional re-read is the replay guard', () => {
       String(((rejected[0] as PromiseRejectedResult).reason as {code?: unknown}).code),
     ).toBe('already-exists');
 
-    // ⚠️ AND THE DURABLE STATE, INDEPENDENTLY — because "one promise rejected"
+    // WARNING: AND THE DURABLE STATE, INDEPENDENTLY — because "one promise rejected"
     // and "value was granted once" are different facts, and only the second one
     // is what a player would notice. Exactly one item, and no refund: a second
     // successful open would either add a second item (different rarity rolled)
@@ -447,7 +447,7 @@ describe('🔴 W2-124 the transactional re-read is the replay guard', () => {
   });
 
   test('a SEQUENTIAL re-open is refused too — by the pre-flight, which is a different guard', async () => {
-    // 🔑 NAMED AS A DIFFERENT GUARD ON PURPOSE. This is the case the pre-flight
+    // KEY: NAMED AS A DIFFERENT GUARD ON PURPOSE. This is the case the pre-flight
     // handles, and it is the case the concurrent test above must NOT be
     // measuring. Keeping both, labelled, is what makes it visible when the
     // concurrent one degrades into this one.
@@ -467,7 +467,7 @@ describe('🔴 W2-124 the transactional re-read is the replay guard', () => {
 // by the test itself, so it proves the rules are right about documents the test
 // invented. Here the chests were minted and stamped by the real handler.
 //
-// 🔴 AND IT PROVES THE FILE, NOT PRODUCTION — see the header. Whether the
+// CRITICAL: AND IT PROVES THE FILE, NOT PRODUCTION — see the header. Whether the
 // deployed ruleset matches this file is `check-rules-deployed.cjs`'s question
 // and is deliberately not restated here as a value that would go stale.
 
@@ -521,10 +521,10 @@ describe('the rules over a chest the callable actually wrote', () => {
 });
 
 // ---------------------------------------------------------------------------
-// ✅ W2-125 — the finding W2-124 recorded, now asserted as FIXED
+// OK: W2-125 — the finding W2-124 recorded, now asserted as FIXED
 // ---------------------------------------------------------------------------
 //
-// 📌 THIS BLOCK USED TO ASSERT THE DEFECT. W2-124 was a test-only brief and
+// NOTE: THIS BLOCK USED TO ASSERT THE DEFECT. W2-124 was a test-only brief and
 // wrote two characterisation tests that pinned the broken behaviour — a real
 // category threw `not-found` — deliberately built to GO RED the day somebody
 // fixed it, so the fixer had to come here and read the note. That is exactly
@@ -543,7 +543,7 @@ describe('the rules over a chest the callable actually wrote', () => {
 
 describe('✅ W2-125 a chest with a REAL category opens, on its FROZEN subject', () => {
   test('a `characters` chest opens and grants an item from the characters pool', async () => {
-    // 🔴 `characters`, NOT `furniture`, ON PURPOSE. It is the only category
+    // CRITICAL: `characters`, NOT `furniture`, ON PURPOSE. It is the only category
     // whose subject pool has more than one entry — `['character', 'fox_outfit']`
     // — so it is the only one where "which day did we resolve this on" is
     // observable at all. `furniture: ['sofa']` and `styles: ['outside_plants']`
@@ -559,12 +559,12 @@ describe('✅ W2-125 a chest with a REAL category opens, on its FROZEN subject',
     expect(typeof res.itemId).toBe('string');
     expect(['common', 'rare', 'legendary']).toContain(res.rarity);
 
-    // 🔑 THE ASSERTION THAT WOULD HAVE CAUGHT THE ORIGINAL BUG, and it is about
+    // KEY: THE ASSERTION THAT WOULD HAVE CAUGHT THE ORIGINAL BUG, and it is about
     // the THEME rather than about success: the granted item must belong to the
     // subject the chest froze. A chest that opened but paid out a sofa would
     // satisfy every other line here.
     const chest = (await db.doc(`users/${PLAYER}/pendingChests/chest-characters`).get()).data()!;
-    // 🔴 STILL UNCONDITIONAL, and now it cannot be otherwise: `seedRowFor`
+    // CRITICAL: STILL UNCONDITIONAL, and now it cannot be otherwise: `seedRowFor`
     // THROWS on a miss rather than returning undefined. The document lookup it
     // replaces could be guarded into silence, which is how the first draft of
     // this test asserted nothing at all while passing.
@@ -590,14 +590,14 @@ describe('✅ W2-125 a chest with a REAL category opens, on its FROZEN subject',
   });
 
   test('🔴 a chest with NO subject is REFUSED rather than rolled on any subject', async () => {
-    // ⚠️ THE FAILURE HERE IS INVERTED AND THAT IS THE WHOLE REASON THIS TEST
+    // WARNING: THE FAILURE HERE IS INVERTED AND THAT IS THE WHOLE REASON THIS TEST
     // EXISTS. `pickChestItem` treats an empty subject as "any subject" by
     // skipping the `where`, so the obvious fallback — `chest.subject ?? ''` —
     // would make a legacy chest OPEN SUCCESSFULLY while ignoring its category
     // entirely: a furniture chest paying out a character, with no error to
     // surface it. A refusal is visible; a wrong prize is not.
     //
-    // 📌 WHETHER ANY SUCH CHEST EXISTS IN PRODUCTION IS AN OPEN QUESTION AT THE
+    // NOTE: WHETHER ANY SUCH CHEST EXISTS IN PRODUCTION IS AN OPEN QUESTION AT THE
     // TIME OF WRITING — it needs a collection-group count that no credential
     // available to this window can perform, and it was escalated rather than
     // guessed. If the answer is non-zero, the intended remedy is to derive the
@@ -617,7 +617,7 @@ describe('✅ W2-125 a chest with a REAL category opens, on its FROZEN subject',
       await refusalCodeOf(call('openPendingChest', PLAYER, {pendingChestId: 'chest-legacy'})),
     ).toBe('failed-precondition');
 
-    // 🔑 AND IT IS NOT CONSUMED. The refusal precedes the transaction, so the
+    // KEY: AND IT IS NOT CONSUMED. The refusal precedes the transaction, so the
     // chest opens the moment a subject can be resolved for it — which is what
     // makes the strict branch safe to ship ahead of that decision.
     const after = (await db.doc(`users/${PLAYER}/pendingChests/chest-legacy`).get()).data()!;

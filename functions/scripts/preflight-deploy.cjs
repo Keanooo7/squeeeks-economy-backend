@@ -5,7 +5,7 @@
 //
 // W2-155. The sibling of `preflight:rules`, for the functions half.
 //
-// 🔴 IT REFUSES TWO STATES, AND THE SECOND IS THE ONE EVERY OTHER GATE MISSES:
+// CRITICAL: IT REFUSES TWO STATES, AND THE SECOND IS THE ONE EVERY OTHER GATE MISSES:
 //   1. a DIRTY tree — the stamp would name a commit that does not describe what
 //      is being compiled;
 //   2. a tree whose HEAD IS NOT AN ANCESTOR OF `origin/main` — the stale-checkout
@@ -14,14 +14,14 @@
 //      production runs week-old code. A dirty-only check cannot see it: the
 //      tree is perfectly clean, just old.
 //
-// 🔴 WHY THIS IS NOT IN `npm run build`, WHICH IS WHERE IT LOOKS LIKE IT BELONGS.
+// CRITICAL: WHY THIS IS NOT IN `npm run build`, WHICH IS WHERE IT LOOKS LIKE IT BELONGS.
 // `build` is `tsc`, and it is called from THREE places: this predeploy hook,
 // `npm run serve`, and `npm run test:e2e`. A dirty-tree refusal inside `build`
 // would fail every e2e run on a working branch — on a tree that is dirty BY
 // DEFINITION, because you are working on it. The gate belongs to the deploy and
 // nowhere else. `serve` and `test:e2e` still call `build` and are untouched.
 //
-// 🔴 BRENDAN DEPLOYS, AND A GATE THAT STRANDS HIM GETS DELETED WITHIN A DAY AND
+// CRITICAL: BRENDAN DEPLOYS, AND A GATE THAT STRANDS HIM GETS DELETED WITHIN A DAY AND
 // THEN PROTECTS NOTHING. So the refusal prints the exact command to proceed, and
 // the override is a loud env var in the `CLAIM_OVERRIDE=1` shape — deliberate,
 // greppable in a shell transcript afterwards, and it says so in its own output.
@@ -33,7 +33,7 @@
 //   1  REFUSED — dirty tree, or HEAD is not an ancestor of origin/main
 //   2  could not tell (no git, no origin/main) — NOT a pass
 //
-// ⚠️ EXIT 2 IS NOT A PASS, for the same reason `check-deployed*.cjs` splits 1
+// WARNING: EXIT 2 IS NOT A PASS, for the same reason `check-deployed*.cjs` splits 1
 // from 3: "could not ask" must never read as "asked, and fine".
 
 'use strict';
@@ -49,7 +49,7 @@ const CANNOT_TELL = 2;
 /**
  * The one path a deploy is ALLOWED to have dirtied.
  *
- * 🔴 WITHOUT THIS THE GATE BREAKS ON ITS OWN SUCCESS. The stamp is a committed
+ * CRITICAL: WITHOUT THIS THE GATE BREAKS ON ITS OWN SUCCESS. The stamp is a committed
  * generated module (see gen-build-info.cjs), so a completed deploy leaves the
  * tree dirty in exactly this file — and the next deploy would refuse, pointing
  * at a change this very script caused. Excluded by exact path, never by pattern.
@@ -65,13 +65,13 @@ function git(args) {
 /**
  * `git status --porcelain`, parsed. NOT via `git()` — and that is not fussiness.
  *
- * 🔴 `.trim()` ON THE WHOLE OUTPUT CORRUPTS THE FIRST LINE ONLY. Porcelain
+ * CRITICAL: `.trim()` ON THE WHOLE OUTPUT CORRUPTS THE FIRST LINE ONLY. Porcelain
  * format is `XY<space>path`, and an unstaged modification is ` M path` — a
  * LEADING SPACE. Trimming the multi-line blob strips it from the first entry and
  * nothing else, so `slice(3)` then eats the first character of that one path.
  * Observed: ` M firebase.json` was reported as `irebase.json`.
  *
- * ⚠️ IT IS INTERMITTENT BY CONSTRUCTION — harmless when the first entry is `??`
+ * WARNING: IT IS INTERMITTENT BY CONSTRUCTION — harmless when the first entry is `??`
  * or a staged change, wrong when it is an unstaged modification. A refusal that
  * misnames the file it is refusing over is worse than no refusal.
  */
@@ -106,11 +106,11 @@ function refuse(reasonLines) {
  * The whole decision, as a pure function of three facts. Exported and pinned by
  * `preflightDeploy.test.ts`.
  *
- * 🔴 SPLIT OUT FOR THE SAME REASON `classify` WAS IN W2-154: the credentialled,
+ * CRITICAL: SPLIT OUT FOR THE SAME REASON `classify` WAS IN W2-154: the credentialled,
  * git-touching half cannot be unit-tested, so the half that DECIDES must not be
  * tangled up in it. Everything above this line runs git; this runs nothing.
  *
- * ⚠️ THE ORDER OF THE CHECKS IS PART OF THE CONTRACT. Override wins over both
+ * WARNING: THE ORDER OF THE CHECKS IS PART OF THE CONTRACT. Override wins over both
  * refusals — otherwise the escape hatch does not escape — and `dirty` is
  * reported before `behind` so a developer who is both fixes the one they can
  * see in `git status` first.
@@ -156,7 +156,7 @@ function main() {
     ]);
   }
 
-  // 🔴 THE STALE-CHECKOUT CASE. `git merge-base --is-ancestor HEAD origin/main`
+  // CRITICAL: THE STALE-CHECKOUT CASE. `git merge-base --is-ancestor HEAD origin/main`
   // exits 0 when HEAD is reachable from origin/main — i.e. HEAD is main or an
   // ancestor of it. Exit 1 means HEAD carries commits main does not, which is
   // ALSO fine (deploying a feature branch is legitimate), so the refusal is on
@@ -210,11 +210,11 @@ function stamp() {
   }
 }
 
-// 🔑 THE PURE HALF IS EXPORTED AND TESTED; the git-touching half cannot be —
+// KEY: THE PURE HALF IS EXPORTED AND TESTED; the git-touching half cannot be —
 // the same split as check-deployed-revision.cjs (W2-154) and its two siblings.
 module.exports = {decide, STAMP_PATH, OVERRIDE, OK, REFUSED, CANNOT_TELL};
 
-// 🔴 GUARDED. preflightDeploy.test.ts `require`s this file, and an unguarded
+// CRITICAL: GUARDED. preflightDeploy.test.ts `require`s this file, and an unguarded
 // main() would shell out to git and process.exit() inside a jest worker.
 if (require.main === module) {
   main();

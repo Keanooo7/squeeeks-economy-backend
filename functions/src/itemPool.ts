@@ -61,7 +61,7 @@ export type DropTableTier = (typeof DROP_TABLE_TIERS)[number];
 /// Anything at or above the second threshold is legendary. Two thresholds for
 /// three outcomes — a third entry would be dead weight pinned at 1.00.
 ///
-/// 🔴 RE-CENTRED 2026-09-03 ON BRENDAN'S RULING. He asked for legendary 22% ·
+/// CRITICAL: RE-CENTRED 2026-09-03 ON BRENDAN'S RULING. He asked for legendary 22% ·
 /// rare 33% · common 45%, server-authoritative. That is ONE set of numbers and
 /// there are THREE tables keyed by generosity, so it could not simply replace
 /// them; his ruling was to make it `mid` and rebuild `lean` and `rich` around
@@ -72,14 +72,14 @@ export type DropTableTier = (typeof DROP_TABLE_TIERS)[number];
 ///   mid   styles      45    33     22        50 / 44 /  6   <- Brendan's number
 ///   rich  characters  15    52     33        20 / 60 / 20
 ///
-/// 🔑 THE RULE, NOT THE DIGITS. `common` steps by 30 centred on 45 — the ladder
+/// KEY: THE RULE, NOT THE DIGITS. `common` steps by 30 centred on 45 — the ladder
 /// already stepped by 30 (80/50/20) — and `legendary` steps by 11 centred on his
 /// 22; `rare` is the remainder. Both free dimensions are arithmetic progressions
 /// and `mid` is exactly what he asked for, so the numbers are derived rather
 /// than picked. It was put to him as a rule he could reject, not nine digits to
 /// argue. Monotone in all three tiers, as before.
 ///
-/// 📌 WHY `lean` MOVES SO LITTLE AND WHY THAT IS NOT TIMIDITY. Only six subjects
+/// NOTE: WHY `lean` MOVES SO LITTLE AND WHY THAT IS NOT TIMIDITY. Only six subjects
 /// are in rotation (`DAILY_SUBJECT_POOLS`), and `sofa` and `tv_stand` hold
 /// exactly ONE item at rare AND at legendary — so on those subjects every roll
 /// outside `common` is a forced duplicate once owned. Dropping lean's rare 18→14
@@ -89,7 +89,7 @@ export type DropTableTier = (typeof DROP_TABLE_TIERS)[number];
 /// rate goes DOWN 1.3 points. A flat 45/33/22 on all three would instead cost
 /// +10 points of duplicate rate on furniture.
 ///
-/// ⚠️ MIRRORED IN `lib/features/shop/domain/chest_drop_rates.dart` AND THAT
+/// WARNING: MIRRORED IN `lib/features/shop/domain/chest_drop_rates.dart` AND THAT
 /// MIRROR IS NOW GATED: `__tests__/dropTableMirror.test.ts` reads the Dart file
 /// off disk and compares it to this table. Before it existed (#693, 2026-09-03)
 /// a one-threshold change here reddened nothing — 1652 passed, exit 0 — while
@@ -156,7 +156,7 @@ export const DUPLICATE_REFUND_FRACTION = 0.75;
 /**
  * Sponges paid back when a chest grants an item the player already owns.
  *
- * 🔴 KEYED BY CATEGORY, NOT BY RARITY. This replaced a `Record<Rarity, number>`
+ * CRITICAL: KEYED BY CATEGORY, NOT BY RARITY. This replaced a `Record<Rarity, number>`
  * of flat values (common 10 / rare 25 / legendary 100), and the re-key is the
  * point rather than a tidy-up: a refund keyed on rarity **cannot** express "75%
  * of what it cost", because rarity is what the chest ROLLED and price is what
@@ -164,7 +164,7 @@ export const DUPLICATE_REFUND_FRACTION = 0.75;
  * 100 out of a furniture one; the old table paid 100 for both — 20% of one
  * purchase and a 100% rebate on the other.
  *
- * 📌 `Math.floor`, deliberately. 250 * 0.75 = 187.5 and a sponge balance is an
+ * NOTE: `Math.floor`, deliberately. 250 * 0.75 = 187.5 and a sponge balance is an
  * integer. Flooring loses at most one sponge per duplicate, in the house's
  * favour; rounding up would let a repeated duplicate drift the economy in the
  * player's favour without anyone choosing that. Pinned in chestPricing.test.ts.
@@ -186,7 +186,7 @@ export const DUPLICATE_REFUNDS: Record<string, number> = Object.fromEntries(
  * rich/mid/lean against characters/styles/furniture — so inverting it derives a
  * price rather than inventing one.
  *
- * ⚠️ IT IS ONLY 1:1 WHILE NO TWO CATEGORIES SHARE A TIER. If a fourth category
+ * WARNING: IT IS ONLY 1:1 WHILE NO TWO CATEGORIES SHARE A TIER. If a fourth category
  * ever reuses a tier, this silently keeps whichever category was declared last
  * and the other one's refund becomes wrong. `chestPricing.test.ts` asserts the
  * inversion is total and lossless so that day is a red test, not a quiet
@@ -199,7 +199,7 @@ export const DROP_TABLE_CATEGORY: Record<string, string> = Object.fromEntries(
 /**
  * The refund for a chest whose actual price is known — 75% of what was paid.
  *
- * 🔑 THIS IS THE PRIMARY FORM, AND THE PURCHASE PATH USES IT. Brendan asked for
+ * KEY: THIS IS THE PRIMARY FORM, AND THE PURCHASE PATH USES IT. Brendan asked for
  * "75% of the sponges it cost to open the chest", and a bought chest knows
  * exactly what it cost: the price is read off the shop document inside the
  * transaction. Deriving from the CATEGORY there would be a second lookup of a
@@ -265,11 +265,11 @@ export function sumDuplicateRefunds(
 // collection happened to make it — structurally common, and approaching 100%
 // for anyone engaged enough to have finished a cell.
 //
-// 🔑 SO THE TARGET CANNOT BE REACHED BY TUNING `DROP_TABLES`. The drop table
+// KEY: SO THE TARGET CANNOT BE REACHED BY TUNING `DROP_TABLES`. The drop table
 // chooses a RARITY; it has no idea what the player owns. The bias has to live in
 // the pick itself, which is what `pickWithDuplicateBias` is.
 //
-// 🔴 AND IT CANNOT BE REACHED AT ALL IN MOST CELLS. Measured 2026-08-29 over the
+// CRITICAL: AND IT CANNOT BE REACHED AT ALL IN MOST CELLS. Measured 2026-08-29 over the
 // bundled pool: 192 items in 84 (subject, rarity) cells, sizes min 1 / max 6,
 // histogram {1:45, 2:6, 3:1, 4:29, 5:2, 6:1}. **45 of 84 cells hold exactly one
 // item.** In those the rate is binary — 0% until the player owns it, 100% every
@@ -314,7 +314,7 @@ export function partitionByOwnership<T>(
  * nothing else to hand over. Only the second one makes the odds copy a lie, so
  * only the second one is worth surfacing.
  *
- * ⚠️ `rng` is injected so a test can pin the boundary rather than sample it. A
+ * WARNING: `rng` is injected so a test can pin the boundary rather than sample it. A
  * test that only samples cannot tell 5% from 4% without tens of thousands of
  * draws, and one that samples at that size is slow enough to get deleted.
  */
@@ -333,7 +333,7 @@ export function pickWithDuplicateBias<T>(
     return { item: uniform(unowned, rng), isDuplicate: false, forcedDuplicate: false };
   }
   if (unowned.length === 0) {
-    // 🔴 THE EXHAUSTED CELL — 45 of 84 cells reach this the moment their single
+    // CRITICAL: THE EXHAUSTED CELL — 45 of 84 cells reach this the moment their single
     // item is owned. The duplicate is unavoidable, so it is paid, not prevented.
     return { item: uniform(owned, rng), isDuplicate: true, forcedDuplicate: true };
   }
@@ -359,7 +359,7 @@ function uniform<T>(pool: readonly T[], rng: () => number): T {
 // The pools are the subjects a category is allowed to draw on for a given day.
 // Adding a subject here is how a new day-one set enters the rotation.
 //
-// 🔑 A SUBJECT ONLY ENTERS THE POOL WHEN IT IS STOCKED AT EVERY RARITY.
+// KEY: A SUBJECT ONLY ENTERS THE POOL WHEN IT IS STOCKED AT EVERY RARITY.
 // This is enforced by dailyRotation.test.ts and it is not a nicety: once a
 // chest is themed, `pickChestItem` filters on (subject, rarity), so a subject
 // missing its legendary throws `not-found` on every roll that reaches the tail
@@ -367,14 +367,14 @@ function uniform<T>(pool: readonly T[], rng: () => number): T {
 // chest they can see and afford. Theming turned a pool that was dense by
 // rarity alone into a sparse grid, and this rule is what keeps the grid full.
 //
-// ⚠️ ADDING A SUBJECT DIVIDES THE EXISTING ONES' ROTATION. subjectForDay
+// WARNING: ADDING A SUBJECT DIVIDES THE EXISTING ONES' ROTATION. subjectForDay
 // picks `pool[dayNumber % pool.length]`, so `character` went from every day to
 // every other day when `fox_outfit` landed (W3-09). That is deliberate — the
 // generic profession skins are five glyph-only rows with no art, and the fox
 // outfits are eleven with art — but it is a live behaviour change, not a
 // data-only one.
 //
-// 🔑 THE RULING THAT AUTHORISES THAT COST, Brendan 2026-08-19: THE SHOP
+// KEY: THE RULING THAT AUTHORISES THAT COST, Brendan 2026-08-19: THE SHOP
 // TAKES TURNS. Asked in plain terms — "sofa finishes show up less often, but
 // every piece gets a turn" — and accepted explicitly. So the dilution is the
 // INTENDED behaviour, not a regression to be tuned away: W2-130 moved
@@ -382,7 +382,7 @@ function uniform<T>(pool: readonly T[], rng: () => number): T {
 // sofa from every day to one day in three. Do NOT "fix" a subject's frequency
 // by trimming this pool.
 //
-// ⚠️ What the ruling does NOT license is unbenching a subject that is not
+// WARNING: What the ruling does NOT license is unbenching a subject that is not
 // stocked at all three rarities. That check is independent and still binds —
 // it is why lamp, bunk_bed and wall stay on the bench.
 export const DAILY_SUBJECT_POOLS: Record<string, string[]> = {
@@ -477,20 +477,20 @@ export function subjectForDay(category: string, dateStr: string): string {
 // them moving each time with the character egg being the most rare (not common
 // to see more than 2x a week). furnature is very common and styles are too."
 //
-// 🔑 THIS IS A DIFFERENT AXIS FROM `rarity` AND FROM `dropTable`, despite the
+// KEY: THIS IS A DIFFERENT AXIS FROM `rarity` AND FROM `dropTable`, despite the
 // vocabulary collision. `rarity` is the chest card's colour/tier label and
 // `dropTable` is what it rolls against once bought; both are correct and
 // untouched here. This controls only how often a chest is STOCKED — whether the
 // player sees it at all on a given day. A chest that appears less often does not
 // thereby cost more: price still comes from CHEST_PRICE.
 //
-// 🔴 THE HARD PART IS THE CAP, NOT THE RANDOMNESS. "Not more than 2x a week" is
+// CRITICAL: THE HARD PART IS THE CAP, NOT THE RANDOMNESS. "Not more than 2x a week" is
 // a constraint ACROSS days, and the writer that needs it (`rotateMarket`) is a
 // scheduled function with no memory of yesterday. Independent weighted rolls
 // cannot honour it — they will happily produce the egg four days running, which
 // is the exact outcome the instruction rules out.
 //
-// ⚠️ AND BUCKETING BY CALENDAR WEEK DOES NOT FIX IT. "At most 2 per ISO week"
+// WARNING: AND BUCKETING BY CALENDAR WEEK DOES NOT FIX IT. "At most 2 per ISO week"
 // still permits Thu+Fri of one week followed by Mon+Tue of the next — four
 // appearances inside six days, every one of them legal under a per-week count.
 // A player does not experience ISO weeks. So the cap here is enforced on a
@@ -521,7 +521,7 @@ export const ROTATION_BLOCK_DAYS = 7;
 /// Offsets within a block at which the character egg may fall. The narrow band
 /// is the whole mechanism: it bounds the gap between consecutive appearances to
 /// [5, 9] days, which is what makes the rolling cap of 2-per-7-days provable.
-/// ⚠️ Widening this to {0..6} restores the boundary-clustering bug.
+/// WARNING: Widening this to {0..6} restores the boundary-clustering bug.
 export const CHARACTER_BLOCK_OFFSETS = [2, 3, 4];
 
 /// Days per block on which each of the common categories is stocked.
@@ -640,7 +640,7 @@ export interface SeedItem {
 // own dE ceiling — and agreed 4-for-4. This file is the machine-readable half of
 // that page, not a place to re-argue it.
 //
-// 🔴 IN v1 FAMILY IS A LEDGER, AN ART-BRIEF AXIS, AND AN ALBUM GROUPING.
+// CRITICAL: IN v1 FAMILY IS A LEDGER, AN ART-BRIEF AXIS, AND AN ALBUM GROUPING.
 // NOTHING ELSE. It must not become a drop key. `pickChestItem` filters on
 // (subject, rarity) and then picks uniformly; adding `family` as a third filter
 // turns the mandatory coverage grid from 3 x 3 = 9 cells into 3 x 3 x 4 = 36,
@@ -652,7 +652,7 @@ export interface SeedItem {
 // path, later, is to theme the DAY across all three chests, which leaves the
 // grid at 9 — and that is a future brief.
 //
-// 🔑 WHY A LEDGER AND NOT A FIELD ON SeedItem. A field would also change what
+// KEY: WHY A LEDGER AND NOT A FIELD ON SeedItem. A field would also change what
 // the seeder writes to Firestore (index.ts enumerates the fields explicitly), so
 // a separate const is invisible to it: zero migration, zero deploy coupling. It
 // is also the answer this repo has already reached three times — BENCHED_SUBJECTS
@@ -661,7 +661,7 @@ export interface SeedItem {
 // is far easier to audit than the same data smeared across thirty long
 // constructor calls."
 //
-// ⚠️ NAMING THE FAMILIES IS FREE; THE SURFACES ARE THE BILL. Three of the four
+// WARNING: NAMING THE FAMILIES IS FREE; THE SURFACES ARE THE BILL. Three of the four
 // families can only be SEEN on a sofa today — there is no roof renderer, floors
 // are keyed by room type, and walls are keyed by geometry. Nothing here is
 // permission to commission a family's worth of art.
@@ -676,7 +676,7 @@ export interface SeedItem {
 ///
 /// Shared, not copied four times, so retiring a fifth word is one edit.
 ///
-/// ⚠️ This governs PROMPT TEXT only. `lighting='clay'` and `add_clay_box` in
+/// WARNING: This governs PROMPT TEXT only. `lighting='clay'` and `add_clay_box` in
 /// `3d-source/` are internal Blender identifiers that never reach a prompt and
 /// are deliberately left alone.
 export const RETIRED_VOCABULARY: string[] = [
@@ -833,7 +833,7 @@ export const STYLE_FAMILIES: Record<string, StyleFamily> = {
     material: {
       tiers: ['generic', 'fabric'],
       propClass: 'box',
-      // ⚠️ THE TRAP THAT HAS ALREADY COST TWO REVISIONS. `make_clay_mat` defaults
+      // WARNING: THE TRAP THAT HAS ALREADY COST TWO REVISIONS. `make_clay_mat` defaults
       // warm_strength to 1.0, where the warm shade ramp over-darkens near-whites
       // — that is what rendered the shower salmon-pink for two revisions. Every
       // Dovecote bake must pass this EXPLICITLY and be checked on the SHADE
@@ -904,27 +904,27 @@ export const ITEM_FAMILY: Record<string, string> = ITEM_FAMILY_GENERATED;
 /// are the baseline every family departs from — a free item carrying a family
 /// would make the free house read as an incomplete purchase.
 ///
-/// 🔑 NEUTRAL IS A DECISION, AND THIS LIST IS WHERE IT IS RECORDED. That is the
+/// KEY: NEUTRAL IS A DECISION, AND THIS LIST IS WHERE IT IS RECORDED. That is the
 /// whole reason family is not an id-prefix convention: `kFoxOutfitIdPrefix` is
 /// the in-tree precedent for that approach and it cannot express "deliberately
 /// neutral", because a missing prefix is indistinguishable from a forgotten one.
 export const FAMILY_NEUTRAL: string[] = FAMILY_NEUTRAL_GENERATED;
 
-// 🔴 AUTHORED IN functions/seed/collection_seed.json, NOT HERE (W2-135).
+// CRITICAL: AUTHORED IN functions/seed/collection_seed.json, NOT HERE (W2-135).
 //
 // The 52 rows and the ~775 words of reasoning that used to live in this block
 // are in that JSON, which is the single source both language projections are
 // generated from. `npm run seed:check` regenerates and byte-diffs, so this
 // re-export cannot drift from the source.
 //
-// 🔑 THE PROSE MOVED WITH THE DATA, DELIBERATELY. Generating from a data-only
+// KEY: THE PROSE MOVED WITH THE DATA, DELIBERATELY. Generating from a data-only
 // source would have destroyed 64 comment lines in this declaration alone — the
 // style_roof_tile_gold pricing bug, furn_cozy_sofa's "measured dusty rose, not
 // cream", the day-one-set provenance. The schema carries `note` and `section`
 // so a comment about a ROW travels with that row. Proven lossless at migration:
 // 64 committed comment lines -> 64 generated, with the row values unchanged.
 //
-// ⚠️ A note belongs in the JSON, never merged back from the generated file. That
+// WARNING: A note belongs in the JSON, never merged back from the generated file. That
 // is what keeps the output a pure function of its input, which is the only
 // reason the byte-diff gate proves anything.
 export const SEED_ITEMS: SeedItem[] = SEED_ITEMS_GENERATED;

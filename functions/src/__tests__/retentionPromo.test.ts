@@ -3,7 +3,7 @@
 // The 5-of-7 promo decision, tested as pure data — no Firestore, no emulator,
 // no fake clock. `nowMs` is a parameter, so a history can be placed anywhere.
 //
-// 🔴 THE WINDOW DEFINITION IS UNSETTLED. Both honest readings of "5 of 7 days
+// CRITICAL: THE WINDOW DEFINITION IS UNSETTLED. Both honest readings of "5 of 7 days
 // for 3 weeks" are implemented and both are tested here, because the thing that
 // must not happen is a rule change arriving with no test of the reading it
 // replaces. `ACTIVE_RULE` selects one; these tests pass whichever it is, and
@@ -149,7 +149,7 @@ describe('evaluatePromo — total-days', () => {
 
 describe('the observation window is ROLLING, not calendar', () => {
   test('⚠️ a day older than the period does not count', () => {
-    // 🔑 The one thing that is unambiguous under BOTH readings. A calendar-week
+    // KEY: The one thing that is unambiguous under BOTH readings. A calendar-week
     // bucket would let days that never formed a 7-day run qualify, and would
     // refuse a genuine 5-of-7 that straddles a Sunday. Everything here is
     // anchored to the moment of the call.
@@ -205,7 +205,7 @@ describe('🔑 the default rule is the STRICTLY STRICTER one', () => {
   });
 
   test('ACTIVE_RULE is the strict one while the question is open', () => {
-    // 📌 This is a PIN on an UNDECIDED policy, and it is meant to go red when
+    // NOTE: This is a PIN on an UNDECIDED policy, and it is meant to go red when
     // Brendan answers. Its failure is the reminder to update the header, the
     // PR that changes it, and whatever UI quotes the requirement.
     expect(ACTIVE_RULE).toBe('consecutive-windows');

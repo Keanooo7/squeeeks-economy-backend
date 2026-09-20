@@ -2,7 +2,7 @@
 // demoAccount — the seeded screenshot account
 // ---------------------------------------------------------------------------
 //
-// 🔑 THESE TESTS ASSERT THE TWO THINGS THAT FAIL QUIET.
+// KEY: THESE TESTS ASSERT THE TWO THINGS THAT FAIL QUIET.
 //
 // Everything this module can get wrong degrades silently rather than throwing:
 // an unknown task id is dropped by the renderer, a schedule on the wrong week
@@ -11,7 +11,7 @@
 // anywhere — they produce a screenshot that looks like the seeder was never
 // run. So the assertions here are about values a human would not re-check.
 //
-// ⚠️ AND A LESSON FROM #390, WHICH IS WHY THE FIXTURES BELOW LOOK PARANOID: a
+// WARNING: AND A LESSON FROM #390, WHICH IS WHY THE FIXTURES BELOW LOOK PARANOID: a
 // control is only real if the WRONG code returns the WRONG answer. Each control
 // here is built so that deleting the line it guards changes its result — noted
 // per test where the choice is not obvious.
@@ -43,7 +43,7 @@ const at = (writes: {path: string; data: Record<string, unknown>}[], p: string) 
   writes.find((w) => w.path === p)?.data;
 
 // ---------------------------------------------------------------------------
-// 🔴 THE MIRROR — every id this fixture names must exist upstream
+// CRITICAL: THE MIRROR — every id this fixture names must exist upstream
 // ---------------------------------------------------------------------------
 //
 // This is the hazard defaultHouses.ts documents for furniture, one level up and
@@ -52,7 +52,7 @@ const at = (writes: {path: string; data: Record<string, unknown>}[], p: string) 
 // two wrong spellings both read as correct. An unknown id is dropped in
 // silence.
 //
-// ⚠️ TRANSCRIBED COPY, WITH THE SAME TRADE defaultHouses.ts ACCEPTS: the server
+// WARNING: TRANSCRIBED COPY, WITH THE SAME TRADE defaultHouses.ts ACCEPTS: the server
 // cannot import from lib/. An unchecked id is strictly worse than a checked
 // copy, and the anti-vacuity assertion below is what stops a copy that silently
 // emptied from passing everything.
@@ -67,7 +67,7 @@ const TASK_LIBRARY_IDS = [
 
 describe('🔴 the fixture names only ids that exist', () => {
   test('the mirror is non-empty and has known-good anchors', () => {
-    // 🔑 ANTI-VACUITY. Without this, a mirror that was emptied by a bad edit
+    // KEY: ANTI-VACUITY. Without this, a mirror that was emptied by a bad edit
     // would make every `toContain` below pass against nothing.
     expect(TASK_LIBRARY_IDS.length).toBe(30);
     expect(TASK_LIBRARY_IDS).toContain('lib_kitchen_0');
@@ -198,7 +198,7 @@ describe('🔴 FRAME 3 — the streak clears StreakDayZero', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 THE WEEK KEY — the two-clocks failure, which is silent
+// CRITICAL: THE WEEK KEY — the two-clocks failure, which is silent
 // ---------------------------------------------------------------------------
 
 describe('🔴 the schedule week key', () => {
@@ -241,7 +241,7 @@ describe('🔴 the schedule week key', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 THE ANCHOR — found by running it, not by reading it
+// CRITICAL: THE ANCHOR — found by running it, not by reading it
 // ---------------------------------------------------------------------------
 //
 // The first real emulator run seeded at 22:00 Pacific and the newest dailyScores
@@ -361,7 +361,7 @@ describe('planDemoAccount', () => {
   });
 
   test('the fixture drives the output — changing streakDays changes the doc', () => {
-    // 🔑 THE ANTI-HARD-CODING CONTROL. The brief asks that the next person be
+    // KEY: THE ANTI-HARD-CODING CONTROL. The brief asks that the next person be
     // able to change a streak length without reading the builder; if any of
     // this were hard-coded to 7 the assertion below would fail.
     const writes = planDemoAccount({
@@ -389,7 +389,7 @@ describe('planDemoAccount', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 W2-85 — the collection grid
+// CRITICAL: W2-85 — the collection grid
 // ---------------------------------------------------------------------------
 //
 // W4 excluded the collection frame because the inventory seeding cost was
@@ -435,7 +435,7 @@ describe('🔴 W2-85 inventory — the collection reads as a collection', () => 
   });
 
   test('🔴 an unknown id THROWS rather than seeding an invisible item', () => {
-    // ⚠️ `equippedItemIds: []` IS LOAD-BEARING IN THIS FIXTURE, not tidiness.
+    // WARNING: `equippedItemIds: []` IS LOAD-BEARING IN THIS FIXTURE, not tidiness.
     // Without it the default equipped ids are no longer owned, so the EQUIPPED
     // check throws first — with a different message — and the assertion passes
     // for the wrong reason. Caught by reading the failure rather than the

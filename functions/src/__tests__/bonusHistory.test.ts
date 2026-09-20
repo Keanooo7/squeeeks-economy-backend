@@ -2,16 +2,16 @@
 //
 // W2-16. Which task paid double on a past day.
 //
-// 🔴 THE BUG IS INVISIBLE UNTIL SOMEONE UNRELATED EDITS A LIST. `bonusTaskIdFor`
+// CRITICAL: THE BUG IS INVISIBLE UNTIL SOMEONE UNRELATED EDITS A LIST. `bonusTaskIdFor`
 // returns `TASK_LIBRARY_IDS[hash(dayKey) % length]` — an INDEX into a mutable
 // list. Reorder it or extend it and the answer changes for EVERY PAST DAY, and
 // the historical list is stored nowhere, so the old answer is not recoverable.
 //
-// ⚠️ WHAT MAKES THIS WORSE THAN THE CENSUS: the trigger is an ordinary edit. The
+// WARNING: WHAT MAKES THIS WORSE THAN THE CENSUS: the trigger is an ordinary edit. The
 // census needed someone to change a room. This needs someone to ADD A TASK or
 // SORT THE LIST — obviously safe, well tested, and silently rewrites the past.
 //
-// 🔑 So the tests below reorder and extend a FIXTURE list, never the real one.
+// KEY: So the tests below reorder and extend a FIXTURE list, never the real one.
 // A fixture that cannot express the bug's shape proves nothing, so each block
 // runs the CONTROL first — the recomputed answer moving — and only then shows
 // the recorded answer holding still.
@@ -162,7 +162,7 @@ describe('the fixture rule matches the source', () => {
     require('fs').readFileSync(require('path').join(__dirname, '..', f), 'utf8');
 
   /**
-   * 🔑 W2-29. CODE, not prose. `bonusPaid is deliberately NOT recorded` asserts
+ * KEY: W2-29. CODE, not prose. `bonusPaid is deliberately NOT recorded` asserts
    * `not.toMatch(/bonusPaid:\s/)` — and the comment RIGHT ABOVE that code
    * explains at length why bonusPaid is not recorded. Unstripped, adding the
    * words `bonusPaid: ` to that explanation would turn the guard RED for a

@@ -177,7 +177,7 @@ describe('gibbyFriendEdge', () => {
 // The house document — review note 3.1's server half
 // ---------------------------------------------------------------------------
 //
-// 🔴 This layout was written to match a CLIENT BUG. getFriendVisit read
+// CRITICAL: This layout was written to match a CLIENT BUG. getFriendVisit read
 // data['rooms'], so gibby.ts stored its floors array under the key `rooms` and
 // the two wrong halves agreed. PR #122 fixed the client to read `floors` —
 // which is the only key HouseLayoutModel.toJson() has ever written — so this

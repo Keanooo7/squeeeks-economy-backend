@@ -5,7 +5,7 @@
 // W2-36. Brendan: four starting homes — 1bed/1bath, 2/1, 2/2, 3/3 — varying in
 // size and "furnished as if it were a real home".
 //
-// ⚠️ GIBBY_HOUSE_LAYOUT IS THE CAUTIONARY EXAMPLE, NOT THE TEMPLATE. One room,
+// WARNING: GIBBY_HOUSE_LAYOUT IS THE CAUTIONARY EXAMPLE, NOT THE TEMPLATE. One room,
 // three pieces, a sofa and a coffee table and an armchair floating in a 4x4 box.
 // That is a furniture list. A home is a bed against a wall with a nightstand
 // beside it, seating that faces something, a table with chairs actually pulled
@@ -14,7 +14,7 @@
 // it a machine can see.
 //
 // ---------------------------------------------------------------------------
-// 🔴 A furnitureId THE CATALOGUE DOES NOT KNOW IS SILENTLY SKIPPED
+// CRITICAL: A furnitureId THE CATALOGUE DOES NOT KNOW IS SILENTLY SKIPPED
 // ---------------------------------------------------------------------------
 //
 // The renderer drops an unknown id without an error, so a single typo produces
@@ -23,7 +23,7 @@
 // design choice.
 //
 // `defaultHouses.test.ts` pins every id against a transcribed copy of
-// RoomCatalogue's `items` and `rooms`. 📌 That copy is a MIRROR, and this
+// RoomCatalogue's `items` and `rooms`. NOTE: That copy is a MIRROR, and this
 // codebase has been bitten by mirrors repeatedly (chest_drop_rates.dart,
 // TASK_LIBRARY_IDS, the twice-written FNV-1a). It is accepted here for one
 // reason: the alternative is the server importing from lib/, which it cannot,
@@ -32,7 +32,7 @@
 // silently emptied would fail rather than pass everything.
 //
 // ---------------------------------------------------------------------------
-// 📌 THE CATALOGUE IS SUFFICIENT — the disproof did not fire
+// NOTE: THE CATALOGUE IS SUFFICIENT — the disproof did not fire
 // ---------------------------------------------------------------------------
 //
 // 30 furniture entries, and `RoomCatalogue.awaitingArt` is EMPTY, so every one
@@ -45,7 +45,7 @@
 //   dining    dining_table · dining_chair · bench · stool
 //   office    desk · office_chair · bookshelf
 //
-// ⚠️ W1's finding that ~15 of 30 TASKS name furniture that does not exist is a
+// WARNING: W1's finding that ~15 of 30 TASKS name furniture that does not exist is a
 // DIFFERENT QUESTION and does not block this. Those are things you CLEAN —
 // microwave, rug, washer, bin — not things you PLACE. Furnishing a room and
 // mapping a task to a prop draw on different sets, and only the second is short.
@@ -64,7 +64,7 @@
 // largest house. So they fit 24 with room to spare and fit 34 unchanged, sitting
 // in the top-left rather than centred.
 //
-// 🔑 I did not touch the grid constant — it is lib/ and W1's. If it grows and
+// KEY: I did not touch the grid constant — it is lib/ and W1's. If it grows and
 // someone wants these centred rather than corner-anchored, that is an offset
 // applied at read time, not a re-authoring.
 //

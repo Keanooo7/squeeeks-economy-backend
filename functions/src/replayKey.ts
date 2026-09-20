@@ -5,21 +5,21 @@
 // W2-19. Extracted from purchaseChest, which had these four checks inline, so
 // that purchaseStreakShield reuses the RULE rather than a copy of it.
 //
-// 🔑 A SECOND DEFINITION OF "VALID REPLAY KEY" IS THE DEFECT THIS CODEBASE KEEPS
+// KEY: A SECOND DEFINITION OF "VALID REPLAY KEY" IS THE DEFECT THIS CODEBASE KEEPS
 // FILING — chest_drop_rates.dart mirroring the drop tables, TASK_LIBRARY_IDS
 // mirroring task_library.dart, the FNV-1a hash written twice, kBonusTaskMultiplier
 // standing beside BONUS_TASK_MULTIPLIER. Every one drifted or was caught only by
 // a mirror test. Two callables validating "the same" key with two copies of four
 // conditions is the same shape, one size smaller.
 //
-// ⚠️ THE CHECKS ARE NOT ARBITRARY AND MUST NOT BE RELAXED. The key BECOMES a
+// WARNING: THE CHECKS ARE NOT ARBITRARY AND MUST NOT BE RELAXED. The key BECOMES a
 // Firestore document id:
 //   · a '/' would silently write into a NESTED COLLECTION rather than failing;
 //   · an unbounded string would let a caller author arbitrarily long paths;
 //   · an empty string is not a document id at all.
 // So this validates the key as what it is about to become, not as a string.
 //
-// 📌 WHY A REPLAY KEY AND NOT A TRANSACTION. A transaction stops two CONCURRENT
+// NOTE: WHY A REPLAY KEY AND NOT A TRANSACTION. A transaction stops two CONCURRENT
 // calls racing. It does nothing about the SAME call arriving twice after a
 // dropped response — the client retries, and a second debit is entirely
 // consistent from the server's point of view. Those are different problems and
@@ -54,7 +54,7 @@ export function assertValidReplayKey(purchaseId: unknown): asserts purchaseId is
 }
 
 /**
- * 🔴 THE KEY IS OPTIONAL, AND THAT IS A DECISION WITH AN EXPIRY, NOT A DESIGN.
+ * CRITICAL: THE KEY IS OPTIONAL, AND THAT IS A DECISION WITH AN EXPIRY, NOT A DESIGN.
  *
  * A client that omits it gets a transaction and NO replay protection. So
  * "purchaseChest has a replay ledger" is weaker than it reads: the ledger exists

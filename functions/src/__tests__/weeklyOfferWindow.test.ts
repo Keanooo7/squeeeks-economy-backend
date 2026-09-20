@@ -5,7 +5,7 @@
 // `startsAt` and `endsAt`. It never printed them either, so the operator running
 // it to CHECK got the same blind answer as the one running it to FIX.
 //
-// 🔑 THE WINDOW LOGIC LIVES IN TypeScript RATHER THAN IN THE SCRIPT so that this
+// KEY: THE WINDOW LOGIC LIVES IN TypeScript RATHER THAN IN THE SCRIPT so that this
 // file can reach it. A copy inside a `.js` operator script would be untested by
 // construction — `npm test` never loads it — which is the shape that let the
 // original blindness sit there in the first place.

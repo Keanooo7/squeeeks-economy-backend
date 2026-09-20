@@ -5,7 +5,7 @@
  *   node scripts/with-jdk.cjs firebase emulators:exec --config ... "jest ..."
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHY THIS EXISTS: TWO EMULATOR GATES WERE DOWN AND THE CAUSE WAS INVISIBLE
+ * CRITICAL: WHY THIS EXISTS: TWO EMULATOR GATES WERE DOWN AND THE CAUSE WAS INVISIBLE
  * ---------------------------------------------------------------------------
  *
  * On 2026-08-16 both `npm run test:rules` and `npm run test:e2e` exited 1 in a
@@ -14,12 +14,12 @@
  *   Error: firebase-tools no longer supports Java version before 21.
  *   Please install a JDK at version 21 or above to get a compatible runtime.
  *
- * ⚠️ AND THAT MESSAGE IS WRONG ABOUT THIS MACHINE, WHICH IS THE TRAP. A JDK 21
+ * WARNING: AND THAT MESSAGE IS WRONG ABOUT THIS MACHINE, WHICH IS THE TRAP. A JDK 21
  * WAS ALREADY INSTALLED — Homebrew, at /opt/homebrew/opt/openjdk@21, simply not
  * linked. The error says "install a JDK" about a JDK already present, so the
  * obvious response (install one) is a no-op that leaves the gate just as red.
  *
- * 🔑 `/usr/libexec/java_home -V` DOES NOT ENUMERATE HOMEBREW JDKs. It listed
+ * KEY: `/usr/libexec/java_home -V` DOES NOT ENUMERATE HOMEBREW JDKs. It listed
  * only 19, 18 and 17 here, which is how a first reading concluded "no JDK 21 is
  * installed at all". `ls /opt/homebrew/opt` settled it. Any future diagnosis
  * that trusts java_home alone will reach the same wrong answer.
@@ -37,7 +37,7 @@
  *     Temurin all lack — turning "no JDK" into "wrong path", which reports the
  *     same way.
  *
- * 🔴 THE BAR THE BRIEF SET, AND THE REASON EITHER SHORTCUT FAILS IT: a gate that
+ * CRITICAL: THE BAR THE BRIEF SET, AND THE REASON EITHER SHORTCUT FAILS IT: a gate that
  * needs an undocumented shell tweak is the same species of defect as one that
  * needs a hand-started emulator. `npm run test:rules` must work in a shell that
  * did nothing special, on a machine nobody prepared.
@@ -57,7 +57,7 @@ const MIN_MAJOR = 21;
 /**
  * The major version [javaBin] reports, or null if it cannot be run.
  *
- * 🔴 `java -version` WRITES TO STDERR, NOT STDOUT, AND THIS COST A RED GATE.
+ * CRITICAL: `java -version` WRITES TO STDERR, NOT STDOUT, AND THIS COST A RED GATE.
  * The first version of this function used `execFileSync`, which RETURNS STDOUT
  * ONLY — so the banner went into a piped stderr that nothing ever read, every
  * candidate parsed as null, and the script reported "no JDK 21+ found, and the
@@ -144,7 +144,7 @@ function main() {
   } else {
     const found = resolveJavaHome();
     if (!found) {
-      // 🔴 REFUSE WITH THE DIAGNOSIS, NOT firebase-tools' MESSAGE. Its "install
+      // CRITICAL: REFUSE WITH THE DIAGNOSIS, NOT firebase-tools' MESSAGE. Its "install
       // a JDK" is what sent the first reader of this failure to install a JDK
       // that was already there.
       console.error(
@@ -167,7 +167,7 @@ function main() {
     console.log(`with-jdk: default java is ${onPath ?? 'missing'}; using JDK ${found.major} at ${found.home}`);
   }
 
-  // 🔑 NO SHELL. argv is passed through exactly as npm parsed it, so the single
+  // KEY: NO SHELL. argv is passed through exactly as npm parsed it, so the single
   // quoted `jest …` argument that `emulators:exec` expects survives as ONE
   // argument. Re-quoting it through a shell is how that becomes several.
   const child = spawn(argv[0], argv.slice(1), {stdio: 'inherit', env});

@@ -5,7 +5,7 @@
 // picked uniformly with no ownership filter, so the duplicate rate was whatever
 // the player's collection happened to make it.
 //
-// 🔑 THE CENTRAL CLAIM THIS FILE GUARDS: the duplicate rate is a property of the
+// KEY: THE CENTRAL CLAIM THIS FILE GUARDS: the duplicate rate is a property of the
 // DRAW, not of the drop table. The drop table chooses a rarity and knows nothing
 // about what the player owns, so it cannot move a duplicate rate in either
 // direction. `the drop table cannot move the duplicate rate` below is the CONTROL
@@ -70,7 +70,7 @@ describe('partitionByOwnership', () => {
 });
 
 describe('the biased draw', () => {
-  // 🔴 THE LITERAL, PINNED AGAINST A NUMBER RATHER THAN AGAINST ITSELF.
+  // CRITICAL: THE LITERAL, PINNED AGAINST A NUMBER RATHER THAN AGAINST ITSELF.
   //
   // Every other assertion in this file spells the target as
   // `TARGET_DUPLICATE_RATE`, which is right for expressing the RELATIONSHIP but
@@ -98,7 +98,7 @@ describe('the biased draw', () => {
   });
 
   test('picks a duplicate strictly below the target rate and a fresh item at or above it', () => {
-    // 🔴 THE BOUNDARY IS PINNED, NOT SAMPLED. A test that only samples cannot
+    // CRITICAL: THE BOUNDARY IS PINNED, NOT SAMPLED. A test that only samples cannot
     // tell 5% from 4% without tens of thousands of draws, and one that samples
     // at that size is slow enough that someone deletes it.
     const unowned = cell('fresh');
@@ -132,7 +132,7 @@ describe('the biased draw', () => {
   });
 
   test('an exhausted cell forces a duplicate and says it was forced', () => {
-    // 🔴 THE CASE THAT IS THE MAJORITY, NOT THE EDGE — see the measurement test
+    // CRITICAL: THE CASE THAT IS THE MAJORITY, NOT THE EDGE — see the measurement test
     // at the bottom of this file. 45 of 84 cells hold ONE item, so this branch
     // is what most cells do for the whole rest of a player's life.
     for (const roll of [0, 0.5, 0.999]) {
@@ -173,7 +173,7 @@ describe('the biased draw', () => {
   });
 
   test('THE CONTROL: the drop table cannot move the duplicate rate', () => {
-    // 🔑 The brief's central finding, asserted rather than asserted-about: the
+    // KEY: The brief's central finding, asserted rather than asserted-about: the
     // 5% target CANNOT be reached by tuning DROP_TABLES, because the draw's
     // ownership bias does not consult them. If a future change makes the rate
     // depend on the table, this goes red and the tests above become suspect —
@@ -256,7 +256,7 @@ describe('the refund is 75% of what the chest cost', () => {
   });
 
   test('the tier→category inversion is total and lossless', () => {
-    // ⚠️ The inversion is only 1:1 while no two categories share a tier. If a
+    // WARNING: The inversion is only 1:1 while no two categories share a tier. If a
     // fourth category ever reuses one, DROP_TABLE_CATEGORY silently keeps
     // whichever was declared last and the other category's refund goes wrong.
     // That day should be a red test, not a quiet mispayment.
@@ -272,7 +272,7 @@ describe('the refund is 75% of what the chest cost', () => {
 // The measurement that moved the product decision
 // ---------------------------------------------------------------------------
 //
-// 🔴 THIS IS THE FINDING, NOT THE FIX, AND IT IS A TEST SO THE NEXT PERSON CAN
+// CRITICAL: THIS IS THE FINDING, NOT THE FIX, AND IT IS A TEST SO THE NEXT PERSON CAN
 // RE-RUN IT RATHER THAN TRUST IT.
 //
 // The brief asked for "5% flat across all chests". That is not implementable
@@ -343,7 +343,7 @@ describe('the pool shape that makes a flat rate impossible', () => {
 // nothing at all AND wrote over the item the player already had, so the reward
 // evaporated twice over.
 //
-// 📌 The daily gift is deliberately NOT in this set. Brendan, 2026-08-29: "The
+// NOTE: The daily gift is deliberately NOT in this set. Brendan, 2026-08-29: "The
 // daily gift only gives sponges so it would be a waste to add anything as the
 // duplicate is just for items, the daily gift is also free so it would make no
 // sense." It is a sponge faucet and a duplicate is an item concept — see the

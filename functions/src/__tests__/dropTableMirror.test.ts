@@ -11,26 +11,26 @@ import {DROP_TABLES, DROP_TABLE_TIERS} from '../itemPool';
 //   functions/src/itemPool.ts:63-66              DROP_TABLES        <- the server ROLLS this
 //   lib/features/shop/domain/chest_drop_rates.dart:24-28  kDropTables  <- the client DISPLAYS this
 //
-// 🔴 THE DIVERGENCE IS SILENT AND IT IS NOT COSMETIC. `rollRarity`
+// CRITICAL: THE DIVERGENCE IS SILENT AND IT IS NOT COSMETIC. `rollRarity`
 // (itemPool.ts:101) decides what the player actually gets; `chestOddsText`
 // (chest_drop_rates.dart:88) tells them what to expect. If the two tables drift,
 // the app advertises odds the server does not roll — and every existing test
 // passes, because no test on either side opens the other file.
 //
-// 📌 MEASURED BEFORE THIS FILE EXISTED: `grep -rl "chest_drop_rates.dart'"
+// NOTE: MEASURED BEFORE THIS FILE EXISTED: `grep -rl "chest_drop_rates.dart'"
 // functions/src` returns ZERO. Eight files under functions/ mention the Dart
 // mirror BY NAME as a known hazard — itemPool.ts:85, family.ts:223,
 // housemateToken.ts:124, index.ts:3749, defaultHouses.test.ts:18 and three more
 // — and not one of them reads it. Knowing a hazard by name is not a gate.
 //
-// 🔑 WHY NOW. Candidate E is authorised (lean 75/14/11 · mid 45/33/22 · rich
+// KEY: WHY NOW. Candidate E is authorised (lean 75/14/11 · mid 45/33/22 · rich
 // 15/52/33) and moves all six numbers. `chest_drop_rates.dart`'s own header says
 // its percentages are DERIVED rather than typed, so it "can only drift if the
 // thresholds themselves drift" — which is exactly what the next brief does. The
 // guard lands FIRST and alone, deliberately: a guard shipped in the same commit
 // as the change it guards has never been observed protecting the old state.
 //
-// ⚠️ This is `CHEST_PRICE`'s argument one level up. itemPool.ts:110-117 already
+// WARNING: This is `CHEST_PRICE`'s argument one level up. itemPool.ts:110-117 already
 // refuses to keep a second hand-maintained copy of the same economy, "because
 // two hand-maintained copies of the same economy drift, and the drift stays
 // invisible until someone changes a price". We are about to change a price.
@@ -50,7 +50,7 @@ type ParsedTables = Record<string, number[]>;
 /**
  * `kDropTables`, read out of the Dart source.
  *
- * 🔴 THE BLOCK IS ISOLATED BEFORE THE ENTRIES ARE MATCHED, and that is not
+ * CRITICAL: THE BLOCK IS ISOLATED BEFORE THE ENTRIES ARE MATCHED, and that is not
  * tidiness. `chest_drop_rates.dart` contains other `(double, double)` records —
  * `dropThresholdsFor`'s return type and the destructuring in `dropChancesFor` —
  * so an entry regex run over the whole file would match text that is not the
@@ -80,7 +80,7 @@ function parseDropTables(source: string): ParsedTables {
 /**
  * Refuse a parse that found too little to be a comparison.
  *
- * 🔴 THIS IS THE LOAD-BEARING HALF AND IT IS SEPARATE ON PURPOSE. A parser that
+ * CRITICAL: THIS IS THE LOAD-BEARING HALF AND IT IS SEPARATE ON PURPOSE. A parser that
  * silently extracts nothing passes every equality test it is given: the loop
  * below runs zero times and the suite goes green while comparing nothing to
  * nothing. Same failure `seedCheck.test.ts` guards against ("a generator
@@ -110,20 +110,20 @@ describe('the Dart drop-table mirror agrees with DROP_TABLES', () => {
   const source = fs.readFileSync(MIRROR, 'utf8');
   const parsed = parseDropTables(source);
 
-  // ⚠️ CONTROL, NOT CEREMONY. Everything below is a per-tier comparison; if the
+  // WARNING: CONTROL, NOT CEREMONY. Everything below is a per-tier comparison; if the
   // parse returned nothing, all of it would pass vacuously.
   test('the parse found three tiers and six finite thresholds', () => {
     expect(() => assertParseIsSubstantive(parsed)).not.toThrow();
     expect(Object.keys(parsed).sort()).toEqual([...DROP_TABLE_TIERS].sort());
   });
 
-  // ⚠️ CONTROL OVER THE DETECTOR ITSELF. `assertParseIsSubstantive` returning
+  // WARNING: CONTROL OVER THE DETECTOR ITSELF. `assertParseIsSubstantive` returning
   // quietly on a short parse would make the control above worthless, and
   // `parseDropTables` matching anything at all would make the anchor pointless.
   // Both answers are pinned, against sources crafted here rather than by
   // touching the real file.
   //
-  // 🔴 EVERY DOCTORED SOURCE IS ASSERTED TO DIFFER FROM THE ORIGINAL FIRST, AND
+  // CRITICAL: EVERY DOCTORED SOURCE IS ASSERTED TO DIFFER FROM THE ORIGINAL FIRST, AND
   // THAT LINE WAS BOUGHT WITH A FAILURE. W2-170 moved all six thresholds and
   // this test went red — not on a tier comparison, which passed, but here: the
   // `oneThreshold` fixture doctored the source by substituting the LITERAL
@@ -153,7 +153,7 @@ describe('the Dart drop-table mirror agrees with DROP_TABLES', () => {
       /expected 3 tiers/,
     );
 
-    // 🔴 THE DECLARATION, NOT THE FIRST OCCURRENCE OF THE WORD. This was
+    // CRITICAL: THE DECLARATION, NOT THE FIRST OCCURRENCE OF THE WORD. This was
     // `source.replace('kDropTables', …)`, and a string pattern replaces only the
     // FIRST match — which W2-170 turned into the file's header comment the
     // moment that comment started naming `kDropTables`. The declaration survived
@@ -170,7 +170,7 @@ describe('the Dart drop-table mirror agrees with DROP_TABLES', () => {
     expect(() => parseDropTables(renamed)).toThrow(/kDropTables not found/);
   });
 
-  // 🔑 THE ASSERTION THE BRIEF EXISTS FOR. Keyed by tier so a failure names the
+  // KEY: THE ASSERTION THE BRIEF EXISTS FOR. Keyed by tier so a failure names the
   // tier and prints both thresholds, rather than reporting that two anonymous
   // arrays differ.
   test.each([...DROP_TABLE_TIERS])('%s has the same thresholds on both sides', (tier) => {

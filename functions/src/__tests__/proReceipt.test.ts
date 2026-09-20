@@ -1,7 +1,7 @@
 /**
  * The Pro receipt (W2-107) — and the two gates that stop it drifting.
  *
- * 🔴 A RECEIPT IS THE WORST PLACE FOR A STALE NUMBER, because nobody diffs an
+ * CRITICAL: A RECEIPT IS THE WORST PLACE FOR A STALE NUMBER, because nobody diffs an
  * email against a config. The shop showed 9.99 for a 2.99 product for six days
  * with a test suite green the whole time; a receipt stating a wrong price would
  * survive longer and reach the buyer directly.
@@ -64,7 +64,7 @@ describe('🔴 the price is GATED against ios/Configuration.storekit', () => {
   }
 
   it('the registry parsed and is not vacuously empty', () => {
-    // ⚠️ Subscriptions live under `subscriptionGroups`, NOT `products` — a
+    // WARNING: Subscriptions live under `subscriptionGroups`, NOT `products` — a
     // reader that only walked `products` would find zero subscriptions and
     // every assertion below would pass against nothing.
     expect(registered.size).toBeGreaterThanOrEqual(6);
@@ -93,7 +93,7 @@ describe('🔴 the price is GATED against ios/Configuration.storekit', () => {
   });
 
   it('🔴 W2-157 REVERSED: sub_family_monthly IS priced, so a family buyer gets a receipt', () => {
-    // ⚠️ THIS TEST USED TO ASSERT THE EXACT OPPOSITE, and it was right to at the
+    // WARNING: THIS TEST USED TO ASSERT THE EXACT OPPOSITE, and it was right to at the
     // time: the product existed nowhere, so a receipt for it would have had to
     // INVENT a charge, and `receiptFor` returned null rather than guess. That
     // premise died — the product is in App Store Connect (Apple ID 6801924400)
@@ -101,7 +101,7 @@ describe('🔴 the price is GATED against ios/Configuration.storekit', () => {
     // deliberately, not relaxed: it still pins the same decision, it just pins
     // it to the side the world is now on.
     //
-    // 🔑 WHAT IT COST WHILE THE OLD ASSERTION STOOD: a family subscriber
+    // KEY: WHAT IT COST WHILE THE OLD ASSERTION STOOD: a family subscriber
     // received NO RECEIPT AT ALL. Not a failed purchase — they were charged and
     // granted correctly — a missing email, which receiptFor's own header calls
     // "a missing courtesy, not a failed purchase".
@@ -157,7 +157,7 @@ describe('🔴 the legal links are GATED against lib/core/config/app_links.dart'
 
 describe('the receipt states what Brendan asked for', () => {
   it('names the rewards, COMPUTED from the live caps', () => {
-    // 🔑 Not a typed sentence. taskRewards.ts says "work it out from the
+    // KEY: Not a typed sentence. taskRewards.ts says "work it out from the
     // constants — do not restate it", and an email is where a restated number
     // would live longest unnoticed.
     const r = receiptFor(base)!;
@@ -186,7 +186,7 @@ describe('the receipt states what Brendan asked for', () => {
   });
 
   it('🔴 derives the PERIOD from the product — annual is not "monthly"', () => {
-    // ⚠️ W4-83 lands the annual plan. A receipt hard-coding "monthly" is the
+    // WARNING: W4-83 lands the annual plan. A receipt hard-coding "monthly" is the
     // 3.1.2 disclosure shape in an email, and it would be wrong for exactly the
     // buyer who paid the most.
     const annual = receiptFor({...base, productId: 'sub_pro_annual'})!;
@@ -239,7 +239,7 @@ describe('🔴 W2-157 the receipt names the plan the buyer actually bought', () 
   const familyBase = {...base, productId: 'sub_family_monthly'};
 
   it('a FAMILY purchase is not called Pro anywhere in the receipt', () => {
-    // 🔴 THE DEFECT THIS GUARDS. Every string in the body was hardcoded to
+    // CRITICAL: THE DEFECT THIS GUARDS. Every string in the body was hardcoded to
     // "Squeeeks Pro", so the moment the family price existed the receipt read
     // "Plan: Squeeeks Pro" and "Your Squeeeks Pro receipt — $12.99" — a $5.99
     // product's name next to a $12.99 charge, on the document that proves what
@@ -265,7 +265,7 @@ describe('🔴 W2-157 the receipt names the plan the buyer actually bought', () 
 
 describe("🔴 W2-157 the coverage line is per-product, because it was a false promise", () => {
   it('🔴 a PRO receipt no longer promises that the buyer\'s family gets Pro', () => {
-    // 🔴 THE HEADLINE DEFECT. This line shipped on the ONLY receipt that has
+    // CRITICAL: THE HEADLINE DEFECT. This line shipped on the ONLY receipt that has
     // ever been composable — $5.99 sub_pro_monthly — and W2-156 established it
     // is FALSE: planFamilyFanOutForEffect returns [] unless the owner's product
     // is FAMILY_PRODUCT_ID, so a personal-Pro subscriber's invitees are entitled
@@ -304,7 +304,7 @@ describe("🔴 W2-157 the coverage line is per-product, because it was a false p
 
 describe('🔴 W2-182 the buyer-facing NUMBERS are pinned as LITERALS, not as symbols', () => {
   // ---------------------------------------------------------------------------
-  // 🔴 A GATE SPELLED IN ITS OWN CONSTANT CANNOT FAIL. MEASURED, NOT ARGUED.
+  // CRITICAL: A GATE SPELLED IN ITS OWN CONSTANT CANNOT FAIL. MEASURED, NOT ARGUED.
   // ---------------------------------------------------------------------------
   //
   // Every other assertion in this file that names a derived number imports the
@@ -316,7 +316,7 @@ describe('🔴 W2-182 the buyer-facing NUMBERS are pinned as LITERALS, not as sy
   //   TASK_SPONGE_REWARD         5 → 7   proReceipt.test.ts  23/23 GREEN
   //   PAID_TASK_CAP_BY_TIER.pro  4 → 6   proReceipt.test.ts  23/23 GREEN
   //
-  // ⚠️ AND `TASK_SPONGE_REWARD` IS UNPINNED ACROSS THE ENTIRE BACKEND: the full
+  // WARNING: AND `TASK_SPONGE_REWARD` IS UNPINNED ACROSS THE ENTIRE BACKEND: the full
   // `npm test` run stayed **1687/1687 green** with it at 7. FAMILY_CAP is caught
   // elsewhere (family.test.ts, 5 red) and the pro cap is caught elsewhere
   // (dailyBonusTask.test.ts › `paidTaskCapFor › raises the ceiling with the
@@ -324,18 +324,18 @@ describe('🔴 W2-182 the buyer-facing NUMBERS are pinned as LITERALS, not as sy
   // receipt reading "28 sponges a day" would have shipped with every gate
   // reporting success, and nobody diffs an email against a config.
   //
-  // 📌 THE ASSERTION AT :283 IS NOT VACUOUS, ONLY ITS NUMBER IS. Positive
+  // NOTE: THE ASSERTION AT :283 IS NOT VACUOUS, ONLY ITS NUMBER IS. Positive
   // control on the same sentence and the same population: rewording the source
   // from "including you" to "including yourself" turned exactly that one test
   // red, 1 failed / 22 passed. The prose half is falsifiable; the digit is not.
   //
-  // 🔑 SO THE PIN IS ON THE RENDERED SENTENCE RATHER THAN ON THE CONSTANT. What
+  // KEY: SO THE PIN IS ON THE RENDERED SENTENCE RATHER THAN ON THE CONSTANT. What
   // a billing document has to be right about is the string the buyer reads, and
   // pinning the line whole catches a wrong cap, a wrong reward and a reworded
   // promise in one assertion — without adding a second copy of the arithmetic,
   // which would drift in exactly the way the imported symbol does.
   //
-  // ⚠️ WHEN A CAP OR A REWARD LEGITIMATELY CHANGES THIS GOES RED, AND THAT IS
+  // WARNING: WHEN A CAP OR A REWARD LEGITIMATELY CHANGES THIS GOES RED, AND THAT IS
   // THE POINT. Retype the line to match what the buyer will now read. Do not
   // reintroduce an interpolated constant to make it quiet again.
 

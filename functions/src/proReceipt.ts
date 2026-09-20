@@ -2,7 +2,7 @@
  * The Pro purchase receipt — composed here, sent by nobody yet.
  *
  * ---------------------------------------------------------------------------
- * 🔴 THERE IS NO EMAIL INFRASTRUCTURE IN THIS PROJECT. THIS SENDS NOTHING.
+ * CRITICAL: THERE IS NO EMAIL INFRASTRUCTURE IN THIS PROJECT. THIS SENDS NOTHING.
  * ---------------------------------------------------------------------------
  *
  * No sendgrid, nodemailer, postmark, mailgun or resend anywhere in `functions/`,
@@ -11,7 +11,7 @@
  * account, a verified domain and DNS records that only Brendan can create — see
  * REQUIRED_SETUP at the bottom, which names each one precisely.
  *
- * ⚠️ AND SENDING MUST NEVER SIT INSIDE THE GRANT. `verifyIapAndGrant` and
+ * WARNING: AND SENDING MUST NEVER SIT INSIDE THE GRANT. `verifyIapAndGrant` and
  * `verifySubscriptionReceipt` both write their entitlement in a transaction; a
  * mail outage inside one would turn a successful purchase into a failed one,
  * and #472 is one wave old on that exact path. A receipt is a courtesy. The
@@ -24,7 +24,7 @@
  *     17 auth accounts · 6 with an email address · 11 anonymous (65%)
  *     0 purchases have ever been made
  *
- * 🔑 SO THE "NO ADDRESS" BRANCH IS A FALLBACK THAT SHOULD NEVER FIRE, NOT A
+ * KEY: SO THE "NO ADDRESS" BRANCH IS A FALLBACK THAT SHOULD NEVER FIRE, NOT A
  * CO-EQUAL PATH. Two thirds of today's accounts could not receive anything —
  * but none of them has bought, and the client will require an account before
  * any future purchase. Every buyer will therefore have an address. The branch
@@ -32,7 +32,7 @@
  * because "should never fire" is a prediction rather than a guarantee.
  *
  * ---------------------------------------------------------------------------
- * 🔑 EVERY ELEMENT DERIVES. NOTHING IS RETYPED.
+ * KEY: EVERY ELEMENT DERIVES. NOTHING IS RETYPED.
  * ---------------------------------------------------------------------------
  *
  * Brendan asked for four things: the rewards, the price, the payment details
@@ -45,7 +45,7 @@
  *   payment  ← the verified Apple transaction itself
  *   legal    ← LEGAL_URLS below, GATED against lib/core/config/app_links.dart
  *
- * ⚠️ The two GATED tables are the compromise this repo cannot avoid: a Cloud
+ * WARNING: The two GATED tables are the compromise this repo cannot avoid: a Cloud
  * Function cannot import a Dart file or read `ios/` at runtime, so the values
  * must exist here too. What stops them drifting is not discipline, it is
  * proReceipt.test.ts failing when they disagree with their sources.
@@ -60,11 +60,11 @@ export type BillingPeriod = 'monthly' | 'annual';
 /**
  * What each subscription product costs and how often it bills.
  *
- * 🔴 GATED AGAINST ios/Configuration.storekit BY TEST. A price in two places is
+ * CRITICAL: GATED AGAINST ios/Configuration.storekit BY TEST. A price in two places is
  * the defect this project already shipped once; the gate is what makes a second
  * copy safe rather than merely convenient.
  *
- * 📌 `sub_family_monthly` IS PRESENT AS OF W2-157, AND THE COMMENT THAT STOOD
+ * NOTE: `sub_family_monthly` IS PRESENT AS OF W2-157, AND THE COMMENT THAT STOOD
  * HERE SAYING IT WAS "DELIBERATELY ABSENT" WAS FALSE ON BOTH ITS HALVES. It
  * claimed the product "has never existed in App Store Connect or
  * Configuration.storekit". It now exists in BOTH — Apple ID 6801924400, and
@@ -72,14 +72,14 @@ export type BillingPeriod = 'monthly' | 'annual';
  * stood, `receiptFor` returned null for the family product and a family
  * subscriber received NO RECEIPT AT ALL.
  *
- * ⚠️ `displayPrice` IS THE US TIER AND ONLY THE US TIER. The same tier is
+ * WARNING: `displayPrice` IS THE US TIER AND ONLY THE US TIER. The same tier is
  * AUD 19.99, EUR 14.99, and a different number again across 175 regions. This
  * entry INHERITS that assumption from `sub_pro_monthly` and `sub_pro_annual`
  * rather than introducing it — recorded as a deliberate choice, not slid in.
  * Fixing it means asking Apple for the buyer's actual locale price, which is a
  * real brief and not this one.
  *
- * 🔑 `planName` IS MIRRORED FROM THE SAME FILE AND GATED THE SAME WAY. Without
+ * KEY: `planName` IS MIRRORED FROM THE SAME FILE AND GATED THE SAME WAY. Without
  * it every receipt greeted the buyer with "Squeeeks Pro" and printed
  * "Plan: Squeeeks Pro" — so a Family buyer charged $12.99 got a receipt naming
  * a $5.99 product. On a billing document that is not a cosmetic error.
@@ -101,7 +101,7 @@ export const SUBSCRIPTION_PRICES: Record<
  * Fails LOUDLY for any subscription product this table cannot price.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHY THIS EXISTS AS A SEPARATE FUNCTION RATHER THAN AS A THROW INSIDE
+ * CRITICAL: WHY THIS EXISTS AS A SEPARATE FUNCTION RATHER THAN AS A THROW INSIDE
  * `receiptFor`, WHICH IS THE OBVIOUS PLACE AND IS THE WRONG ONE.
  * ---------------------------------------------------------------------------
  *
@@ -111,18 +111,18 @@ export const SUBSCRIPTION_PRICES: Record<
  * must never become a purchase that fails. Making the RUNTIME path throw would
  * invert exactly the rule the file opens with, and #472 is on that path.
  *
- * 🔑 SO THE LOUD FAILURE MOVES TO THE GATE INSTEAD OF THE GRANT. A missing
+ * KEY: SO THE LOUD FAILURE MOVES TO THE GATE INSTEAD OF THE GRANT. A missing
  * price is a build-time defect — somebody added a subscription to
  * `ios/Configuration.storekit` and not here — and a build-time defect belongs
  * in a test, where it costs a red suite instead of a silent non-receipt. It is
  * `null` at runtime and a named, filed failure at gate time; those are not in
  * tension, they are the same decision applied where each is correct.
  *
- * ⚠️ THE MESSAGE NAMES THE PRODUCT ID **AND** THIS FILE, because a bare
+ * WARNING: THE MESSAGE NAMES THE PRODUCT ID **AND** THIS FILE, because a bare
  * "missing price" sends the reader hunting through three tables that all key on
  * a product id — `SUBSCRIPTION_PRODUCT_TIERS`, `WEEKLY_OFFERS` and this one.
  *
- * 📌 `sub_family_monthly` IS THE PRODUCT THIS WAS WRITTEN FOR, and it was
+ * NOTE: `sub_family_monthly` IS THE PRODUCT THIS WAS WRITTEN FOR, and it was
  * ALREADY FIXED by W2-157 before this function existed — the entry is above.
  * What was missing is the thing that would have CAUGHT it, which is why this
  * lands anyway rather than being dropped as redundant.
@@ -142,7 +142,7 @@ export function assertPricedSubscriptions(productIds: readonly string[]): void {
 /**
  * The hosted legal pages, mirrored from lib/core/config/app_links.dart.
  *
- * 🔴 GATED AGAINST THAT FILE BY TEST, for the same reason as the prices: a
+ * CRITICAL: GATED AGAINST THAT FILE BY TEST, for the same reason as the prices: a
  * Cloud Function cannot import Dart, so the URL exists twice and only a test
  * can keep the copies honest. App Store review checks these, and a receipt
  * linking to a dead page is worse than one linking nowhere.
@@ -173,12 +173,12 @@ function dayOf(ms: number): string {
 /**
  * What the purchased plan actually gives, computed from the live constants.
  *
- * 🔑 NOT A SENTENCE SOMEBODY TYPED. `taskRewards.ts` warns in its own comment
+ * KEY: NOT A SENTENCE SOMEBODY TYPED. `taskRewards.ts` warns in its own comment
  * "work it out from the constants — do not restate it", and a receipt is
  * exactly the place a restated number would survive unnoticed: nobody diffs an
  * email against a config.
  *
- * 🔴 THE COVERAGE LINE IS NOW PER-PRODUCT, AND THE LINE IT REPLACES WAS A FALSE
+ * CRITICAL: THE COVERAGE LINE IS NOW PER-PRODUCT, AND THE LINE IT REPLACES WAS A FALSE
  * PROMISE ON A BILLING DOCUMENT (W2-157). Every receipt used to end with
  * "• Family sharing — everyone in your family gets Pro while your subscription
  * is active", unconditionally — including the $5.99 `sub_pro_monthly` receipt,
@@ -198,7 +198,7 @@ function dayOf(ms: number): string {
  *      which one they were sold. The wording now says "Squeeeks family" and
  *      never "Family sharing".
  *
- * ⚠️ THE CAP IS READ FROM `FAMILY_CAP`, NOT TYPED. It is 5 TOTAL — the owner
+ * WARNING: THE CAP IS READ FROM `FAMILY_CAP`, NOT TYPED. It is 5 TOTAL — the owner
  * plus four — and `family.ts` records that a previous argument about this
  * number compared a total against a besides-the-owner count "wearing one
  * label". The receipt says "including you" so the buyer cannot make that same
@@ -227,7 +227,7 @@ export function benefitLinesFor(productId: string): string[] {
  * stated truthfully.
  *
  * Returns null when there is no address to send to, or when the product has no
- * known price. 🔴 NULL IS NOT AN ERROR AND MUST NEVER BE TREATED AS ONE — the
+ * known price. CRITICAL: NULL IS NOT AN ERROR AND MUST NEVER BE TREATED AS ONE — the
  * grant has already happened by the time anything calls this, and a receipt
  * that could not be composed is a missing courtesy, not a failed purchase.
  */
@@ -261,7 +261,7 @@ export function receiptFor(args: {
     `• Purchased: ${dayOf(purchaseDateMs)}`,
     `• ${renews}`,
     '',
-    // ⚠️ Apple is the merchant of record and the only place a subscription can
+    // WARNING: Apple is the merchant of record and the only place a subscription can
     // be cancelled. Saying so is not boilerplate — a receipt that implies we
     // can cancel it generates a support ticket we cannot resolve.
     'Billed by Apple. Manage or cancel any time in Settings → your name → Subscriptions.',
@@ -298,7 +298,7 @@ export interface EmailSender {
 }
 
 /**
- * 🔴 WHAT BRENDAN MUST CREATE BEFORE A RECEIPT CAN BE SENT.
+ * CRITICAL: WHAT BRENDAN MUST CREATE BEFORE A RECEIPT CAN BE SENT.
  *
  * Named precisely so this needs no follow-up question. Nothing below can be
  * done from inside this repo.
@@ -309,7 +309,7 @@ export interface EmailSender {
  *     eventually add an unsubscribe footer to a purchase receipt, which is both
  *     wrong and a compliance problem.
  *
- *  2. A SENDING DOMAIN YOU CONTROL — e.g. `mail.squeeeks.app`. ⚠️ NOT gmail.com:
+ * 2. A SENDING DOMAIN YOU CONTROL — e.g. `mail.squeeeks.app`. WARNING: NOT gmail.com:
  *     the support address in app_links.dart is a personal Gmail, and no provider
  *     will let you send as a domain you do not own. This is the item with a
  *     real lead time, because it needs a domain purchase if there is not one.
@@ -329,7 +329,7 @@ export interface EmailSender {
  *  5. A FROM ADDRESS on that domain, e.g. `receipts@mail.squeeeks.app`, and a
  *     REPLY-TO of the support address so an answer reaches a human.
  *
- * 📌 Only step 4 is code. Steps 1-3 and 5 are account and DNS work, and step 2
+ * NOTE: Only step 4 is code. Steps 1-3 and 5 are account and DNS work, and step 2
  * is the one that can take a day.
  */
 export const REQUIRED_SETUP = [

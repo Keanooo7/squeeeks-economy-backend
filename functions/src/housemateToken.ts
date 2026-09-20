@@ -8,7 +8,7 @@
 // never the client — writes the housemate edge.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE DISPROOF, ANSWERED BEFORE ANY CODE WAS WRITTEN
+// CRITICAL: THE DISPROOF, ANSWERED BEFORE ANY CODE WAS WRITTEN
 // ---------------------------------------------------------------------------
 //
 // The question was whether the existing rules-only path can carry this, because
@@ -27,7 +27,7 @@
 //     true` is a genuine compare-and-set: rules evaluate against the committed
 //     document state, so two concurrent redemptions cannot both pass.
 //
-//   SINGLE-USE, ACROSS TWO DOCUMENTS — 🔴 rules CANNOT do this, and this is the
+//   SINGLE-USE, ACROSS TWO DOCUMENTS — CRITICAL: rules CANNOT do this, and this is the
 //     one that kills the rules-only design. Redemption is inherently two
 //     writes: consume the token, and append to users/{host}.housemates. Rules
 //     evaluate each document's write independently — even inside a batch or a
@@ -47,11 +47,11 @@
 //     non-owner write path onto another player's top-level document is a
 //     strictly larger exposure than the feature being built.
 //
-// ✅ SO: two callables. The Admin SDK bypasses rules entirely, which is exactly
+// OK: SO: two callables. The Admin SDK bypasses rules entirely, which is exactly
 // why the callable must carry the cap ITSELF — see HOUSEMATE_CAP.
 //
 // ---------------------------------------------------------------------------
-// ⚠️ WHAT THIS PROVES, STATED ONCE AND NOT OVERSOLD
+// WARNING: WHAT THIS PROVES, STATED ONCE AND NOT OVERSOLD
 // ---------------------------------------------------------------------------
 //
 // INTENT, NOT PRESENCE. A code on one screen can be read aloud, screenshotted,
@@ -60,11 +60,11 @@
 // room together, and it does not exist. What the 45 seconds and the single use
 // DO buy is that the two people must be coordinating in real time and that
 // NEITHER can grant themselves anything — which is a real bar, just a lower one
-// than Apple's or Google's. 🔴 No field written by this module may ever be
+// than Apple's or Google's. CRITICAL: No field written by this module may ever be
 // rendered as "verified in person".
 //
 // ---------------------------------------------------------------------------
-// 📌 THE GRANT IS MUTUAL, AND THAT IS A DECISION
+// NOTE: THE GRANT IS MUTUAL, AND THAT IS A DECISION
 // ---------------------------------------------------------------------------
 //
 // The existing ask/accept flow is one-directional: A asks, B adds A to B's
@@ -84,12 +84,12 @@ import { randomBytes } from 'crypto';
 /**
  * How long a minted code stays redeemable, in seconds.
  *
- * 🔑 "Tens of seconds, not minutes" is the spec's bar, and the reason is that a
+ * KEY: "Tens of seconds, not minutes" is the spec's bar, and the reason is that a
  * token which outlives the moment is a token that can be forwarded. 45 leaves
  * room to unlock a phone and open a scanner while staying unambiguously short
  * of the minute that would read as "text it to me".
  *
- * ⚠️ Raising this past ~60 changes what the feature claims. It is not a tuning
+ * WARNING: Raising this past ~60 changes what the feature claims. It is not a tuning
  * knob; it is the only thing standing between "you were both here" and "someone
  * sent you a code".
  */
@@ -99,7 +99,7 @@ export const HOUSEMATE_TOKEN_TTL_SECONDS = 45;
  * Alphabet for a minted code. Crockford base32 — no I, L, O or U, so nothing
  * is ambiguous when a human reads it off a screen, and no accidental words.
  *
- * 🔑 EXACTLY 32 CHARACTERS, and that is load-bearing. 256 is divisible by 32,
+ * KEY: EXACTLY 32 CHARACTERS, and that is load-bearing. 256 is divisible by 32,
  * so `byte % 32` is uniform. A 33-character alphabet would silently bias the
  * first character of every code ever minted, with no test able to see it.
  */
@@ -110,14 +110,14 @@ export const HOUSEMATE_TOKEN_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
  *
  * The threat is online guessing against a live token, not offline cracking:
  * a code is only valid for HOUSEMATE_TOKEN_TTL_SECONDS, and guessing one in
- * that window means ~2^49 callable invocations. ⚠️ Nothing rate-limits the
+ * that window means ~2^49 callable invocations. WARNING: Nothing rate-limits the
  * redeem callable itself — the same gap recorded for submitGalleryFeedback —
  * so the entropy is doing all of the work here, deliberately.
  */
 export const HOUSEMATE_TOKEN_LENGTH = 10;
 
 /**
- * 🔴 THE CAP, MIRRORED FROM `housemateCap()` IN firestore.rules — AND THE
+ * CRITICAL: THE CAP, MIRRORED FROM `housemateCap()` IN firestore.rules — AND THE
  * MIRROR IS WHY THIS CONSTANT IS DANGEROUS.
  *
  * A second definition of a shared number is the defect this codebase keeps
@@ -151,7 +151,7 @@ export interface HousemateTokenDoc {
  * Mints a code.
  *
  * `random` is injectable so a test can pin the bytes; production always uses
- * `crypto.randomBytes`. 🔴 Never `Math.random()` — it is seeded, predictable
+ * `crypto.randomBytes`. CRITICAL: Never `Math.random()` — it is seeded, predictable
  * and would make the 50 bits above a fiction.
  */
 export function generateHousemateTokenCode(
@@ -168,7 +168,7 @@ export function generateHousemateTokenCode(
 /**
  * True when [code] is shaped like something this server minted.
  *
- * 📌 Stricter than `assertValidReplayKey`, and NOT a copy of it. A replay key
+ * NOTE: Stricter than `assertValidReplayKey`, and NOT a copy of it. A replay key
  * is authored by the client, so that rule can only validate a string as a
  * usable document id. This alphabet is chosen by the SERVER, so anything
  * outside it was not minted here and can be refused before a read — which also
@@ -231,7 +231,7 @@ export function evaluateRedemption(
     };
   }
   if (token.hostUid === guestUid) {
-    // 🔴 THE SELF-GRANT. Without this, one person with one phone mints and
+    // CRITICAL: THE SELF-GRANT. Without this, one person with one phone mints and
     // redeems their own code and the whole feature is a button that says yes.
     return {
       ok: false,

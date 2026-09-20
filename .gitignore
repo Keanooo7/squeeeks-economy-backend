@@ -3,3 +3,6 @@ lib/*.js
 functions/lib/
 *.log
 .DS_Store
+
+# agent tooling scratch state
+.claude-flow/

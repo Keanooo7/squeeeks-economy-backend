@@ -15,7 +15,7 @@
 // part — which ids are legal — be tested without an emulator.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE HARD PART IS NOT SPONGES
+// CRITICAL: THE HARD PART IS NOT SPONGES
 // ---------------------------------------------------------------------------
 //
 // A sponge is a number and `FieldValue.increment` already does it. Skins are
@@ -25,18 +25,18 @@
 //   `premium_offer_spring`, a missing shop product that made a shop card
 //   untappable — a bad id does not degrade, it throws at the client.
 //
-// 🔑 SO THE WHOLE REQUEST IS REFUSED, NOT THE BAD ROW. A partial grant is the
+// KEY: SO THE WHOLE REQUEST IS REFUSED, NOT THE BAD ROW. A partial grant is the
 // worst outcome available: the admin sees success, the recipient gets some of
 // what was promised, and the audit row records a grant that did not fully
 // happen. Refusing the request keeps the ledger honest and costs one retry.
 //
-// ⚠️ AND THE CATALOGUE IS `SEED_ITEMS`, NOT THE ASSET DIRECTORY. #518 withdrew
+// WARNING: AND THE CATALOGUE IS `SEED_ITEMS`, NOT THE ASSET DIRECTORY. #518 withdrew
 // the fox cuts of `char_chef` and `char_cleaner` on a design measurement AND
 // THEIR ATLASES STILL SHIP, so an id check against files on disk would happily
 // pass a skin the game deliberately no longer offers. The shipped rows are the
 // catalogue; the files are an implementation detail of the rows.
 //
-// 📌 NOTE THE SUBTLETY THAT MAKES THAT EXAMPLE THE RIGHT ONE: `char_chef` is
+// NOTE: NOTE THE SUBTLETY THAT MAKES THAT EXAMPLE THE RIGHT ONE: `char_chef` is
 // still a legal grant. What #518 withdrew was its FOX CUT — the item is still
 // sold and still wearable by a bear or a duck. So "is this id real" and "can
 // this recipient wear it" are two different questions, and only the first one
@@ -55,7 +55,7 @@ const CHEST_CATEGORIES: ReadonlySet<string> = new Set(
 /**
  * The most sponges one grant may issue.
  *
- * ⚠️ NOT A BALANCE CAP AND NOT A GAME RULE — a typo guard. The difference
+ * WARNING: NOT A BALANCE CAP AND NOT A GAME RULE — a typo guard. The difference
  * between granting 1000 and 100000 is one keystroke on a number nobody reads
  * back, and the second one is not recoverable through this endpoint because
  * there is deliberately no negative grant. Brendan can issue two grants of
@@ -93,13 +93,13 @@ export type AdminGrantDecision =
 /**
  * Whether this grant request is legal, and exactly what it would write.
  *
- * 🔑 ORDER MATTERS AND IS DELIBERATE: shape first, then the catalogue. An admin
+ * KEY: ORDER MATTERS AND IS DELIBERATE: shape first, then the catalogue. An admin
  * holding the secret is trusted, so this is not defending against them — it is
  * defending the RECIPIENT against a typo, and a refusal that names the typo is
  * the whole product. Every refusal below carries a `detail` naming the offending
  * value, because "unknown item" without the id is a puzzle.
  *
- * ⚠️ SPECIES IS DELIBERATELY NOT CHECKED HERE, AND THAT IS A DECISION RATHER
+ * WARNING: SPECIES IS DELIBERATELY NOT CHECKED HERE, AND THAT IS A DECISION RATHER
  * THAN AN OMISSION. `wearableRefusalFor` exists because a skin dresses specific
  * animals, so granting a fox outfit to a player who has no fox produces an album
  * entry they cannot use. Three options were available — refuse, warn, allow —
@@ -112,7 +112,7 @@ export type AdminGrantDecision =
  *   · refusing is the IRREVERSIBLE-FEELING direction: it forces him to grant a
  *     species first, through a path that does not exist yet.
  *
- * 📌 But it is REPORTED. The endpoint's response names any granted skin the
+ * NOTE: But it is REPORTED. The endpoint's response names any granted skin the
  * recipient cannot currently wear, so the decision is visible at the moment it
  * is made rather than discovered in an album. Allowing silently would be the
  * option nobody chose.
@@ -128,7 +128,7 @@ export function planAdminGrant(args: {
 }): AdminGrantDecision {
   const { uid, grantId, sponges, itemIds, chestCategories } = args;
 
-  // 🔴 THE GRANT ID IS THE IDEMPOTENCY KEY, SO IT IS CHECKED FIRST AND HARDEST.
+  // CRITICAL: THE GRANT ID IS THE IDEMPOTENCY KEY, SO IT IS CHECKED FIRST AND HARDEST.
   // Without it a retried curl — the most likely thing to happen on a flaky
   // connection — is a second 1000 sponges, and nothing afterwards can tell the
   // two grants apart. A slash would escape the collection and address an
@@ -161,7 +161,7 @@ export function planAdminGrant(args: {
   const rawItems = normaliseList(itemIds);
   const rawChests = normaliseList(chestCategories);
 
-  // 🔴 EVERY ID, AGAINST THE SHIPPED ROWS. First offender wins so the message
+  // CRITICAL: EVERY ID, AGAINST THE SHIPPED ROWS. First offender wins so the message
   // names one thing to fix rather than a list to decode.
   for (const id of rawItems) {
     if (!CATALOGUE_IDS.has(id)) {
@@ -177,7 +177,7 @@ export function planAdminGrant(args: {
     return { ok: false, refusal: 'too-many-chests', detail: String(rawChests.length) };
   }
 
-  // ⚠️ A GRANT OF NOTHING IS REFUSED RATHER THAN WRITTEN. It would take a
+  // WARNING: A GRANT OF NOTHING IS REFUSED RATHER THAN WRITTEN. It would take a
   // grantId — burning it forever, since the ledger is keyed on it — and write
   // an audit row recording that nothing happened. The retry with the real
   // payload would then be refused as already-processed, which is the most

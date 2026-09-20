@@ -5,7 +5,7 @@
 // W2-80. A store screenshot set CANNOT be captured from a fresh install by
 // anyone. `docs/store-screenshots/CAPTURE-NOTE.md` measured why: a fresh
 // account renders `DayOnePrompt` (the empty lot) and `StreakDayZero`, which W4
-// rejected as "an advertisement for having achieved nothing". 🔑 The frames
+// rejected as "an advertisement for having achieved nothing". KEY: The frames
 // worth showing are exactly the frames that require history.
 //
 // This module is the STATE half. W4 has already proven the capture half end to
@@ -13,29 +13,29 @@
 // ribbon. Nothing here touches capture.
 //
 // ---------------------------------------------------------------------------
-// 🔴 WHAT THIS CAN AND CANNOT PRODUCE — read before reporting the set covered
+// CRITICAL: WHAT THIS CAN AND CANNOT PRODUCE — read before reporting the set covered
 // ---------------------------------------------------------------------------
 //
 // W4's set is three frames. Seeding produces TWO of them outright. The third
 // is not a seeding problem and no amount of Firestore will fix it:
 //
-//   1. the furnished house   ✅ SEEDABLE. `DayOnePrompt` is gated on
+//   1. the furnished house   OK: SEEDABLE. `DayOnePrompt` is gated on
 //                               `currentFloor.rooms.isEmpty`
 //                               (home_dashboard.dart:531). A layout with rooms
 //                               clears it.
 //   2. the running timer     ❌ NOT SEEDABLE — see below.
-//   3. the 7-day streak      ✅ SEEDABLE. `isDayZero` is `state.currentStreak
+//   3. the 7-day streak      OK: SEEDABLE. `isDayZero` is `state.currentStreak
 //                               == 0` (streak_page.dart:178). A streak doc with
 //                               a non-zero count clears it.
 //
-// ⚠️ FRAME 2 IS EPHEMERAL WIDGET STATE, NOT PERSISTED STATE. `CountdownTimer`
+// WARNING: FRAME 2 IS EPHEMERAL WIDGET STATE, NOT PERSISTED STATE. `CountdownTimer`
 // (countdown_timer.dart) is a bare `Timer.periodic` initialised from
 // `task.estimatedTime` when the widget MOUNTS, at
 // `task_completion_page.dart:284`. It is written to no document, no
 // SharedPreferences key, and no provider that outlives the page. There is no
 // value this seeder could write that makes a timer be running.
 //
-// 🔑 SO THE HONEST SPLIT IS: seeding makes frame 2 REACHABLE AND DETERMINISTIC,
+// KEY: SO THE HONEST SPLIT IS: seeding makes frame 2 REACHABLE AND DETERMINISTIC,
 // and a driver makes it RENDER. The seeded schedule puts `lib_kitchen_0`
 // ("Wipe down counters", `estimatedMinutes: 10`) in the current week, which is
 // precisely W4's "Wipe down counters · 10:00 left" — so the tap sequence has a
@@ -43,12 +43,12 @@
 // account happened to plan. Driving the taps is `integration_test`'s job
 // (CAPTURE-NOTE Wall 3), not this module's.
 //
-// 📌 That matters more than it looks: W4 wrote "if the set shrinks, #2 stays" —
+// NOTE: That matters more than it looks: W4 wrote "if the set shrinks, #2 stays" —
 // it is the only frame showing a real timer on a real chore. A harness reported
 // as complete while covering 1 and 3 would be reporting the easy two-thirds.
 //
 // ---------------------------------------------------------------------------
-// ⚠️ TWO CLOCKS, AND BOTH OF THEM BITE
+// WARNING: TWO CLOCKS, AND BOTH OF THEM BITE
 // ---------------------------------------------------------------------------
 //
 // A fixture anchored to a simulated day is silently expired the next real day.
@@ -62,11 +62,11 @@
 //      yesterday reads as broken, and the page falls back to day zero — the
 //      exact frame this exists to avoid.
 //
-// 🔑 SO EVERY DATE HERE IS DERIVED FROM ONE `nowMs` ARGUMENT AND NOTHING CALLS
+// KEY: SO EVERY DATE HERE IS DERIVED FROM ONE `nowMs` ARGUMENT AND NOTHING CALLS
 // `Date.now()` BELOW THIS COMMENT. The caller pins the clock; this module never
 // reads it. That is also what makes the plan testable at a fixed instant.
 //
-// ⚠️ AND THE TWO CLOCKS ARE ON DIFFERENT MACHINES. `currentWeekStart()` runs on
+// WARNING: AND THE TWO CLOCKS ARE ON DIFFERENT MACHINES. `currentWeekStart()` runs on
 // the DEVICE in the device's LOCAL timezone; this seeder runs in the functions
 // runtime, which is UTC. Near a Monday boundary those disagree and the schedule
 // silently does not load. `seedDemoAccount` therefore accepts an explicit
@@ -94,7 +94,7 @@ export interface SeedWrite {
 // THE FIXTURE — "enough history", as DATA
 // ---------------------------------------------------------------------------
 //
-// 🔑 CHANGING THE STREAK LENGTH IS EDITING ONE NUMBER HERE. That is the point
+// KEY: CHANGING THE STREAK LENGTH IS EDITING ONE NUMBER HERE. That is the point
 // of this block existing: the next person tuning the screenshot set should not
 // have to read the builder below, and nothing downstream hard-codes 7.
 
@@ -125,7 +125,7 @@ export interface DemoFixture {
   /**
    * Owned collection items, as SEED_ITEMS ids.
    *
-   * 🔑 SEED_ITEMS IS THE RIGHT SOURCE AND THAT IS NOT AN ACCIDENT OF
+ * KEY: SEED_ITEMS IS THE RIGHT SOURCE AND THAT IS NOT AN ACCIDENT OF
    * CONVENIENCE. The collection grid is computed from the DART catalog
    * (`collection_seed.dart`) plus the player's inventory, so an id the catalog
    * does not know is dropped in silence — the same failure `lib_living_0` was.
@@ -145,7 +145,7 @@ export interface DemoFixture {
 }
 
 /**
- * 🔴 `timerTaskId` IS W4'S FRAME, SPELLED OUT.
+ * CRITICAL: `timerTaskId` IS W4'S FRAME, SPELLED OUT.
  *
  * `lib_kitchen_0` is "Wipe down counters", `estimatedMinutes: 10`
  * (task_library.dart:33-39) — the literal "Wipe down counters · 10:00 left"
@@ -164,7 +164,7 @@ export const DEMO_FIXTURE: DemoFixture = {
     'lib_kitchen_0',
     'lib_kitchen_1',
     'lib_bathroom_0',
-    // ⚠️ `lib_livingroom_0`, NOT `lib_living_0`. The room enum is `living` and
+    // WARNING: `lib_livingroom_0`, NOT `lib_living_0`. The room enum is `living` and
     // the house catalogue's room is `living_room`, so both shorter spellings
     // read as correct; the library's is neither. I wrote `lib_living_0` here
     // first and only a check against the real file caught it — an unknown id
@@ -210,7 +210,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /**
  * The instant to seed "today" at, given the DEVICE's local date.
  *
- * 🔴 THIS EXISTS BECAUSE THE FIRST END-TO-END RUN CAUGHT THE HALF I MISSED.
+ * CRITICAL: THIS EXISTS BECAUSE THE FIRST END-TO-END RUN CAUGHT THE HALF I MISSED.
  * `weekStartOverride` pinned the WEEK against UTC drift, but every day key still
  * came from `Date.now()` in the runtime's UTC. Seeded at 22:00 Pacific on
  * 2026-08-14 the newest `dailyScores` key came back **2026-08-15** — a cell the
@@ -218,11 +218,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * device's future. Unit tests could not see it: they pass a fixed `nowMs` and
  * assert self-consistency, which is exactly what a wrong anchor also satisfies.
  *
- * 🔑 NOON UTC, NOT MIDNIGHT, for 12 hours of margin on both sides. Midnight —
+ * KEY: NOON UTC, NOT MIDNIGHT, for 12 hours of margin on both sides. Midnight —
  * the obvious alternative — puts every negative offset on the day BEFORE, which
  * is the bug this replaced.
  *
- * 📌 AND THE BOUND IS ±12, NOT "every timezone". Real offsets span UTC-12..
+ * NOTE: AND THE BOUND IS ±12, NOT "every timezone". Real offsets span UTC-12..
  * UTC+14, which is 26 hours, so NO single instant preserves the date
  * everywhere; UTC+13/+14 read the next day. That does not matter here, and the
  * reason is the part worth keeping: the contract is
@@ -252,7 +252,7 @@ export function dateKey(ms: number): string {
 /**
  * Monday of the week containing `ms`, as `YYYY-MM-DD`.
  *
- * ⚠️ MIRRORS `currentWeekStart()` (weekly_schedule_repository_impl.dart:8) AND
+ * WARNING: MIRRORS `currentWeekStart()` (weekly_schedule_repository_impl.dart:8) AND
  * IS A MIRROR, with the same hazard defaultHouses.ts records about its
  * catalogue copy: the app computes this in DEVICE-LOCAL time and this computes
  * it in UTC. They agree except near a Monday boundary, which is exactly when a
@@ -294,7 +294,7 @@ export function planDemoAccount(args: {
 
   const house = defaultHouseById(fx.houseId);
   if (!house) {
-    // 🔴 LOUD, NOT QUIET. defaultHouses.ts records that an unknown furnitureId
+    // CRITICAL: LOUD, NOT QUIET. defaultHouses.ts records that an unknown furnitureId
     // is silently dropped by the renderer, producing an emptier house than was
     // authored with nothing anywhere saying so. An unknown HOUSE id would do
     // the same thing one level up — a seeded account with no rooms is
@@ -345,7 +345,7 @@ export function planDemoAccount(args: {
 /**
  * The house document, in the shape `HouseLayoutModel.fromJson` reads.
  *
- * 🔴 `schemaVersion` IS LOAD-BEARING AND ITS ABSENCE IS NOT NEUTRAL. Absent,
+ * CRITICAL: `schemaVersion` IS LOAD-BEARING AND ITS ABSENCE IS NOT NEUTRAL. Absent,
  * the model reads the document as **v1** by design — "the field was added with
  * v2, so its absence is not 'unknown', it is the original schema"
  * (house_model.dart:11) — and `HouseLayoutMigrations.migrate` then DOUBLES
@@ -376,7 +376,7 @@ export function houseLayoutDoc(
 /**
  * The streak document, in the shape `Streak.fromJson` reads.
  *
- * ⚠️ `lastCompletionDate` IS TODAY, NOT `today - 1`. A streak whose last
+ * WARNING: `lastCompletionDate` IS TODAY, NOT `today - 1`. A streak whose last
  * completion is older than yesterday resolves as broken and the page falls back
  * to `StreakDayZero`. Today is the only value that is unambiguously live on the
  * day the screenshot is taken.
@@ -428,11 +428,11 @@ export function dailyScoreDocs(
 /**
  * The week's plan, in the shape `WeeklySchedule.fromJson` reads.
  *
- * 🔴 `weekStartDate` IS AN EQUALITY KEY, NOT A LABEL.
+ * CRITICAL: `weekStartDate` IS AN EQUALITY KEY, NOT A LABEL.
  * `getScheduleForWeek` compares it and returns null on mismatch — so a schedule
  * seeded for the wrong week does not render as stale, it does not render.
  *
- * ⚠️ `tasksByDay` KEYS ARE STRINGS HERE AND `Map<int, …>` IN DART. Firestore
+ * WARNING: `tasksByDay` KEYS ARE STRINGS HERE AND `Map<int, …>` IN DART. Firestore
  * has no integer map keys; JSON objects are string-keyed, and freezed's
  * generated `fromJson` parses them back. Writing numbers would not survive the
  * round trip.
@@ -468,7 +468,7 @@ export function scheduleDoc(
 // otherwise have to be hand-built for this — and that bit this file once, as
 // `lib_living_0` — already exists and already fails loudly.
 //
-// 🔴 THE SHOP IS DELIBERATELY NOT HERE, AND THAT IS THE FINDING. `shop/current`
+// CRITICAL: THE SHOP IS DELIBERATELY NOT HERE, AND THAT IS THE FINDING. `shop/current`
 // already has THREE writers (rotateMarket, rotateWeeklyOffer, seedShopData) and
 // weeklyOffers.ts records that seedShopData ONCE SHIPPED ITS OWN HARDCODED COPY
 // of the offer, bypassing rotation — "that copy is now deleted and both paths
@@ -480,7 +480,7 @@ export function scheduleDoc(
 /**
  * The player's owned items, one document per id.
  *
- * ⚠️ `type` IS LOOKED UP FROM SEED_ITEMS RATHER THAN RESTATED. The inventory
+ * WARNING: `type` IS LOOKED UP FROM SEED_ITEMS RATHER THAN RESTATED. The inventory
  * document carries a type the client reads, and a second hand-written copy of
  * "which item is a character" is a second thing to drift. An id absent from
  * SEED_ITEMS throws rather than defaulting — a silently mistyped item renders

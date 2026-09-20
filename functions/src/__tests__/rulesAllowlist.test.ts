@@ -4,7 +4,7 @@
 // BLOCKLIST. It catches the two catch-all shapes I could think of, and a third I
 // could not would pass.
 //
-// 🔑 THIS IS THE INVERSE, AND IT IS THE SAME LOGIC AS THE THING IT PROTECTS.
+// KEY: THIS IS THE INVERSE, AND IT IS THE SAME LOGIC AS THE THING IT PROTECTS.
 // Firestore default-denies any path no `match` reaches. This allowlist
 // default-fails any `match` no entry names. A new path is a deliberate act with
 // a written reason, or it is a red test.
@@ -33,7 +33,7 @@
 //     module-reachability ledger and the economy-idempotency ledger — four
 //     prior uses in this repo, all of which have caught something.
 //
-// ⚠️ 24 is small enough to read. If it ever passes ~60, revisit: at that size a
+// WARNING: 24 is small enough to read. If it ever passes ~60, revisit: at that size a
 // reviewer WOULD rubber-stamp the diff and the brief's objection starts to hold.
 
 import * as fs from 'fs';
@@ -58,7 +58,7 @@ function matchPaths(): string[] {
  * reason it exists. Adding a path here is the deliberate act; a path not here
  * fails the suite.
  *
- * 🔑 `/shop/{doc}` appears TWICE and both are listed, because they are different
+ * KEY: `/shop/{doc}` appears TWICE and both are listed, because they are different
  * documents: one under `users/{uid}` (per-player shop state) and one top-level
  * (the shared daily market). Collapsing them into a set would hide the removal
  * of one, so the assertion compares an ordered list rather than a set.

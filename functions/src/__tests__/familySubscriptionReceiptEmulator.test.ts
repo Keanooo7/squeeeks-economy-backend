@@ -2,7 +2,7 @@
  * A REAL `sub_family_monthly` receipt, driven through to a family document.
  *
  * ---------------------------------------------------------------------------
- * 🔴 W2-178 · REGISTER ITEM #26 — "sub_family_monthly has no receipt"
+ * CRITICAL: W2-178 · REGISTER ITEM #26 — "sub_family_monthly has no receipt"
  * ---------------------------------------------------------------------------
  *
  * The register's claim was stale as written: the price entry exists
@@ -13,7 +13,7 @@
  * the item was "I don't know the answer — you figure it out", so it was settled
  * by measurement rather than by argument, and this file is the measurement.
  *
- * 🔑 THE MEASUREMENT THAT PRODUCED THIS FILE, AND ITS POSITIVE CONTROL.
+ * KEY: THE MEASUREMENT THAT PRODUCED THIS FILE, AND ITS POSITIVE CONTROL.
  *
  *     grep -ln sub_family_monthly src/__tests__/*Emulator.test.ts
  *         → familyEmulator.test.ts, and ONLY inside two comments
@@ -27,7 +27,7 @@
  *     jest --config jest.e2e.config.js --runInBand -t sub_family_monthly
  *         → Tests: 139 skipped, 139 total
  *
- * ⚠️ AN EXIT CODE IS NOT THAT MEASUREMENT. The first attempt at that command
+ * WARNING: AN EXIT CODE IS NOT THAT MEASUREMENT. The first attempt at that command
  * exited 127 — `jest: command not found`, because `emulators:exec` runs the
  * script through `/bin/sh` without npm's `node_modules/.bin` on PATH. A reader
  * grepping for "Tests:" saw nothing and could reasonably have called that "no
@@ -52,7 +52,7 @@
  *   · `proReceipt.test.ts` asserts the PRICE TABLE has a row for the product.
  *     A row is not a receipt.
  *
- * 🔑 SO THE GAP WAS NEVER "IS THE ENTRY THERE". It was: does a receipt for this
+ * KEY: SO THE GAP WAS NEVER "IS THE ENTRY THERE". It was: does a receipt for this
  * product, carried through the shipped callable, write an entitlement that the
  * create gate then accepts — and does the resulting family actually entitle
  * anybody. Three separate writers have to agree on one string
@@ -60,7 +60,7 @@
  * ever made all three agree in one run.
  *
  * ---------------------------------------------------------------------------
- * 🔴 NOTHING HERE SEEDS `users/{BUYER}`. GREP THE FILE.
+ * CRITICAL: NOTHING HERE SEEDS `users/{BUYER}`. GREP THE FILE.
  * ---------------------------------------------------------------------------
  *
  * There is no `seedSubscriber` equivalent below and no write to the buyer's
@@ -79,13 +79,13 @@
  * verification makes no HTTP call, so there is no transport to intercept and
  * nothing here talks to Apple.
  *
- * ⚠️ THIS FILE THEREFORE PROVES NOTHING ABOUT SIGNATURE VERIFICATION. That is
+ * WARNING: THIS FILE THEREFORE PROVES NOTHING ABOUT SIGNATURE VERIFICATION. That is
  * covered once, against a generated certificate chain, in `appleJws.test.ts`.
  * What is real here is everything downstream of the signature: the account
  * boundary, the three Firestore writes, the create gate's read of them, and the
  * entitlement a member ends up holding.
  *
- * ✅ THE TRANSACTION CARRIES A REAL `appAccountToken`, not the `null` the
+ * OK: THE TRANSACTION CARRIES A REAL `appAccountToken`, not the `null` the
  * compatibility branch admits. `iapGrantEmulator` passes `null`, which is legal
  * only because `accountTokenRollout.epochMs` still ships disabled — so that file
  * exercises the escape hatch rather than the boundary. Here the token is
@@ -94,7 +94,7 @@
  * the epoch.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT THIS STILL CANNOT PROVE
+ * CRITICAL: WHAT THIS STILL CANNOT PROVE
  * ---------------------------------------------------------------------------
  *
  *   · Nothing about Apple's servers, sandbox, or a genuinely signed receipt.
@@ -119,7 +119,7 @@ import {ProReceipt, receiptFor} from '../proReceipt';
 import {purchaseTokenForUid} from '../purchaseAccountToken';
 import {resolveEffectiveTier, resolveOwnPaidTier} from '../taskRewards';
 
-// 🔑 IMPORTED FOR ITS SIDE EFFECT, AFTER the pure modules above. `index.ts`
+// KEY: IMPORTED FOR ITS SIDE EFFECT, AFTER the pure modules above. `index.ts`
 // calls `admin.initializeApp()` at module scope; none of the imports above do,
 // so this is the first and only initialisation in this file's registry.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -130,7 +130,7 @@ const PROJECT_ID = process.env.GCLOUD_PROJECT;
 /**
  * Uids unique to this file.
  *
- * ⚠️ `familyEmulator.test.ts` calls `testEnv.clearFirestore()` in its own
+ * WARNING: `familyEmulator.test.ts` calls `testEnv.clearFirestore()` in its own
  * `beforeAll`, and the e2e suites share one emulator. `--runInBand` (pinned in
  * the `test:e2e` script) means files never overlap in time, so that wipe can
  * only ever land before or after this file, never during it — but these uids do
@@ -240,7 +240,7 @@ beforeAll(async () => {
 
   db = admin.firestore();
 
-  // 🔑 AUTH RECORDS ONLY. The email is here because it is where a real buyer's
+  // KEY: AUTH RECORDS ONLY. The email is here because it is where a real buyer's
   // address lives and where a sender would have to read it from — `receiptFor`
   // takes an address, and no Firestore document in this project stores one.
   // `createFamily` and `joinFamily` also stamp `memberNames` from the Auth
@@ -260,14 +260,14 @@ afterAll(async () => {
 
 describe('a sub_family_monthly receipt, from Apple to a family document', () => {
   test('BASELINE — the buyer holds nothing, and cannot create a family', async () => {
-    // 🔴 THE FALSIFIER, AND THE REASON EVERY ASSERTION BELOW IS ATTRIBUTABLE.
+    // CRITICAL: THE FALSIFIER, AND THE REASON EVERY ASSERTION BELOW IS ATTRIBUTABLE.
     // Without this, a green suite would be compatible with the buyer having been
     // entitled by something other than the receipt — a leftover document, an
     // earlier suite, a fixture somebody adds later. The measurement this brief
     // was sent to make is "the receipt is what funded the family", and that is a
     // BEFORE and an AFTER, not an AFTER on its own.
     //
-    // 📌 NOT W2-177's CASE. That one is an account that PAYS, refused for
+    // NOTE: NOT W2-177's CASE. That one is an account that PAYS, refused for
     // holding the wrong product. This one pays nothing at all and is refused by
     // the tier gate that has existed since #389. It is here as the zero mark,
     // not as a second copy of somebody else's test.
@@ -301,7 +301,7 @@ describe('a sub_family_monthly receipt, from Apple to a family document', () => 
     expect(res.success).toBe(true);
     expect(res.alreadyProcessed).toBeFalsy();
 
-    // 🔑 THE STORED DOCUMENT, NOT THE RESPONSE. This callable returns
+    // KEY: THE STORED DOCUMENT, NOT THE RESPONSE. This callable returns
     // `{success: true}` and nothing else — it could write the wrong product, the
     // wrong tier or nothing at all and return exactly the same object. The
     // fake-driven unit suites check the response; only this can check the write.
@@ -312,7 +312,7 @@ describe('a sub_family_monthly receipt, from Apple to a family document', () => 
     // disagreeing, which is the entire failure mode this file is about.
     expect(buyer?.subscriptionProductId).toBe(FAMILY_PRODUCT_ID);
 
-    // 🔴 APPLE'S EXPIRY, TO THE MILLISECOND, NEVER FABRICATED. "some timestamp
+    // CRITICAL: APPLE'S EXPIRY, TO THE MILLISECOND, NEVER FABRICATED. "some timestamp
     // got written" is what a server-side `Date.now() + a month` would also
     // satisfy, and that is a real bug shape: it would keep entitling a
     // subscriber whose subscription Apple had already ended.
@@ -328,7 +328,7 @@ describe('a sub_family_monthly receipt, from Apple to a family document', () => 
     expect(ledger?.transactionId).toBe(FAMILY_TXN);
     expect(ledger?.tier).toBe('pro');
 
-    // 🔑 THE OWNER INDEX, WHICH IS THE ONLY WAY A RENEWAL EVER FINDS THIS
+    // KEY: THE OWNER INDEX, WHICH IS THE ONLY WAY A RENEWAL EVER FINDS THIS
     // ACCOUNT. A family subscription that grants once and can never rebill is
     // the same defect as one that never granted, discovered a month later.
     const owner = (await db.doc(`subscriptionOwners/${FAMILY_ORIGINAL_TXN}`).get()).data();
@@ -344,7 +344,7 @@ describe('a sub_family_monthly receipt, from Apple to a family document', () => 
     expect(typeof familyId).toBe('string');
     expect(familyId.length).toBeGreaterThan(0);
 
-    // 🔑 THE DOCUMENT, NOT THE RESPONSE — a callable can return a familyId it
+    // KEY: THE DOCUMENT, NOT THE RESPONSE — a callable can return a familyId it
     // never persisted, which is the shape a fake `set()` cannot catch.
     const snap = await db.doc(`families/${familyId}`).get();
     expect(snap.exists).toBe(true);
@@ -360,7 +360,7 @@ describe('a sub_family_monthly receipt, from Apple to a family document', () => 
     // have wiped the subscription in the same breath.
     expect(buyer?.subscriptionProductId).toBe(FAMILY_PRODUCT_ID);
 
-    // 🔴 THE STRUCTURAL CONTROL. `avatarUrl` is the field `familyEmulator`'s
+    // CRITICAL: THE STRUCTURAL CONTROL. `avatarUrl` is the field `familyEmulator`'s
     // `seedSubscriber` writes and this file never does. Its absence is the
     // machine-checkable form of the header's claim that NOTHING here seeds the
     // buyer's document — if a fixture ever starts doing so, this goes red before
@@ -383,7 +383,7 @@ describe('a sub_family_monthly receipt, from Apple to a family document', () => 
     const member = await userDoc(MEMBER);
     expect(member?.familyId).toBe(familyId);
 
-    // 🔴 THE EXACT MILLISECOND APPLE PUT ON THE RECEIPT, copied — never
+    // CRITICAL: THE EXACT MILLISECOND APPLE PUT ON THE RECEIPT, copied — never
     // extended. Asserted as an equality because "some timestamp got written" is
     // what a bespoke second grant path would also satisfy, and because this is
     // the number that ties the member's entitlement back to the purchase rather
@@ -415,7 +415,7 @@ describe('a sub_family_monthly receipt, from Apple to a family document', () => 
       buyer?.subscriptionExpiresAt as admin.firestore.Timestamp
     ).toMillis();
 
-    // 🔴 THE TWO RECORDS MUST NAME THE SAME PRODUCT, and nothing else in this
+    // CRITICAL: THE TWO RECORDS MUST NAME THE SAME PRODUCT, and nothing else in this
     // repo asserts that they do. `processedReceipts` says what was CHARGED;
     // `users/{uid}` says what is ENTITLED. A receipt is composed from the first
     // and the family gate reads the second, so a divergence bills for one plan
@@ -438,7 +438,7 @@ describe('a sub_family_monthly receipt, from Apple to a family document', () => 
     expect(receipt.transactionId).toBe(FAMILY_TXN);
     expect(receipt.period).toBe('monthly');
 
-    // 🔴 THE LITERAL PRICE, PINNED HERE AS WELL AS DERIVED IN proReceipt.test.ts.
+    // CRITICAL: THE LITERAL PRICE, PINNED HERE AS WELL AS DERIVED IN proReceipt.test.ts.
     // A gate spelled only in the constant it is checking cannot fail. $12.99 is
     // also what distinguishes a Family receipt from a Pro one at a glance, which
     // is exactly the defect W2-157 fixed: a Family buyer charged $12.99 used to
@@ -470,7 +470,7 @@ describe('a sub_family_monthly receipt, from Apple to a family document', () => 
 
     expect(receipt.displayPrice).toBe('5.99');
     expect(receipt.subject).toBe('Your Squeeeks Pro receipt — $5.99');
-    // 🔴 THE ABSENCE IS THE ASSERTION. Every receipt used to end with a family
+    // CRITICAL: THE ABSENCE IS THE ASSERTION. Every receipt used to end with a family
     // promise unconditionally, including the $5.99 one — a false statement on a
     // billing document, since `planFamilyFanOutForEffect` returns `[]` for any
     // product that is not the family one. The line belongs on exactly one of

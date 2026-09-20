@@ -2,7 +2,7 @@
  * The family feature, driven end to end against a REAL Firestore.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHY THIS FILE EXISTS: EVERY GATE WAS GREEN AND NOTHING HAD ASKED A REAL
+ * CRITICAL: WHY THIS FILE EXISTS: EVERY GATE WAS GREEN AND NOTHING HAD ASKED A REAL
  *    QUESTION
  * ---------------------------------------------------------------------------
  *
@@ -21,14 +21,14 @@
  *     callables actually write.
  *   · `make test` (Flutter) drives the client against fakes.
  *
- * 🔴 AND ONE OF THOSE FAKES IS WRONG IN THE REASSURING DIRECTION.
+ * CRITICAL: AND ONE OF THOSE FAKES IS WRONG IN THE REASSURING DIRECTION.
  * `fake_cloud_firestore` (4.1.0+1) calls `maybeThrowSecurityException` from
  * `mock_document_reference.dart` and from NOWHERE in the collection or query
  * classes. A DENIED COLLECTION READ RETURNS EMPTY THERE INSTEAD OF THROWING —
  * so on the client side an empty family and a forbidden family are the same
  * observation, and no widget test can tell them apart. Found by W4.
  *
- * ⚠️ THAT IS A CLAIM ABOUT AN INSTRUMENT, SO IT IS TESTED RATHER THAN TRUSTED:
+ * WARNING: THAT IS A CLAIM ABOUT AN INSTRUMENT, SO IT IS TESTED RATHER THAN TRUSTED:
  * `the emulator THROWS on a denied COLLECTION read` below asserts the real
  * behaviour on a NON-EMPTY collection, which is the only version of that
  * assertion that distinguishes "denied" from "nothing there".
@@ -55,7 +55,7 @@
  *    that has nothing to do with the rule under test.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT THIS STILL CANNOT PROVE — READ THIS BEFORE CALLING THE FEATURE DONE
+ * CRITICAL: WHAT THIS STILL CANNOT PROVE — READ THIS BEFORE CALLING THE FEATURE DONE
  * ---------------------------------------------------------------------------
  *
  *   · IT DOES NOT ASK PRODUCTION ANYTHING. This runs `index.ts` FROM THIS
@@ -117,7 +117,7 @@ import {
   utcBinDateKey,
 } from '../trashDay';
 
-// 🔑 IMPORTED FOR ITS SIDE EFFECT, AND THE ORDER MATTERS. `index.ts` calls
+// KEY: IMPORTED FOR ITS SIDE EFFECT, AND THE ORDER MATTERS. `index.ts` calls
 // `admin.initializeApp()` at module scope; doing it here first would throw
 // "The default Firebase app already exists". Every `admin.*` call below runs
 // inside a test, i.e. after this line.
@@ -127,7 +127,7 @@ const idx = require('../index') as Record<string, {run: (req: unknown) => Promis
 const RULES_PATH = resolve(__dirname, '../../../firestore.rules');
 
 /**
- * 🔴 READ FROM THE ENVIRONMENT, NEVER WRITTEN AS A LITERAL. The Admin SDK picks
+ * CRITICAL: READ FROM THE ENVIRONMENT, NEVER WRITTEN AS A LITERAL. The Admin SDK picks
  * its project up from `GCLOUD_PROJECT`, which `emulators:exec` sets. If the
  * rules-test environment used a DIFFERENT id it would look at a different
  * database — every `assertFails` would pass against an empty project, and the
@@ -157,7 +157,7 @@ const CHORE_TASK_ID = TASK_LIBRARY_IDS[0];
 /**
  * Today's bin date, in the server's own vocabulary.
  *
- * 🔴 DERIVED FROM `utcBinDateKey(Date.now())`, NEVER WRITTEN AS A LITERAL, and
+ * CRITICAL: DERIVED FROM `utcBinDateKey(Date.now())`, NEVER WRITTEN AS A LITERAL, and
  * that is not fussiness. `planTrashDayCompletion` refuses any key more than
  * `BIN_DATE_MAX_SKEW_DAYS` from the server's today, so a hard-coded date would
  * pass on the day it was written and then fail forever afterwards for a reason
@@ -196,7 +196,7 @@ async function refusalCodeOf(p: Promise<unknown>): Promise<string | null> {
 /**
  * The code AND message a call rejects with, or null if it resolved.
  *
- * ⚠️ THE MESSAGE IS NOT DECORATION. `CHORE_REFUSALS` maps THREE different
+ * WARNING: THE MESSAGE IS NOT DECORATION. `CHORE_REFUSALS` maps THREE different
  * refusals — `not-a-member`, `unknown-task` and `due-in-the-past` — onto the
  * single code `invalid-argument`. A test asserting only the code cannot tell
  * "you tried to assign a chore to somebody outside the family" from "you sent a
@@ -283,7 +283,7 @@ beforeAll(async () => {
   await db.doc(`users/${OUTSIDER_KID}`).set({avatarUrl: 'avatar-of-outsider-kid'});
 
   // ---------------------------------------------------------------------
-  // 🔴 THE DECOY, BUILT FIRST AND ON PURPOSE.
+  // CRITICAL: THE DECOY, BUILT FIRST AND ON PURPOSE.
   //
   // A control over a query passes on seed order. If the only family in the
   // database were the one under test, then `a non-member cannot read it`
@@ -313,7 +313,7 @@ beforeAll(async () => {
     familyId: decoyFamilyId,
     text: 'a decoy message in a family the outsider really is in',
   });
-  // 🔑 THE DECOY'S BINS GO OUT TOO (W2-94). Without this, "a non-member cannot
+  // KEY: THE DECOY'S BINS GO OUT TOO (W2-94). Without this, "a non-member cannot
   // read our trash day" would be paired with nothing — and the outsider having
   // NO trash day of their own makes a denial and an empty household look the
   // same from outside, which is the exact confusion this suite exists to end.
@@ -343,7 +343,7 @@ describe('the family lifecycle, driven through the real callables', () => {
     expect(typeof familyId).toBe('string');
     expect(familyId.length).toBeGreaterThan(0);
 
-    // 🔑 THE DOCUMENT, NOT THE RESPONSE. A callable can return a familyId it
+    // KEY: THE DOCUMENT, NOT THE RESPONSE. A callable can return a familyId it
     // never persisted; that is exactly the shape a fake `set()` cannot catch.
     const snap = await db.doc(`families/${familyId}`).get();
     expect(snap.exists).toBe(true);
@@ -383,7 +383,7 @@ describe('the family lifecycle, driven through the real callables', () => {
   });
 
   // ---------------------------------------------------------------------
-  // 🔴 W2-177 — A PERSONAL PRO SUBSCRIPTION DOES NOT FUND A FAMILY
+  // CRITICAL: W2-177 — A PERSONAL PRO SUBSCRIPTION DOES NOT FUND A FAMILY
   // ---------------------------------------------------------------------
   //
   // Ruled 2026-09-04: only `sub_family_monthly` may create a family. Before
@@ -395,7 +395,7 @@ describe('the family lifecycle, driven through the real callables', () => {
   // never grant anybody anything — it returns `[]` unless the effect's product
   // is FAMILY_PRODUCT_ID.
   //
-  // 🔑 THIS IS NOT THE FREE-USER CASE ABOVE UNDER A NEW NAME, AND THE
+  // KEY: THIS IS NOT THE FREE-USER CASE ABOVE UNDER A NEW NAME, AND THE
   // ASSERTION THAT KEEPS IT HONEST IS THE FIRST ONE. This account IS paying:
   // `resolveOwnPaidTier` — the exact resolver the gate consumes — returns
   // `pro` for it. It therefore PASSES the old gate in full. If that assertion
@@ -418,7 +418,7 @@ describe('the family lifecycle, driven through the real callables', () => {
       'failed-precondition',
     );
 
-    // 🔑 THE ABSENCE IS THE POINT. A refusal that still wrote the document
+    // KEY: THE ABSENCE IS THE POINT. A refusal that still wrote the document
     // would be the empty shell this rule exists to prevent, and the code
     // assertion alone cannot see it.
     expect((await db.collection('families').where('ownerUid', '==', PRO_ONLY).get()).empty)
@@ -455,7 +455,7 @@ describe('the family lifecycle, driven through the real callables', () => {
     const kid = (await db.doc(`users/${KID}`).get()).data();
     expect(kid?.familyId).toBe(familyId);
 
-    // 🔴 THE GRANT IS THE FEATURE. `familyProExpiresAt` is the owner's own
+    // CRITICAL: THE GRANT IS THE FEATURE. `familyProExpiresAt` is the owner's own
     // expiry COPIED — never extended — so a member cannot outlive the period
     // somebody paid for. Asserted as the exact millisecond, because "some
     // timestamp got written" is what a bespoke second grant path would also
@@ -464,7 +464,7 @@ describe('the family lifecycle, driven through the real callables', () => {
       OWNER_EXPIRY_MS,
     );
 
-    // 🔑 DRIVEN THROUGH THE REAL CLASSIFIER OVER THE REAL STORED DOCUMENT, not
+    // KEY: DRIVEN THROUGH THE REAL CLASSIFIER OVER THE REAL STORED DOCUMENT, not
     // a hand-built one. W2-79: every test that constructed the input by hand
     // passed against a broken table; only the ones going through the real
     // classifier went red.
@@ -654,7 +654,7 @@ describe('the family lifecycle, driven through the real callables', () => {
 // in exactly the state the family feature was in before #436: shipped,
 // deployed, and proven by nothing that asked a real question.
 //
-// 📌 THE HYPOTHESIS UNDER TEST WAS "THIS IS COVERAGE, NOT REPAIR" — W2-81
+// NOTE: THE HYPOTHESIS UNDER TEST WAS "THIS IS COVERAGE, NOT REPAIR" — W2-81
 // established from the SOURCE that the writes are safe. Source-reading is what
 // missed nine undeployed callables, so the emulator is asked directly. Where it
 // agrees, that is worth exactly as much as the disagreement would have been.
@@ -671,7 +671,7 @@ describe('trash day, driven through the real callable', () => {
     expect(completion.completedByUid).toBe(KID);
     expect(typeof completion.completedAtMs).toBe('number');
 
-    // 🔑 THE DOCUMENT ID IS THE BIN DATE, so scoping is structural rather than
+    // KEY: THE DOCUMENT ID IS THE BIN DATE, so scoping is structural rather than
     // filtered. Asserted because "the record went somewhere under this family"
     // and "the record is at the key next week's reminder will look up" are
     // different facts, and only the second makes the takeover clear.
@@ -698,7 +698,7 @@ describe('trash day, driven through the real callable', () => {
     const after = (
       await db.doc(`families/${familyId}/trashDay/${BIN_DATE_KEY}`).get()
     ).data() as TrashDayCompletion;
-    // 🔴 THE STORED DOCUMENT, NOT THE RESPONSE. A callable can return the first
+    // CRITICAL: THE STORED DOCUMENT, NOT THE RESPONSE. A callable can return the first
     // completer while having overwritten the record — that is precisely what a
     // read-then-write outside a transaction would do, and the response would
     // still look right.
@@ -786,7 +786,7 @@ describe('trash day, driven through the real callable', () => {
 });
 
 describe('the shared bin day, driven through the real callables', () => {
-  // 🔴 THIS BLOCK EXISTS BECAUSE W2-118 SHIPPED WITH IT MISSING AND SAID SO.
+  // CRITICAL: THIS BLOCK EXISTS BECAUSE W2-118 SHIPPED WITH IT MISSING AND SAID SO.
   // `planFamilyBinDay` is pure and has 14 unit cases; the CALLABLE WRAPPER —
   // the transaction, the `{merge: true}`, the not-found path — had none. The
   // merge is the one worth proving: a bare `set()` there would delete the
@@ -803,7 +803,7 @@ describe('the shared bin day, driven through the real callables', () => {
 
     const after = (await db.doc(`families/${familyId}`).get()).data() as FamilyDoc;
     expect(after.binWeekday).toBe(4);
-    // 🔑 THE ROSTER SURVIVED. Replace `{merge: true}` with a bare set() and
+    // KEY: THE ROSTER SURVIVED. Replace `{merge: true}` with a bare set() and
     // this is the assertion that goes red — the family loses every member,
     // every name and its own owner to a one-integer write.
     expect(after.memberUids).toEqual(before.memberUids);
@@ -911,7 +911,7 @@ describe('firestore.rules over the produced data', () => {
   });
 
   test('🔴 the emulator THROWS on a denied COLLECTION read — the fake returns empty', async () => {
-    // ⚠️ THE ONE ASSERTION THIS WHOLE FILE WAS WRITTEN FOR.
+    // WARNING: THE ONE ASSERTION THIS WHOLE FILE WAS WRITTEN FOR.
     // `fake_cloud_firestore` never calls `maybeThrowSecurityException` from a
     // collection or query class, so a denied collection read there yields an
     // EMPTY snapshot. No client test can distinguish an empty family from a
@@ -977,7 +977,7 @@ describe('firestore.rules over the produced data', () => {
       getDoc(doc(memberDb(), 'families', familyId, 'trashDay', BIN_DATE_KEY)),
     );
 
-    // 🔑 THE PAIR. The outsider reads their OWN household's bin day from the
+    // KEY: THE PAIR. The outsider reads their OWN household's bin day from the
     // same credentials, so the denial above is about membership and not about
     // broken credentials, a missing document, or a ruleset that denies
     // everything.
@@ -991,7 +991,7 @@ describe('firestore.rules over the produced data', () => {
       await db.doc(`families/${familyId}/trashDay/${BIN_DATE_KEY}`).get()
     ).data() as TrashDayCompletion;
 
-    // ⚠️ THE MEMBER CASE IS THE ONE THAT MATTERS HERE. "A member reads but
+    // WARNING: THE MEMBER CASE IS THE ONE THAT MATTERS HERE. "A member reads but
     // cannot write" is exactly the split a later edit relaxes quietly, on the
     // reasonable-sounding grounds that a member writing their own completion is
     // harmless. It is not: the point of the feature is that it clears for
@@ -1042,7 +1042,7 @@ describe('firestore.rules over the produced data', () => {
       }),
     );
 
-    // 🔑 THE DOCUMENT IS BYTE-FOR-BYTE WHAT IT WAS, and the collection gained
+    // KEY: THE DOCUMENT IS BYTE-FOR-BYTE WHAT IT WAS, and the collection gained
     // nothing. Six refusals that each left a write behind would still have
     // produced six `assertFails`, because assertFails watches the promise and
     // not the database.
@@ -1101,7 +1101,7 @@ describe('firestore.rules over the produced data', () => {
 // fake Firestore, which is the surface this whole file exists because it
 // cannot be trusted.
 //
-// 🔴 AND TEARDOWN IS WHERE THE FAKE IS LEAST TRUSTWORTHY, because teardown is
+// CRITICAL: AND TEARDOWN IS WHERE THE FAKE IS LEAST TRUSTWORTHY, because teardown is
 // the only path that DELETES. `applyFamilyDeparture` calls `tx.delete()` on the
 // family document, and Firestore DOES NOT CASCADE TO SUBCOLLECTIONS. Every
 // chore, message and trash-day record outlives the family it belonged to.
@@ -1112,7 +1112,7 @@ describe('firestore.rules over the produced data', () => {
 // errors before the fallback is ever reached. That is a different code path,
 // and nothing had ever executed it.
 //
-// 📌 A DEDICATED FAMILY, NOT THE ONE UNDER TEST ABOVE. These tests delete
+// NOTE: A DEDICATED FAMILY, NOT THE ONE UNDER TEST ABOVE. These tests delete
 // things, and the rules describe above depends on `familyId` still existing.
 // Building a separate household here makes this block order-independent
 // instead of quietly destroying the state its predecessors assert against.
@@ -1172,7 +1172,7 @@ describe('the family teardown, driven through the real callables', () => {
   // -------------------------------------------------------------------------
 
   test('🔴 a plain member cannot remove ANOTHER member — that is the owner’s power', async () => {
-    // ⚠️ THE REASON `removeMember` IS A SEPARATE CALLABLE FROM `leaveFamily`.
+    // WARNING: THE REASON `removeMember` IS A SEPARATE CALLABLE FROM `leaveFamily`.
     // Leaving is authorised by BEING the person; removing is authorised by
     // OWNING the family. One callable with an optional uid would put both
     // behind a defaulted argument, and a bug in that default is exactly the bug
@@ -1230,7 +1230,7 @@ describe('the family teardown, driven through the real callables', () => {
     const family = (await db.doc(`families/${tdFamilyId}`).get()).data() as FamilyDoc;
     expect(family.memberUids).toEqual([TD_OWNER, TD_KID2]);
 
-    // 🔑 THE MAPS, NOT ONLY THE ARRAY. A departed member's name and avatar
+    // KEY: THE MAPS, NOT ONLY THE ARRAY. A departed member's name and avatar
     // lingering on the family document stay readable by everyone still in it —
     // a small leak about somebody who left, and stale by definition. The
     // planner prunes them deliberately, so the pruning is asserted deliberately.
@@ -1252,7 +1252,7 @@ describe('the family teardown, driven through the real callables', () => {
     expect(kid?.familyProExpiresAt).toBeNull();
     expect(kid?.familyId).toBeNull();
 
-    // 🔑 THROUGH THE REAL CLASSIFIER OVER THE REAL STORED DOCUMENT. Without the
+    // KEY: THROUGH THE REAL CLASSIFIER OVER THE REAL STORED DOCUMENT. Without the
     // revoke the leaver keeps a copied expiry worth up to a full billing
     // period, and `resolveEffectiveTier` is the function that decides whether
     // that is true — so it is asked, rather than the field being eyeballed.
@@ -1274,7 +1274,7 @@ describe('the family teardown, driven through the real callables', () => {
     // holds, and an error here would tell them their first attempt failed.
     expect(res.noop).toBe(true);
 
-    // 🔑 THE STORED DOCUMENT, BYTE FOR BYTE. A second departure that re-wrote
+    // KEY: THE STORED DOCUMENT, BYTE FOR BYTE. A second departure that re-wrote
     // the roster with the same values would return `noop: true` and still be a
     // write — and on a document whose maps were just pruned, a re-write is how
     // a pruned name comes back.
@@ -1291,7 +1291,7 @@ describe('the family teardown, driven through the real callables', () => {
       const stillIn = await getDocs(collection(tdKid2Db(), 'families', tdFamilyId, sub));
       expect(stillIn.size).toBeGreaterThan(0);
 
-      // ⚠️ ASSERTED AS A REJECTION, NEVER AS AN EMPTY RESULT — the assertion
+      // WARNING: ASSERTED AS A REJECTION, NEVER AS AN EMPTY RESULT — the assertion
       // `fake_cloud_firestore` is structurally unable to make, and the reason
       // no client test could ever have caught this.
       let code: string | null = null;
@@ -1350,7 +1350,7 @@ describe('the family teardown, driven through the real callables', () => {
       expect(u?.familyId).toBeNull();
     }
 
-    // 🔴 THE OWNER'S SUBSCRIPTION IS UNTOUCHED, AND THIS IS THE ONE PROPERTY
+    // CRITICAL: THE OWNER'S SUBSCRIPTION IS UNTOUCHED, AND THIS IS THE ONE PROPERTY
     // WHOSE FAILURE IS A DOWNGRADE FOR SOMEBODY WHO PAID. They keep what they
     // pay for; what ends is the family grant DERIVED from it. Leaving the grant
     // in place instead would make `resolveEffectiveTier` answer `pro` from a
@@ -1369,7 +1369,7 @@ describe('the family teardown, driven through the real callables', () => {
   });
 
   test('🔴 THE ORPHANS OUTLIVE THE FAMILY — and are unreadable by anyone', async () => {
-    // ⚠️ FIRESTORE DOES NOT CASCADE. `tx.delete(familyRef)` removes one
+    // WARNING: FIRESTORE DOES NOT CASCADE. `tx.delete(familyRef)` removes one
     // document; the chore, the message and the bin-day record underneath it are
     // still there. Proven FIRST, because a denial over a collection that had
     // been emptied would prove nothing at all — this test needs a subject.
@@ -1382,7 +1382,7 @@ describe('the family teardown, driven through the real callables', () => {
       (await db.doc(`families/${tdFamilyId}/chores/${tdChoreId}`).get()).exists,
     ).toBe(true);
 
-    // 🔴 THE QUESTION NOTHING HAD EVER ASKED. Read access to these documents is
+    // CRITICAL: THE QUESTION NOTHING HAD EVER ASKED. Read access to these documents is
     // decided by `familyMemberUids()`, which does
     // `get(.../families/$(familyId)).data.get('memberUids', [])`. The
     // `.get(..., [])` fallback is documented as making a MALFORMED family deny
@@ -1412,7 +1412,7 @@ describe('the family teardown, driven through the real callables', () => {
       );
     }
 
-    // 🔑 THE WITHIN-SUBJECT CONTROL, and it is the strongest one available
+    // KEY: THE WITHIN-SUBJECT CONTROL, and it is the strongest one available
     // here. TD_KID2 read every one of those collections successfully while the
     // family existed (the lock-out test above). The credentials, the ruleset,
     // the collection paths and the documents are all unchanged — the ONLY thing
@@ -1443,7 +1443,7 @@ describe('the family teardown, driven through the real callables', () => {
   });
 
   test('the owner can start again after disbanding — the block was the family, not them', async () => {
-    // 🔑 THE END-TO-END PROOF THAT THE REVOKE WAS CLEAN. `createFamily` refuses
+    // KEY: THE END-TO-END PROOF THAT THE REVOKE WAS CLEAN. `createFamily` refuses
     // anyone already in a family, and it reads `resolveOwnPaidTier`. If either
     // `familyId` or the grant had been left behind, this call would fail — so
     // this single assertion covers the teardown's whole job from the other side.
@@ -1456,7 +1456,7 @@ describe('the family teardown, driven through the real callables', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 THE CONTROL — do those denials come from the rules under test?
+// CRITICAL: THE CONTROL — do those denials come from the rules under test?
 // ---------------------------------------------------------------------------
 //
 // Every `assertFails` above is satisfied by a great many wrong worlds: a
@@ -1474,7 +1474,7 @@ describe('CONTROL: the denials are produced by the membership clauses', () => {
   const REAL_GET =
     "allow get: if isAuthenticated()\n                 && resource.data.get('memberUids', []).hasAny([request.auth.uid]);";
   const REAL_MESSAGES_READ = 'match /messages/{messageId} {\n        allow read: if isFamilyMember(familyId);';
-  // ⚠️ THE `match` LINE IS PART OF THE ANCHOR AND HAS TO BE. `allow read: if
+  // WARNING: THE `match` LINE IS PART OF THE ANCHOR AND HAS TO BE. `allow read: if
   // isFamilyMember(familyId);\n        allow write: if false;` appears
   // IDENTICALLY in the trashDay, chores and messages blocks, so an anchor
   // without it would edit whichever came first and the control would be about
@@ -1503,7 +1503,7 @@ describe('CONTROL: the denials are produced by the membership clauses', () => {
         REAL_TRASHDAY_WRITE,
         'match /trashDay/{binDateKey} {\n        allow read: if isAuthenticated();\n        allow write: if isAuthenticated();',
       )
-      // 🔴 THE DISCRIMINATOR (W2-96). `size() >= 0` is TRUE for any list and
+      // CRITICAL: THE DISCRIMINATOR (W2-96). `size() >= 0` is TRUE for any list and
       // cannot be false — so this clause allows the read if and only if
       // `familyMemberUids()` RETURNS something. Over an orphan whose parent
       // does not exist, that distinguishes the two mechanisms which produce an
@@ -1515,7 +1515,7 @@ describe('CONTROL: the denials are produced by the membership clauses', () => {
         'match /chores/{choreId} {\n        allow read: if familyMemberUids(familyId).size() >= 0;',
       );
 
-    // 🔴 A MUTATION THAT DID NOT APPLY IS A CONTROL THAT TESTS NOTHING. Every
+    // CRITICAL: A MUTATION THAT DID NOT APPLY IS A CONTROL THAT TESTS NOTHING. Every
     // anchor is whitespace-sensitive, so a reformat of firestore.rules would
     // silently turn this describe into a second copy of the assertions above —
     // passing, and proving nothing. Refuse instead, per anchor, so the error
@@ -1611,7 +1611,7 @@ describe('CONTROL: the denials are produced by the membership clauses', () => {
   });
 
   test('🔴 with `allow write: if false` relaxed, a client CAN overwrite the bin day', async () => {
-    // ⚠️ WHAT THIS CONTROL DOES AND DOES NOT SHOW, stated rather than implied.
+    // WARNING: WHAT THIS CONTROL DOES AND DOES NOT SHOW, stated rather than implied.
     // The deny-write assertions are PINS, not catches: Firestore default-denies,
     // so DELETING the trashDay block leaves them all passing. What this proves
     // is that they respond to RELAXATION — which is the realistic failure, and
@@ -1630,7 +1630,7 @@ describe('CONTROL: the denials are produced by the membership clauses', () => {
   });
 
   test('🔴 a MISSING parent ERRORS the rules expression — the [] fallback does not cover an orphan', async () => {
-    // ⚠️ THIS IS WHY THE ORPHAN DENIAL IN THE TEARDOWN BLOCK IS NOT LUCK, AND
+    // WARNING: THIS IS WHY THE ORPHAN DENIAL IN THE TEARDOWN BLOCK IS NOT LUCK, AND
     // WHY IT IS ALSO NOT THE FALLBACK DOING ITS JOB.
     //
     // Under this mutant, `chores` reads are allowed by
@@ -1645,7 +1645,7 @@ describe('CONTROL: the denials are produced by the membership clauses', () => {
     //     `.get('memberUids', [])`. The documented fallback protects a
     //     MALFORMED family; it does not protect against a MISSING one.
     //
-    // 📌 THE CONSEQUENCE, since a fact without one reads as trivia: orphaned
+    // NOTE: THE CONSEQUENCE, since a fact without one reads as trivia: orphaned
     // chores, messages and bin days are unreachable because a rules ERROR
     // denies — not because the roster came back empty. Anyone "tidying"
     // `.data.get('memberUids', [])` into `.data.memberUids` would keep this
@@ -1686,7 +1686,7 @@ describe('CONTROL: the denials are produced by the membership clauses', () => {
 // The VISIT journey (W2-113) — join, walk through the front door, leave, denied
 // ---------------------------------------------------------------------------
 //
-// 🔴 EVERY PART OF THIS WAS TESTED AND THE JOURNEY HAD NEVER BEEN WALKED.
+// CRITICAL: EVERY PART OF THIS WAS TESTED AND THE JOURNEY HAD NEVER BEEN WALKED.
 // `#483` made family membership grant house access — `sharesFamilyWith` at
 // firestore.rules:172, reached from `canViewHouse` (:198) and from the
 // `publicProfiles` read (:755). Before this describe, the string
@@ -1702,12 +1702,12 @@ describe('CONTROL: the denials are produced by the membership clauses', () => {
 // judged against the real output of the real writers". The visit was the one
 // piece of the family feature that never got that treatment.
 //
-// 🔑 AND IT IS LIVE. Brendan deployed the ruleset at 2026-08-18T15:38:24Z
+// KEY: AND IT IS LIVE. Brendan deployed the ruleset at 2026-08-18T15:38:24Z
 // (`check-rules-deployed.cjs` exit 0, both digests c8a0c1a6063b5030), so this
 // is production behaviour with no end-to-end test behind it.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE SHAPE IS A BRACKET, NOT A GRANT, AND THAT IS THE ANTI-VACUITY DESIGN
+// CRITICAL: THE SHAPE IS A BRACKET, NOT A GRANT, AND THAT IS THE ANTI-VACUITY DESIGN
 // ---------------------------------------------------------------------------
 //
 // The tempting version of this test is join → read → succeed. It would be
@@ -1748,7 +1748,7 @@ describe('the family VISIT journey — the door opens, then closes', () => {
     await seedSubscriber(JV_OWNER, FAMILY_PRODUCT_ID);
     await db.doc(`users/${JV_KID}`).set({avatarUrl: 'avatar-of-visit-kid'});
 
-    // ⚠️ SEEDED WITH THE ADMIN SDK, AND SAYING SO MATTERS. Unlike the family
+    // WARNING: SEEDED WITH THE ADMIN SDK, AND SAYING SO MATTERS. Unlike the family
     // documents below, `users/{uid}/house/layout` is written by the DART
     // CLIENT — no callable produces it — so there is no "real writer" here to
     // judge the rules against. What this journey proves is the READ path over
@@ -1795,7 +1795,7 @@ describe('the family VISIT journey — the door opens, then closes', () => {
   test('the kid joins through createFamily → mintFamilyInvite → joinFamily', async () => {
     jvFamilyId = await buildFamily(JV_OWNER, JV_KID);
 
-    // 🔑 THE ROSTER IS READ BACK, NOT INFERRED FROM THE RETURN VALUE. The
+    // KEY: THE ROSTER IS READ BACK, NOT INFERRED FROM THE RETURN VALUE. The
     // rules ask `familyRoster(...).hasAny([uid])` about the STORED document,
     // so a callable that returned success while writing a different roster
     // would break the grant and satisfy any assertion made on its response.
@@ -1815,7 +1815,7 @@ describe('the family VISIT journey — the door opens, then closes', () => {
 
   test('🔴 AFTER joining, the kid MAY read the host house', async () => {
     const snap = await assertSucceeds(getDoc(housePath()));
-    // 📌 NOT JUST "the read was allowed". A permitted read of a document that
+    // NOTE: NOT JUST "the read was allowed". A permitted read of a document that
     // is not there returns a snapshot that does not exist, and the visit that
     // matters is the one that comes back with a house in it.
     expect(snap.exists()).toBe(true);
@@ -1843,7 +1843,7 @@ describe('the family VISIT journey — the door opens, then closes', () => {
     const fam = (await db.doc(`families/${jvFamilyId}`).get()).data() as FamilyDoc;
     expect(fam.memberUids).toEqual([JV_OWNER]);
 
-    // 🔴 BOTH SIDES, because `sharesFamilyWith` asks the roster about BOTH
+    // CRITICAL: BOTH SIDES, because `sharesFamilyWith` asks the roster about BOTH
     // uids specifically so that neither one alone is a grant. Asserting only
     // the roster would leave the stale-pointer case untested from this
     // direction.

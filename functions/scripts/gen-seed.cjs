@@ -9,13 +9,13 @@
  *   • the Dart tables of collection_seed.dart — kCollectionSeed, kItemFamily,
  *     kFamilyNeutral, kSkinDescriptions
  *
- * 🔴 THE DART HALF IS EMITTED BUT NOT WRITTEN INTO `lib/`. That is W1-149's commit,
+ * CRITICAL: THE DART HALF IS EMITTED BUT NOT WRITTEN INTO `lib/`. That is W1-149's commit,
  * and `lib/` is a different window's lane with a different gate. What this script
  * buys now is the PROOF: seedGenerator.test.ts asserts the emitted Dart matches the
  * committed tables modulo whitespace, so the wiring commit lands with the projection
  * already established rather than discovering it.
  *
- * 🔑 WHY A PLAIN NODE SCRIPT AND NOT build_runner. build_runner cannot emit
+ * KEY: WHY A PLAIN NODE SCRIPT AND NOT build_runner. build_runner cannot emit
  * TypeScript, so it could only ever be HALF the mechanism, with a second generator
  * for the TS side — two generators over one source, which is a second way for the
  * halves to drift. That is the disease this exists to cure. It is also why nothing
@@ -55,12 +55,12 @@ function loadRows() {
 /**
  * Render a row's `section` banner and `note` as comment lines.
  *
- * 🔑 THIS IS WHY THE SCHEMA HAS 11 FIELDS AND NOT 9. Generating these tables
+ * KEY: THIS IS WHY THE SCHEMA HAS 11 FIELDS AND NOT 9. Generating these tables
  * from a 9-field source would have destroyed 71 comment lines / ~775 words of
  * institutional reasoning in itemPool.ts — the style_roof_tile_gold pricing bug,
  * the "measured dusty rose, not cream" correction, the day-one-set provenance.
  *
- * ⚠️ A note lives in the AUTHORED SOURCE, never merged back from this file's own
+ * WARNING: A note lives in the AUTHORED SOURCE, never merged back from this file's own
  * previous output. That distinction is the whole design: merging prose back would
  * mean parsing our own emission, and then `seed:check`'s byte-diff would no longer
  * prove the output is a pure function of the input. Authoring keeps the gate intact.
@@ -158,7 +158,7 @@ function emitDartRows(rows) {
 
 function emitDartFamily(rows) {
   const assigned = rows.filter((r) => r.family !== null);
-  // 🔴 THE COLON IS PART OF THE PADDED TOKEN, NOT SEPARATE FROM IT (W2-159).
+  // CRITICAL: THE COLON IS PART OF THE PADDED TOKEN, NOT SEPARATE FROM IT (W2-159).
   //
   // This used to read `q(r.id).padEnd(w) + ': '`, which pads BEFORE the colon
   // and emits `'furn_sofa_sage'      : 'meadow',`. The committed Dart writes
@@ -170,13 +170,13 @@ function emitDartFamily(rows) {
   //   · dailyRotation.test.ts parses kItemFamily with a regex that requires
   //     `'key':`, and read the padded form as SIX entries out of 160.
   //
-  // ⚠️ AND THE FAILURE LIED ABOUT ITS CAUSE. The unparsed rows surfaced as
+  // WARNING: AND THE FAILURE LIED ABOUT ITS CAUSE. The unparsed rows surfaced as
   // "add these to collection_seed.dart kItemFamily: [154 ids]" — a list of
   // items that were all present, none missing, and simply unreadable to that
   // parser. Anyone pasting the emission verbatim would have gone looking for
   // 154 absent rows that were sitting in front of them.
   //
-  // 📌 The TypeScript half of this same generator already padded correctly —
+  // NOTE: The TypeScript half of this same generator already padded correctly —
   // `(r.id + ':').padEnd(famW)` at emitTs — so the two projections of one
   // source formatted their identical table two different ways. Matched here.
   const w = Math.max(...assigned.map((r) => q(r.id).length + 1));

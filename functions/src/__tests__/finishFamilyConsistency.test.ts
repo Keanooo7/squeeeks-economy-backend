@@ -3,7 +3,7 @@
 // W2-159. A finish token names exactly one family, across the whole seed.
 //
 // ---------------------------------------------------------------------------
-// 🔴 WHY THIS EXISTS: W2-159 ADDED 59 ROWS BY APPLYING A RULE NOTHING ENFORCED
+// CRITICAL: WHY THIS EXISTS: W2-159 ADDED 59 ROWS BY APPLYING A RULE NOTHING ENFORCED
 // ---------------------------------------------------------------------------
 //
 // The fifteen props' families were not chosen. They were DERIVED: every finish
@@ -13,20 +13,20 @@
 // `slate`→quarry, `terracotta`→oakhouse — with zero conflicts. The 59 new rows
 // follow that mapping.
 //
-// 🔑 UNTIL THIS FILE, THAT RULE EXISTED ONLY AS A SENTENCE IN A COMMENT. A
+// KEY: UNTIL THIS FILE, THAT RULE EXISTED ONLY AS A SENTENCE IN A COMMENT. A
 // derivation stated in prose and enforced by nothing is the shape this repo
 // keeps rediscovering: it is true on the day it is written and silently false
 // the first time somebody adds a row in a hurry. The next `caramel` row is free
 // to say `quarry`, every other gate stays green, and the album grows one item
 // whose family contradicts its own colour.
 //
-// ⚠️ THIS IS NOT A RESTATEMENT OF `productRegistry`-STYLE COVERAGE. Nothing
+// WARNING: THIS IS NOT A RESTATEMENT OF `productRegistry`-STYLE COVERAGE. Nothing
 // else compares two rows to each other: `dailyRotation.test.ts` counts
 // ITEM_FAMILY, `seedGenerator.test.ts` compares the projections. Both would
 // pass with `furn_bench_caramel` filed under quarry — the count is unchanged
 // and both projections would carry the same wrong value.
 //
-// 📌 IT READS THE GENERATED ARTIFACTS, NOT THE AUTHORED JSON, on purpose: the
+// NOTE: IT READS THE GENERATED ARTIFACTS, NOT THE AUTHORED JSON, on purpose: the
 // thing that ships is `SEED_ITEMS` + `ITEM_FAMILY`, and a rule proven only
 // against the source would not notice a generator that dropped a family.
 
@@ -35,7 +35,7 @@ import { SEED_ITEMS, ITEM_FAMILY } from '../itemPool';
 /**
  * Rows whose id is exactly `furn_<subject>_<token>`.
  *
- * ⚠️ ELEVEN LEGACY ROWS DO NOT MATCH AND ARE SKIPPED, not forced: ids like
+ * WARNING: ELEVEN LEGACY ROWS DO NOT MATCH AND ARE SKIPPED, not forced: ids like
  * `furn_bunk_walnut` (subject `bunk_bed`) and `furn_retro_tv` predate the
  * convention. Rewriting them would be an id migration, which is a real player
  * risk — `seed-ids.lock` exists precisely to make that deliberate. The count

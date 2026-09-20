@@ -49,7 +49,7 @@ describe('test-floor.json', () => {
     expect(new Set(commands).size).toBe(SUITES.length);
   });
 
-  // 🔴 EACH SUITE ANSWERS A QUESTION THE OTHERS CANNOT, and the entries must
+  // CRITICAL: EACH SUITE ANSWERS A QUESTION THE OTHERS CANNOT, and the entries must
   // keep saying which. `unit` reads source against a hand-written fake
   // Firestore; `rules` judges the ruleset over documents the test itself
   // seeded; `e2e` runs the real callables against a real emulator and then

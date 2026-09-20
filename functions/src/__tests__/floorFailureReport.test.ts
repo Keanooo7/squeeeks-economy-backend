@@ -4,7 +4,7 @@
 // was not in the brief — it can now see a suite that failed to RUN at all.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE DEFECT THIS EXISTS FOR WAS MEASURED, NOT SUSPECTED
+// CRITICAL: THE DEFECT THIS EXISTS FOR WAS MEASURED, NOT SUSPECTED
 // ---------------------------------------------------------------------------
 //
 // Reproduced by adding one test file that cannot compile, then running both:
@@ -15,7 +15,7 @@
 //   check-test-floor.cjs unit   floor: unit OK — 933, at the floor.
 //                               exit 0                      <- GREEN. WRONG.
 //
-// 🔑 A SUITE THAT FAILS TO RUN CONTRIBUTES ZERO TESTS. It is not a failure
+// KEY: A SUITE THAT FAILS TO RUN CONTRIBUTES ZERO TESTS. It is not a failure
 // added to the `Tests:` line — it is a whole file removed from the run. The
 // count does not drop, so the FLOOR cannot see it either: those tests were
 // never in the total to compare against.
@@ -25,7 +25,7 @@
 // `unit OK — 908 (floor 906, +2)` and exited 0 while 25 tests never ran.
 //
 // ---------------------------------------------------------------------------
-// ⚠️ EVERY FIXTURE BELOW IS LITERAL CAPTURED OUTPUT, NOT WRITTEN FROM MEMORY
+// WARNING: EVERY FIXTURE BELOW IS LITERAL CAPTURED OUTPUT, NOT WRITTEN FROM MEMORY
 // ---------------------------------------------------------------------------
 //
 // Each was produced by deliberately breaking something and saving what jest
@@ -33,12 +33,12 @@
 // reached main in #364/#365, and every one of them was a guess about a format
 // that turned out to be wrong in a way that made the gate PASS.
 //
-// 📌 The first thing these fixtures proved is that a guess would have been
+// NOTE: The first thing these fixtures proved is that a guess would have been
 // wrong again: jest's default reporter emits NO `✕` lines. Per-test names
 // appear only as `● describe › test` bullets. An extractor built around `✕`
 // would have found nothing and reported every red run as unattributable.
 
-// 🔴 FORCE MODULE SCOPE — LOAD-BEARING, NOT STYLISTIC. Without one top-level
+// CRITICAL: FORCE MODULE SCOPE — LOAD-BEARING, NOT STYLISTIC. Without one top-level
 // `import`/`export` this file is a SCRIPT and its top-level `const checker`
 // lands in the GLOBAL scope, where it can collide with another script test and
 // take THIS ENTIRE SUITE out of the run with no failure reported. The long
@@ -123,7 +123,7 @@ Time:        2.1 s
 `;
 
 /**
- * A suite that cannot compile. 🔴 NOTE THE `Tests:` LINE — no `failed` in it at
+ * A suite that cannot compile. CRITICAL: NOTE THE `Tests:` LINE — no `failed` in it at
  * all, and the total is simply smaller. This is the fixture that proves the
  * old check could not work.
  */
@@ -162,7 +162,7 @@ Snapshots:   0 total
 `;
 
 /**
- * 🔴 A GREEN RUN THAT CONTAINS `● Console` BULLETS. This is not a contrived
+ * CRITICAL: A GREEN RUN THAT CONTAINS `● Console` BULLETS. This is not a contrived
  * case — the real suite prints five of them on a passing run, because the code
  * under test logs. Without the heading filter, every green run would be
  * reported as five failing tests named "Console".
@@ -209,7 +209,7 @@ describe('🔴 a suite that FAILED TO RUN is red, though the Tests: line is gree
   });
 
   test('🔴 the SUMMARY LINES alone are sufficient, with the exit code GREEN', () => {
-    // 🔴 THIS TEST EXISTS BECAUSE A CONTROL CAUGHT ITS ABSENCE. Deleting the
+    // CRITICAL: THIS TEST EXISTS BECAUSE A CONTROL CAUGHT ITS ABSENCE. Deleting the
     // suite-level terms from isRed left all 17 tests GREEN, because every
     // fixture passes status = 1 and `status !== 0` already carried them. The
     // suite-level detection was redundant in every case it was supposedly

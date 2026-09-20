@@ -89,7 +89,7 @@ describe('effectOf — the notifications that GRANT', () => {
 
 describe('effectOf — the notifications that REVOKE', () => {
   test('REFUND revokes at the revocation date, NOT at the still-future expiry', () => {
-    // 🔴 The one case the clock cannot handle on its own. Apple can refund in
+    // CRITICAL: The one case the clock cannot handle on its own. Apple can refund in
     // the middle of a paid period, so `subscriptionExpiresAt` is still weeks
     // ahead and every reader would keep computing `pro`. Without this branch a
     // refunded account keeps Pro until a period it was paid back for runs out.
@@ -146,7 +146,7 @@ describe('effectOf — the notifications that REVOKE', () => {
 
 describe('effectOf — the notifications that must change NOTHING', () => {
   test('DID_FAIL_TO_RENEW does not cut off a subscriber Apple is still charging', () => {
-    // 🔑 The tempting wrong answer. A failed rebill is not an ended
+    // KEY: The tempting wrong answer. A failed rebill is not an ended
     // subscription: with a billing-retry or grace period the subscriber is
     // still entitled through the expiry already stored, and without one the
     // clock revokes them at that same moment. Writing `free` here would
@@ -172,7 +172,7 @@ describe('effectOf — the notifications that must change NOTHING', () => {
   });
 
   test('an UNKNOWN notification type is ignored, never an error', () => {
-    // ⚠️ Apple adds notification types without asking — RESCIND_CONSENT,
+    // WARNING: Apple adds notification types without asking — RESCIND_CONSENT,
     // METADATA_UPDATE and MIGRATION are all newer than this app. A handler that
     // threw on an unrecognised one would turn a routine Apple release into
     // three days of retries against an endpoint that looks broken.

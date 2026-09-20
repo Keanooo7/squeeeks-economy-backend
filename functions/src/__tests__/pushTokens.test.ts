@@ -87,7 +87,7 @@ describe('resolvePushToken — which document holds the token', () => {
   });
 
   test('a token only in the legacy field is still used', () => {
-    // 🔑 The install that has not updated. Reading the private path alone
+    // KEY: The install that has not updated. Reading the private path alone
     // would silently stop push for every one of them, which is worse than the
     // exposure being fixed.
     expect(
@@ -96,7 +96,7 @@ describe('resolvePushToken — which document holds the token', () => {
   });
 
   test('THE PRIVATE DOCUMENT WINS when both carry a token', () => {
-    // 🔑 The decisive tie. A document carrying both was caught between the
+    // KEY: The decisive tie. A document carrying both was caught between the
     // client's write of the new path and its clear of the old field, so the
     // private copy is the newer one. Preferring legacy would pin the user to
     // whatever their last pre-update launch recorded — a token that may
@@ -161,7 +161,7 @@ describe('sendEachAndPruneDeadTokens', () => {
   });
 
   test('a private-sourced token is cleared from the PRIVATE document', async () => {
-    // 🔑 The migration's decisive prune case. A prune hard-coded to
+    // KEY: The migration's decisive prune case. A prune hard-coded to
     // users/{uid} would write a delete for a field that is not there and leave
     // the real dead token in place, so the next cron sends to it again.
     const { db, updates } = fakeDb();
@@ -209,7 +209,7 @@ describe('sendEachAndPruneDeadTokens', () => {
   });
 
   test('a TRANSIENT error clears nothing', async () => {
-    // 🔑 The test that matters. messaging/internal-error is a bad night at FCM,
+    // KEY: The test that matters. messaging/internal-error is a bad night at FCM,
     // not a dead device — pruning on it would unsubscribe healthy users
     // permanently, and they would never get a notification again.
     const { db, updates } = fakeDb();

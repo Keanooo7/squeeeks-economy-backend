@@ -3,12 +3,12 @@
 // W2-08. The shop's STOCK rotates: which chests are OFFERED varies by day, with
 // the character egg rare and furniture/styles common.
 //
-// 🔑 THE DELIVERABLE IS THE DISTRIBUTION, NOT A DAY. A rarity rule asserted on
+// KEY: THE DELIVERABLE IS THE DISTRIBUTION, NOT A DAY. A rarity rule asserted on
 // one date is a coincidence with a green tick next to it. Everything below runs
 // a multi-year span and asserts frequencies and — the part that actually matters
 // — the CAP, over every rolling window rather than every aligned week.
 //
-// ⚠️ Nothing here stubs Math.random. The scheduler is seeded internally, so
+// WARNING: Nothing here stubs Math.random. The scheduler is seeded internally, so
 // there is no global to stub; and stubbing it under Jest returns a constant
 // pivot into Jest's own quicksort, which recurses to death before a single test
 // runs. `makeRng` is exported so a caller injects instead.
@@ -58,7 +58,7 @@ describe('the day index and the span fixture are sound', () => {
 });
 
 describe('the character egg is the rarest, and the cap is structural', () => {
-  // 🔴 The headline assertion. Not "at most 2 per ISO week" — at most 2 in EVERY
+  // CRITICAL: The headline assertion. Not "at most 2 per ISO week" — at most 2 in EVERY
   // 7-day window, including the ones that straddle a week boundary. A per-week
   // count would pass while the player saw four eggs in six days.
   test('no rolling 7-day window ever contains more than 2 character days', () => {

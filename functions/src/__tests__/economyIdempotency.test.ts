@@ -3,7 +3,7 @@
 // W2-18. Nothing rate-limits any callable. `git grep ratelimit|throttle|appCheck`
 // across functions/src returns NOTHING, for any of the twelve.
 //
-// 🔑 AND THE AUDIT SAYS THAT IS MOSTLY FINE, WHICH IS THE POINT OF THIS FILE.
+// KEY: AND THE AUDIT SAYS THAT IS MOSTLY FINE, WHICH IS THE POINT OF THIS FILE.
 // A rate limiter is the wrong instrument for a replay: it makes abuse slower,
 // not impossible, and it would be a second mechanism guarding what idempotency
 // already guards. What actually protects the economy is that every grant is
@@ -14,7 +14,7 @@
 // listed below with a reason. A new non-transactional grant fails this suite
 // until someone decides which it is.
 //
-// ⚠️ WHY A GATE RATHER THAN A PARAGRAPH IN A RETURN: an audit that produces no
+// WARNING: WHY A GATE RATHER THAN A PARAGRAPH IN A RETURN: an audit that produces no
 // gate is a finding that rots. This one caught two things at the time of
 // writing, and both are recorded below rather than fixed here — fixing either
 // needs a client change, which is not this window's lane.
@@ -26,7 +26,7 @@ import {codeOf} from './helpers/sourceText';
 const INDEX_RAW = fs.readFileSync(path.join(__dirname, '..', 'index.ts'), 'utf8');
 
 /**
- * 🔴 W2-29. Source greps here read CODE, never comments.
+ * CRITICAL: W2-29. Source greps here read CODE, never comments.
  *
  * W2-27 found a guard in galleryFeedback.test.ts passing because the handler
  * MENTIONED the thing it was asserting was gone — in a comment saying it was
@@ -34,7 +34,7 @@ const INDEX_RAW = fs.readFileSync(path.join(__dirname, '..', 'index.ts'), 'utf8'
  * source-reading guard written this session had the same hole; this is one of
  * five audited under W2-29.
  *
- * ⚠️ The classification below (movesValue / hasTransaction) was checked raw vs
+ * WARNING: The classification below (movesValue / hasTransaction) was checked raw vs
  * stripped for all 12 callables and NOT ONE changed — so this guard was not
  * lying. It is stripped anyway, because it was one long comment away from it:
  * a handler whose comment mentioned `runTransaction` would have been silently
@@ -48,7 +48,7 @@ function callables(): {name: string; body: string}[] {
   const re = /export const (\w+) = onCall\(/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(INDEX)) !== null) {
-    // A handler ends at the first `});` in column 0. ⚠️ Slicing to the next
+    // A handler ends at the first `});` in column 0. WARNING: Slicing to the next
     // `export const` runs PAST it into whatever helper sits between, and a test
     // that does that is asserting about the wrong function while passing for
     // the wrong reason. That mistake was made twice while writing this session.
@@ -91,7 +91,7 @@ const NON_TRANSACTIONAL_BUT_SAFE: Record<string, string> = {
 /**
  * Value-moving callables with NO replay key, and why each is or is not a hole.
  *
- * 🔴 A transaction stops two CONCURRENT calls from racing. It does nothing about
+ * CRITICAL: A transaction stops two CONCURRENT calls from racing. It does nothing about
  * the SAME call arriving twice — a dropped response and a client retry. Those
  * are different problems and only one of them is solved by `runTransaction`.
  */
@@ -204,7 +204,7 @@ describe('🔴 a transaction is not a replay guard — they solve different prob
     expect(INDEX).toContain('purchaseId?: string');
   });
 
-  // 🔑 THIS TEST INVERTED WHEN W2-19 FIXED THE DEFECT IT WAS DESCRIBING, which
+  // KEY: THIS TEST INVERTED WHEN W2-19 FIXED THE DEFECT IT WAS DESCRIBING, which
   // is the two-way ledger doing its job: closing the gap FORCED the excuse to be
   // deleted, rather than leaving a permanent note about a problem that no longer
   // exists. It previously asserted `not.toContain('purchaseId')`.

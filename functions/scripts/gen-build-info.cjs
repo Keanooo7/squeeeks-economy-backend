@@ -3,29 +3,29 @@
 // gen-build-info — stamp the tree's identity into a module that SHIPS (W2-155)
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE PROBLEM THIS EXISTS FOR. Every deployment instrument in this repo
+// CRITICAL: THE PROBLEM THIS EXISTS FOR. Every deployment instrument in this repo
 // reasons about WHEN a zip was uploaded — `source.storageSource.generation` is
 // an upload time, nothing more. `check-deployed-revision.cjs` said so in its own
 // header after W2-154: "a deploy later than a commit does not prove the deploy
 // CONTAINED it… nothing here can answer 'which sha is live'."
 //
-// ✅ So the deployed code carries its own identity. This writes it; index.ts
+// OK: So the deployed code carries its own identity. This writes it; index.ts
 // logs it at cold start; the sha in the log is what production is RUNNING, not
 // what someone believed they deployed.
 //
-// ⚠️ WHY A COMMITTED `.generated.ts` AND NOT A GITIGNORED FILE. `src/index.ts`
+// WARNING: WHY A COMMITTED `.generated.ts` AND NOT A GITIGNORED FILE. `src/index.ts`
 // imports it, `tsc` compiles it and jest type-checks it, so a file that exists
 // only after a generator has run would break `npm test` and `npm run
 // preflight:rules` on a fresh clone. Committed, every one of those works
 // unchanged. Same shape and same naming as `itemPool.generated.ts`.
 //
-// 🔴 CONSEQUENCE, AND IT IS DELIBERATE: a deploy REWRITES a committed file, so
+// CRITICAL: CONSEQUENCE, AND IT IS DELIBERATE: a deploy REWRITES a committed file, so
 // the tree is dirty in exactly this path afterwards. `preflight-deploy.cjs`
 // excludes this one path from its dirty check and says why. Without that
 // exclusion the first deploy would make the second one refuse — a gate that
 // breaks on its own success.
 //
-// 🔴 NEVER STAMP ANYTHING BUT THE SHA AND A UTC TIMESTAMP. No branch name, no
+// CRITICAL: NEVER STAMP ANYTHING BUT THE SHA AND A UTC TIMESTAMP. No branch name, no
 // machine name, no username, no path. A commit id is public; the others leak an
 // environment into a file that ships to Google and gets read back in logs.
 
@@ -49,7 +49,7 @@ function main() {
   try {
     sha = git(['rev-parse', 'HEAD']);
   } catch (e) {
-    // 🔴 REFUSE RATHER THAN STAMP "unknown". A build-info module that says
+    // CRITICAL: REFUSE RATHER THAN STAMP "unknown". A build-info module that says
     // `unknown` looks like a successful stamp in every log line it writes, and
     // the whole point is that the log line is trustworthy.
     console.error(
@@ -68,13 +68,13 @@ function main() {
 // so a fresh clone must be able to run \`tsc\` and \`jest\` without generating
 // anything first. See the generator's header for why it is not gitignored.
 //
-// 🔴 THE VALUE COMMITTED ON \`main\` IS NOT THIS COMMIT'S SHA AND IS NOT MEANT
+// CRITICAL: THE VALUE COMMITTED ON \`main\` IS NOT THIS COMMIT'S SHA AND IS NOT MEANT
 // TO BE. It is whatever the last deploy stamped, so between a landing and the
 // next deploy it is stale BY DESIGN. Do not read this file to learn what is
 // live — read the cold-start log line, which comes from the copy inside the
 // DEPLOYED bundle. That is the whole point of the mechanism.
 //
-// 📌 A diff here after a deploy is EXPECTED, not drift.
+// NOTE: A diff here after a deploy is EXPECTED, not drift.
 
 /** The git sha this bundle was compiled from. */
 export const BUILD_SHA = '${sha}';

@@ -2,7 +2,7 @@
  * `adminGrant`, driven end to end against a REAL Firestore. (W2-124)
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHY THIS FILE EXISTS: THE HANDLER HAD NEVER BEEN RUN BY ANYTHING
+ * CRITICAL: WHY THIS FILE EXISTS: THE HANDLER HAD NEVER BEEN RUN BY ANYTHING
  * ---------------------------------------------------------------------------
  *
  * `adminGrant.test.ts` exists and is a good suite — but it tests
@@ -22,7 +22,7 @@
  * sentence was untestable where it was written.
  *
  * ---------------------------------------------------------------------------
- * 🔑 `onRequest`, NOT `onCall` — AND IT CHANGES HOW THIS IS DRIVEN
+ * KEY: `onRequest`, NOT `onCall` — AND IT CHANGES HOW THIS IS DRIVEN
  * ---------------------------------------------------------------------------
  *
  * Every other emulator suite here reaches its callable through
@@ -33,12 +33,12 @@
  * `HttpsError` code becomes an HTTP status plus a body, so the refusals are
  * checked as `{status, body.refusal}` rather than as a thrown code.
  *
- * ⚠️ THE DOUBLE IS AN INSTRUMENT, SO IT IS KEPT AS THIN AS POSSIBLE: it records
+ * WARNING: THE DOUBLE IS AN INSTRUMENT, SO IT IS KEPT AS THIN AS POSSIBLE: it records
  * `status`, `json` and `send` and does nothing else. Anything it smoothed over
  * would be a behaviour this suite claims to prove and does not.
  *
  * ---------------------------------------------------------------------------
- * 🔴 WHAT THIS FILE CANNOT PROVE
+ * CRITICAL: WHAT THIS FILE CANNOT PROVE
  * ---------------------------------------------------------------------------
  *
  *   · IT IS NOT PRODUCTION, AND NO AMOUNT OF GREEN HERE EVER WILL BE. It runs
@@ -46,7 +46,7 @@
  *     `check-rules-deployed.cjs` and `check-deployed-revision.cjs` are the
  *     gates that ask production; this is not a third one. **A deployment state
  *     written into this comment would be false within hours — run the checks.**
- *     ⚠️ On 2026-08-19 the deploy split: functions at 04:43Z, rules at 04:49Z.
+ * WARNING: On 2026-08-19 the deploy split: functions at 04:43Z, rules at 04:49Z.
  *     For those six minutes `adminGrant` was live in production with its rules
  *     path unenforced, and **nothing in this repo could have distinguished
  *     that from the fully-deployed state.** A working callable is not evidence
@@ -96,7 +96,7 @@ interface Captured {
 /**
  * Invoke the `onRequest` handler with a minimal Express double.
  *
- * 🔑 `get()` IS CASE-INSENSITIVE HERE ON PURPOSE. Express's own `req.get` is,
+ * KEY: `get()` IS CASE-INSENSITIVE HERE ON PURPOSE. Express's own `req.get` is,
  * and the handler reads `req.get('x-seed-secret')`. A case-SENSITIVE double
  * would let a header-casing bug pass this suite and fail in production — the
  * double would be kinder than the thing it stands in for, which is the one
@@ -168,12 +168,12 @@ beforeAll(async () => {
 
   process.env.SEED_SECRET = SECRET;
 
-  // 🔴 clearFirestore() DOES NOT CLEAR AUTH, so this file could not be run
+  // CRITICAL: clearFirestore() DOES NOT CLEAR AUTH, so this file could not be run
   // twice inside one emulator session: the second beforeAll threw "The user
   // with the provided uid already exists", every test in the file reported as
   // failed, and the suite-level failure looked exactly like a broken test.
   //
-  // 🔑 THAT IS NOT A COSMETIC FIX — it is what makes this file INVESTIGABLE.
+  // KEY: THAT IS NOT A COSMETIC FIX — it is what makes this file INVESTIGABLE.
   // W2-136 needed to run the concurrency test in a loop to measure a flake
   // rate, and the first harness reported "19 of 20 failed" when what it had
   // actually measured was this collision. Anyone chasing the same flake would
@@ -252,7 +252,7 @@ describe('adminGrant — a refused plan is a 400 that names itself', () => {
     });
     expect(res.status).toBe(400);
     expect(res.body.ok).toBe(false);
-    // 🔑 THE REFUSAL KEY, NOT JUST THE STATUS. `planAdminGrant` has several
+    // KEY: THE REFUSAL KEY, NOT JUST THE STATUS. `planAdminGrant` has several
     // refusals that all surface as 400; asserting only the status cannot tell
     // "your item id is a typo" from "your grantId has a slash in it", so it
     // would pass for the wrong reason exactly when the wrong check fired.
@@ -263,7 +263,7 @@ describe('adminGrant — a refused plan is a 400 that names itself', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 The dry run — the default, and the reason this endpoint is safe to hold
+// CRITICAL: The dry run — the default, and the reason this endpoint is safe to hold
 // ---------------------------------------------------------------------------
 
 describe('🔴 adminGrant — dry run is the DEFAULT and writes nothing', () => {
@@ -321,7 +321,7 @@ describe('adminGrant — apply writes sponges, items, chests and a ledger row', 
     expect(ledger.granted.sponges).toBe(100);
     expect(ledger.granted.pendingChestIds).toEqual(['grant-full_0', 'grant-full_1']);
 
-    // 🔑 THE CHESTS ARE MINTED UNOPENED AND THEIR ODDS ARE FROZEN AT MINT TIME.
+    // KEY: THE CHESTS ARE MINTED UNOPENED AND THEIR ODDS ARE FROZEN AT MINT TIME.
     // Asserted against CHEST_CATEGORY_DROP_TABLE rather than re-derived from
     // the live rotation: the rotation may move between grant and open, and the
     // recipient is owed the odds they were granted.
@@ -340,7 +340,7 @@ describe('adminGrant — apply writes sponges, items, chests and a ledger row', 
     // Re-granting an owned item would reset `equipped` and silently un-equip
     // something the player is wearing. The grant still reports success — they
     // own it, which is what was asked — and says so via `alreadyOwned`.
-    // 🔑 A REAL CATALOGUE ID, NOT AN INVENTED ONE. `planAdminGrant` validates
+    // KEY: A REAL CATALOGUE ID, NOT AN INVENTED ONE. `planAdminGrant` validates
     // every itemId against CATALOGUE_IDS (the shipped SEED_ITEMS), so an
     // invented id is refused 400 before the handler ever reaches Firestore —
     // this test failed exactly that way on its first run, and an invented id
@@ -365,7 +365,7 @@ describe('adminGrant — apply writes sponges, items, chests and a ledger row', 
 });
 
 // ---------------------------------------------------------------------------
-// 🔴 THE IDEMPOTENCY LOCK — a retried curl must not be a second grant
+// CRITICAL: THE IDEMPOTENCY LOCK — a retried curl must not be a second grant
 // ---------------------------------------------------------------------------
 
 describe('🔴 W2-124 the ledger document is the idempotency lock', () => {
@@ -384,7 +384,7 @@ describe('🔴 W2-124 the ledger document is the idempotency lock', () => {
     });
     expect(replay.status).toBe(200);
     expect(replay.body.alreadyProcessed).toBe(true);
-    // 🔴 THE LINE A DELETED LOCK MOVES: without the ledger check the balance
+    // CRITICAL: THE LINE A DELETED LOCK MOVES: without the ledger check the balance
     // would be `before + 1000`.
     expect(await spongeBalanceOf(RECIPIENT)).toBe(before + 500);
     // And the replay returns the ORIGINAL grant rather than a fresh one.
@@ -392,7 +392,7 @@ describe('🔴 W2-124 the ledger document is the idempotency lock', () => {
   });
 
   test('🔴 TWO CONCURRENT applies of one grantId pay exactly once', async () => {
-    // 🔑 THIS IS THE CLEANER RACE OF THE TWO IN W2-124. `openPendingChest` has
+    // KEY: THIS IS THE CLEANER RACE OF THE TWO IN W2-124. `openPendingChest` has
     // a pre-flight `get()` outside its transaction that can close the window on
     // its own; `adminGrant` has NO check outside the transaction at all, so the
     // ledger read and the commit are the only serialisation there is. Both
@@ -409,18 +409,18 @@ describe('🔴 W2-124 the ledger document is the idempotency lock', () => {
     });
     const [ra, rb] = await Promise.all([a, b]);
 
-    // 🔴 THE FAILURE MUST NAME ITSELF. This test went red once on an integrated
+    // CRITICAL: THE FAILURE MUST NAME ITSELF. This test went red once on an integrated
     // tip and green on two immediate re-runs of the identical tree, and the only
     // thing recorded was the test's NAME — which was not enough to classify it.
     // W2-136 then failed to reproduce it in 24 consecutive runs, so the one red
     // this project has ever seen is also the only evidence, and it said nothing.
     //
-    // 🔑 So every assertion below carries the whole observation. A recurrence
+    // KEY: So every assertion below carries the whole observation. A recurrence
     // now records WHICH of the three ways it failed:
     //   both false          -> the lock did not fire: a real double-pay
     //   both true           -> neither applied: the grant silently did nothing
     //   a non-200 status    -> the transaction gave up rather than raced
-    // ⚠️ This is diagnostics, NOT a retry, a sleep or a longer timeout. Those
+    // WARNING: This is diagnostics, NOT a retry, a sleep or a longer timeout. Those
     // would each turn the symptom green and hide the double-pay case entirely.
     const after = await spongeBalanceOf(RECIPIENT);
     const observed =
@@ -437,7 +437,7 @@ describe('🔴 W2-124 the ledger document is the idempotency lock', () => {
         [ra.body.alreadyProcessed, rb.body.alreadyProcessed].sort(),
       )}`,
     ).toBe(`${observed} | exactly one applied: [false,true]`);
-    // 🔴 700 ONCE, NOT 1400. This is the sentence the endpoint exists to make true.
+    // CRITICAL: 700 ONCE, NOT 1400. This is the sentence the endpoint exists to make true.
     expect(`${observed} | delta: ${after - before}`).toBe(`${observed} | delta: 700`);
   });
 });
@@ -449,7 +449,7 @@ describe('🔴 W2-124 the ledger document is the idempotency lock', () => {
 describe('✅ W2-125 a granted chest opens, end to end — the finding, now fixed', () => {
   test('adminGrant mints a frozen subject and openPendingChest rolls on it', async () => {
     // -----------------------------------------------------------------------
-    // 📌 THIS TEST USED TO ASSERT A DEFECT. It is kept, rewritten, rather than
+    // NOTE: THIS TEST USED TO ASSERT A DEFECT. It is kept, rewritten, rather than
     // replaced, because the account of WHY it existed is the most useful thing
     // in this file.
     // -----------------------------------------------------------------------
@@ -482,7 +482,7 @@ describe('✅ W2-125 a granted chest opens, end to end — the finding, now fixe
     const chestId = granted.body.granted.pendingChestIds[0];
     expect(chestId).toBe('grant-chain_0');
 
-    // 🔑 THE MINT NOW WRITES BOTH FROZEN AXES. Asserted against `subjectForDay`
+    // KEY: THE MINT NOW WRITES BOTH FROZEN AXES. Asserted against `subjectForDay`
     // rather than a literal: a literal would pass today and rot the moment
     // DAILY_SUBJECT_POOLS changes, which is exactly the class of bug this whole
     // episode came from.
@@ -513,7 +513,7 @@ describe('✅ W2-125 a granted chest opens, end to end — the finding, now fixe
     // disagreeing with itself, discoverable only by a player whose chest rolled
     // the wrong theme.
     //
-    // ⚠️ THIS CANNOT FORCE A MIDNIGHT RETRY, and says so rather than implying
+    // WARNING: THIS CANNOT FORCE A MIDNIGHT RETRY, and says so rather than implying
     // it did. What it pins is the observable consequence: all chests minted by
     // one grant agree, and they agree with `subjectForDay` for the same day.
     const res = await invoke({

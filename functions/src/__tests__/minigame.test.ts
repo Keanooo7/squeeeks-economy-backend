@@ -2,7 +2,7 @@
 //
 // W2-17. The organisation mini-game's daily claim.
 //
-// 🔑 The load-bearing test in this file is not the happy path. It is
+// KEY: The load-bearing test in this file is not the happy path. It is
 // `the server does NOT validate the arrangement`, which pins an ABSENCE — and an
 // absence is exactly what a well-meaning future change deletes. Someone will
 // eventually read "the server grants without checking the puzzle" as a bug and
@@ -31,7 +31,7 @@ const readCode = (f: string): string => codeOf(read(f));
 /**
  * CODE view of the handler.
  *
- * 🔑 W2-30 measured this before changing it: `arrangement`, `placements`,
+ * KEY: W2-30 measured this before changing it: `arrangement`, `placements`,
  * `slots`, `solution`, `board` and `grid` were all absent raw AND stripped —
  * the guard was clean. It was clean by PLACEMENT, not by design: the block
  * comment explaining "No arrangement is accepted, none is checked" sits ABOVE
@@ -84,7 +84,7 @@ describe('one claim per player per day', () => {
 describe('🔴 the server does NOT validate the arrangement — pinned so a "fix" must argue', () => {
   test('the callable accepts no puzzle state at all', () => {
     const body = handler();
-    // 🔑 STRENGTHENED BY W2-172, NOT WEAKENED. This asserted
+    // KEY: STRENGTHENED BY W2-172, NOT WEAKENED. This asserted
     // `expect(body).toContain('const { clientNowIso } = request.data')` —
     // "only the clock comes in" — which was the strongest available statement
     // while the clock DID come in. It reads nothing from `request.data` now, so
@@ -114,7 +114,7 @@ describe('🔴 the server does NOT validate the arrangement — pinned so a "fix
 });
 
 describe('📌 the daily clock is reused; subjectForDay deliberately is not', () => {
-  // 🔴 REWRITTEN BY W2-172 BECAUSE IT PINNED THE DEFECT. This test read:
+  // CRITICAL: REWRITTEN BY W2-172 BECAUSE IT PINNED THE DEFECT. This test read:
   //
   //     expect(handler()).toContain("clientNowIso.slice(0, 10)");
   //     expect(readCode('index.ts')).toContain(
@@ -220,7 +220,7 @@ describe('a replay is a no-op that reports itself, not an error', () => {
 // W2-35 — a failed first-run grant should leave a trace, and so should a good one
 // ---------------------------------------------------------------------------
 //
-// 🔴 onNewUserBefriendGibby swallows its errors, deliberately and correctly: a
+// CRITICAL: onNewUserBefriendGibby swallows its errors, deliberately and correctly: a
 // failed Gibby write must never be able to fail signup. The cost is that a
 // failure and a success both finish with platform status 'ok', so the outcome
 // is invisible from outside.
@@ -309,7 +309,7 @@ describe('the already-exists message is restated, and only half of it is mine', 
 // W2-172 · the once-per-day key was chosen by the CALLER
 // ---------------------------------------------------------------------------
 //
-// 🔴 THE HOLE THESE TESTS CLOSE, AND WHY THE EXISTING ONES COULD NOT SEE IT.
+// CRITICAL: THE HOLE THESE TESTS CLOSE, AND WHY THE EXISTING ONES COULD NOT SEE IT.
 // Above, `a SECOND claim on the same day grants nothing` is correct and was
 // never the whole question. It fixes `dayKey` and varies the ledger — so it
 // pins replay for ONE key. The handler took its key from
@@ -318,7 +318,7 @@ describe('the already-exists message is restated, and only half of it is mine', 
 // dates was granted every time. 50 sponges per call, unbounded, against a
 // callable that is DEPLOYED and ACTIVE with `ingressSettings: ALLOW_ALL`.
 //
-// 📌 `economyIdempotency.test.ts:104-106` records the same reasoning and is
+// NOTE: `economyIdempotency.test.ts:104-106` records the same reasoning and is
 // true for exactly the same reason and to exactly the same depth: "a replay
 // returns alreadyClaimed and grants nothing" holds for a replay with the SAME
 // dayKey, which is the question that file set out to answer. Neither file was

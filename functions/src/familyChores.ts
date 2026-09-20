@@ -5,13 +5,13 @@
 // W2-88 part 3, spec item 2: "Parents choose the chores kids will do each week,
 // including on the special day."
 //
-// 🔑 "THE SPECIAL DAY" IS TRASH DAY, RULED, AND NO SECOND CONCEPT IS INVENTED.
+// KEY: "THE SPECIAL DAY" IS TRASH DAY, RULED, AND NO SECOND CONCEPT IS INVENTED.
 // It is the only special day in the product, and spec item 6 already pairs trash
 // day with orientation. A chore due on trash day is an ordinary chore whose due
 // time falls on it; nothing here knows the phrase.
 //
 // ---------------------------------------------------------------------------
-// 🔴 THE TASK ID IS BORROWED, NOT MINTED — AND THIS FILE HAS ALREADY PAID FOR
+// CRITICAL: THE TASK ID IS BORROWED, NOT MINTED — AND THIS FILE HAS ALREADY PAID FOR
 // THE ALTERNATIVE
 // ---------------------------------------------------------------------------
 //
@@ -23,7 +23,7 @@
 // catalogue says `living_room` — three spellings, two of them wrong, and an
 // unknown id is DROPPED BY THE RENDERER IN SILENCE.
 //
-// ⚠️ SO THE IDS ARE MIRRORED HERE AND THE MIRROR IS GATED AGAINST THE DART FILE
+// WARNING: SO THE IDS ARE MIRRORED HERE AND THE MIRROR IS GATED AGAINST THE DART FILE
 // ON DISK. The server cannot import from `lib/`, so a copy is unavoidable; what
 // is avoidable is an UNCHECKED copy. `familyChores.test.ts` reads
 // `task_library.dart` and asserts the two agree in both directions — the same
@@ -33,7 +33,7 @@
 /**
  * Every task id the app's library defines.
  *
- * ⚠️ A MIRROR OF `lib/features/weekly_schedule/domain/data_sources/task_library.dart`.
+ * WARNING: A MIRROR OF `lib/features/weekly_schedule/domain/data_sources/task_library.dart`.
  * Do not edit by hand without editing that file; the test reads it off disk and
  * fails in BOTH directions, so an addition here that is not there is as loud as
  * an omission.
@@ -60,7 +60,7 @@ export interface FamilyChoreDoc {
   /**
    * When it is due, as an ABSOLUTE INSTANT.
    *
-   * 🔴 AN INSTANT, AND NOT A LOCAL WALL-CLOCK TIME — WHICH IS THE OPPOSITE OF
+ * CRITICAL: AN INSTANT, AND NOT A LOCAL WALL-CLOCK TIME — WHICH IS THE OPPOSITE OF
    * THE BIN DATE, DELIBERATELY, AND THE CONTRAST IS THE EXPLANATION.
    *
    * `trashDay.ts` stores a LOCAL CALENDAR DAY because a bin day is a physical
@@ -73,7 +73,7 @@ export interface FamilyChoreDoc {
    * the only value they cannot disagree about; a stored "17:00" would mean two
    * different moments to two members and neither would be wrong.
    *
-   * 📌 The assigner picks it from their own local clock, so the household's
+ * NOTE: The assigner picks it from their own local clock, so the household's
    * timezone is captured at assign time without this module ever storing one.
    */
   dueAtMs: number;
@@ -102,7 +102,7 @@ export type ChoreCompletePlan =
 /**
  * Whether [actorUid] may assign [taskId] to [assignedToUid].
  *
- * 🔴 ONLY THE OWNER ASSIGNS — the same authority split `removeMember` draws.
+ * CRITICAL: ONLY THE OWNER ASSIGNS — the same authority split `removeMember` draws.
  * A member who could assign could hand their own chores to a sibling, and the
  * page would show a parent's instruction that no parent gave.
  *
@@ -126,7 +126,7 @@ export function planChoreAssignment(args: {
     return {ok: false, refusal: 'not-a-member'};
   }
 
-  // 🔴 THE SILENT-SKIP GUARD. An id the library does not define renders as
+  // CRITICAL: THE SILENT-SKIP GUARD. An id the library does not define renders as
   // nothing — an emptier card than was assigned, with no error anywhere. This
   // is the check `lib_living_0` needed and did not have.
   if (typeof taskId !== 'string' || !TASK_IDS.has(taskId)) {
@@ -149,7 +149,7 @@ export function planChoreAssignment(args: {
       assignedByUid: actorUid,
       dueAtMs,
       assignedAtMs: nowMs,
-      // 🔑 EXPLICITLY NULL RATHER THAN ABSENT. An absent field and a null one
+      // KEY: EXPLICITLY NULL RATHER THAN ABSENT. An absent field and a null one
       // read the same from Dart, but only one of them is a value the writer
       // chose — and `completedAtMs: null` is what makes "outstanding" a state
       // the document asserts rather than one a reader infers.
@@ -161,12 +161,12 @@ export function planChoreAssignment(args: {
 /**
  * Whether [actorUid] may mark [chore] done.
  *
- * 🔑 COMPLETION IS THE MEMBER'S OWN ACT, so the authority here is BEING the
+ * KEY: COMPLETION IS THE MEMBER'S OWN ACT, so the authority here is BEING the
  * assignee — not owning the family. A parent marking a child's chore done is a
  * different feature (and a different message on the board); this is the child
  * saying they did it.
  *
- * ⚠️ IDEMPOTENT IN THE REFUSAL SENSE, NOT THE SUCCESS SENSE. A second
+ * WARNING: IDEMPOTENT IN THE REFUSAL SENSE, NOT THE SUCCESS SENSE. A second
  * completion is refused rather than silently re-stamped, because the FIRST
  * completion time is the one the family will argue about — the same reason
  * `planTrashDayCompletion` preserves its first completer.

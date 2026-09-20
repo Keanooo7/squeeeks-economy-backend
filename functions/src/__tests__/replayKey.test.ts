@@ -2,7 +2,7 @@
 //
 // W2-19. The shared replay-key rule, and the double charge it closes.
 //
-// 🔴 THE BUG WAS NOT A MISSING TRANSACTION. purchaseStreakShield always had one,
+// CRITICAL: THE BUG WAS NOT A MISSING TRANSACTION. purchaseStreakShield always had one,
 // and the audit column that said so is what nearly let it through (W2-18). A
 // transaction stops two CONCURRENT calls racing; it does nothing about the SAME
 // call arriving twice after a dropped response. The tests below are written to

@@ -2,7 +2,7 @@
 //
 // A generated Apple-shaped certificate chain, and a signer for it.
 //
-// 🔑 WHY THIS EXISTS SEPARATELY FROM `appleJws.test.ts`, WHICH HAS ITS OWN COPY.
+// KEY: WHY THIS EXISTS SEPARATELY FROM `appleJws.test.ts`, WHICH HAS ITS OWN COPY.
 //
 // `appleJws.test.ts` is the ground truth for the cryptography: it is the one
 // place that asserts a tampered payload is rejected, that a foreign chain is
@@ -16,7 +16,7 @@
 // left alone, and everything that needs a REAL signed JWS for a reason other
 // than testing the signature comes here.
 //
-// ⚠️ THIS IS NOT A STUB. The chain is real, the signature is real, and
+// WARNING: THIS IS NOT A STUB. The chain is real, the signature is real, and
 // `makeVerify([rootDer], BUNDLE_ID)` is the shipped verifier with one input
 // changed — the trust anchor. Nothing about the JWS parsing, the chain walk,
 // the environment retry or the payload normalisation is bypassed.
@@ -43,7 +43,7 @@ interface KeyPair {
 /**
  * Node's native P-256 generator, NOT `KEYUTIL.generateKeypair`.
  *
- * 🔑 jsrsasign generates keys with pure-JS bignum arithmetic, which cost 2603 ms
+ * KEY: jsrsasign generates keys with pure-JS bignum arithmetic, which cost 2603 ms
  * of suite wall time when `appleJws.test.ts` used it (measured with `--cpu-prof`
  * in W2-143). Native does the same work in single-digit milliseconds. Only key
  * GENERATION moved — the certificates below still get their signatures from
@@ -144,7 +144,7 @@ export function buildChain(): AppleChain {
 /**
  * Signs a StoreKit 2 transaction payload with the chain's leaf key.
  *
- * ⚠️ `noTimestamp: true` — `jsonwebtoken` would otherwise add an `iat` claim
+ * WARNING: `noTimestamp: true` — `jsonwebtoken` would otherwise add an `iat` claim
  * Apple does not send, and the payload is asserted on by shape elsewhere.
  */
 export function signTransactionJws(
