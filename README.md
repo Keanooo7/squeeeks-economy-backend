@@ -7,15 +7,22 @@ The interesting half is not the feature work. It is that **every value-moving ca
 transaction over server-derived state**, that two real exploits were found by attacking it,
 and that the obvious fix for one of them was disproven before it shipped.
 
-**1,694 tests across 75 suites, all passing, in about 7 seconds.** 17,028 lines of TypeScript
-under test by 35,330 lines of test code, plus a 1,069-line Firestore ruleset.
+**1,695 tests across 75 suites in about 7 seconds: 1,694 pass on a fresh clone and one is
+skipped on purpose** (below). 17,028 lines of TypeScript under test by 35,343 lines of test code,
+plus a 1,069-line Firestore ruleset.
 
 ```
 npm --prefix functions install
 npm --prefix functions test
 # Test Suites: 75 passed, 75 total
-# Tests:       1694 passed, 1694 total
+# Tests:       1 skipped, 1694 passed, 1695 total
 ```
+
+The skipped test is `dailyRotation.test.ts`'s check that no roof art exists, which is why the roof
+prize is benched. It walks `assets/`, and the art tree is not part of this extract, so on a clone the
+premise cannot be read. The test skips rather than passing, because a gate that cannot find a
+directory has not shown the art is absent. In the source repository it runs against 1,018 asset
+files and passes. The assertions that roof is benched and in no pool run everywhere.
 
 ## The core: `purchaseChest`
 
@@ -101,7 +108,7 @@ errors — and therefore denies — on a create. `pendingChests`, `chestPurchase
 
 The rules suite is 3,390 lines driving 241 assertions against the emulator
 (`npm --prefix functions run test:rules`). It needs Java and the Firebase emulator, so it is
-**not** part of the 1,694 above.
+**not** part of the 1,695 above.
 
 ## What is honest about the test suite
 

@@ -212,26 +212,39 @@ describe("the day's subject is deterministic and always stocked", () => {
   // directions, which is worse than absent. What is asserted instead is the one
   // subject whose absence is unambiguous, plus reachability per category.
 
-  test('roof is benched, and the reason still holds', () => {
+  test('roof is benched', () => {
     expect(Object.keys(BENCHED_SUBJECTS)).toContain('roof');
     for (const pool of Object.values(DAILY_SUBJECT_POOLS)) {
       expect(pool).not.toContain('roof');
     }
-
-    // The bench reason is "no art exists". Verify the premise rather than
-    // trusting the comment — unbenching without baking would put the invisible
-    // prize straight back into rotation.
-    const repoRoot = path.resolve(__dirname, '../../..');
-    const walk = (dir: string): string[] =>
-      fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-        const full = path.join(dir, e.name);
-        return e.isDirectory() ? walk(full) : [full];
-      });
-    const roofArt = walk(path.join(repoRoot, 'assets')).filter((p) =>
-      path.basename(p).toLowerCase().includes('roof'),
-    );
-    expect(roofArt).toEqual([]);
   });
+
+  // The art tree is not part of this extract. A premise that cannot be read did
+  // not fail -- and it did not pass either. Skip loudly rather than let an
+  // absent directory read as "no roof art exists": a gate cannot promote
+  // "cannot find" into "does not exist" (the same refusal as the asset
+  // pipeline's verify_no_getbbox_diff.py, which will not report clean on zero
+  // files scanned).
+  const repoRoot = path.resolve(__dirname, '../../..');
+  const assetsDir = path.join(repoRoot, 'assets');
+  const hasAssets = fs.existsSync(assetsDir);
+  (hasAssets ? test : test.skip)(
+    'the reason roof is benched still holds: no roof art exists under assets/',
+    () => {
+      // The bench reason is "no art exists". Verify the premise rather than
+      // trusting the comment — unbenching without baking would put the invisible
+      // prize straight back into rotation.
+      const walk = (dir: string): string[] =>
+        fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+          const full = path.join(dir, e.name);
+          return e.isDirectory() ? walk(full) : [full];
+        });
+      const roofArt = walk(assetsDir).filter((p) =>
+        path.basename(p).toLowerCase().includes('roof'),
+      );
+      expect(roofArt).toEqual([]);
+    },
+  );
 
   test('the styles chest actually reaches its subject', () => {
     // The mirror of the characters test below. There was NO reachability test
